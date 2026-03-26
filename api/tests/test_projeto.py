@@ -1,4 +1,5 @@
 import pytest
+from pytest import approx
 from model_bakery import baker
 from django.test import RequestFactory
 from api.views.projeto_view import listar_projetos_view, get_resumo_projeto_view
@@ -38,16 +39,16 @@ class TestGetResumoProjeto:
     def test_retorna_zeros_quando_projeto_sem_dados(self):
         projeto = baker.make('api.Projeto')
         resultado = get_resumo_projeto(projeto.id)
-        assert resultado['custo_materiais'] == 0.0
-        assert resultado['custo_compras'] == 0.0
-        assert resultado['tempo_total'] == 0.0
+        assert resultado['custo_materiais'] == approx(0.0)
+        assert resultado['custo_compras'] == approx(0.0)
+        assert resultado['tempo_total'] == approx(0.0)
 
     def test_calcula_custo_materiais_corretamente(self):
         projeto = baker.make('api.Projeto')
         material = baker.make('api.Material', custo_estimado=100.00)
         baker.make('api.EstoqueMaterialProjeto', projeto=projeto, material=material, quantidade=5)
         resultado = get_resumo_projeto(projeto.id)
-        assert resultado['custo_materiais'] == 500.0
+        assert resultado['custo_materiais'] == approx(500.0)
 
     def test_exclui_compras_canceladas_do_calculo(self):
         projeto = baker.make('api.Projeto')
@@ -56,7 +57,7 @@ class TestGetResumoProjeto:
         baker.make('api.ComprasProjeto', projeto=projeto, pedido_compra=pedido_cancelado, valor_alocado=1000.00)
         baker.make('api.ComprasProjeto', projeto=projeto, pedido_compra=pedido_ativo, valor_alocado=500.00)
         resultado = get_resumo_projeto(projeto.id)
-        assert resultado['custo_compras'] == 500.0
+        assert resultado['custo_compras'] == approx(500.0)
 
     def test_calcula_tempo_total_das_tarefas(self):
         projeto = baker.make('api.Projeto')
@@ -64,7 +65,7 @@ class TestGetResumoProjeto:
         baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=8.0)
         baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=4.5)
         resultado = get_resumo_projeto(projeto.id)
-        assert resultado['tempo_total'] == 12.5
+        assert resultado['tempo_total'] == approx(12.5)
 
 
 @pytest.mark.django_db
