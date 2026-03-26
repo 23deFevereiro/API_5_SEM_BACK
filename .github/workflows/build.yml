@@ -40,6 +40,8 @@ jobs:
           POSTGRES_DB: lunae
           POSTGRES_USER: fev-23
           POSTGRES_PASSWORD: fev-23
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
           DJANGO_SETTINGS_MODULE: api.settings
         run: |
           pytest api/tests/test_projeto.py --cov=api --cov-report=xml
