@@ -10,7 +10,7 @@ class Fornecedor(models.Model):
 
     codigo_fornecedor = models.CharField(max_length=20, unique=True)
     razao_social = models.CharField(max_length=255)
-    cidade = models.CharField(max_length=100)
+    cidade = models.CharField(max_length=255)
     estado = models.CharField(max_length=2)
     categoria = models.CharField(max_length=100)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)

@@ -8,7 +8,7 @@ class Programa(models.Model):
     ]
 
     codigo_programa = models.CharField(max_length=20, unique=True)
-    nome_programa = models.CharField(max_length=255)
+    nome_programa = models.CharField(max_length=255, unique=True)
     gerente_programa = models.CharField(max_length=255)
     gerente_tecnico = models.CharField(max_length=255)
     data_inicio = models.DateField()
