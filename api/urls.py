@@ -1,4 +1,3 @@
-from .views import demo_view
 """
 URL configuration for api project.
 
@@ -18,9 +17,11 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
+from .views import demo_view, projeto_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('demo/', demo_view.get_demo_view),
-
+    path('projetos/', projeto_view.listar_projetos_view),
+    path('projetos/<int:projeto_id>/resumo/', projeto_view.get_resumo_projeto_view),
 ]
