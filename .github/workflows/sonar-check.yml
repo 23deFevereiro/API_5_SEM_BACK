@@ -25,6 +25,11 @@ jobs:
           POSTGRES_PASSWORD: fev-23
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,13 +44,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       - name: Run tests with coverage
-        env:
-          POSTGRES_DB: lunae
-          POSTGRES_USER: fev-23
-          POSTGRES_PASSWORD: fev-23
-          POSTGRES_HOST: localhost
-          POSTGRES_PORT: 5432
-          DJANGO_SETTINGS_MODULE: api.settings
+      
         run: |
           pytest --cov=api --cov-report=xml
       - name: SonarQube Scan
