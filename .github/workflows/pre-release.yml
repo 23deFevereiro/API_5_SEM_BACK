@@ -1,0 +1,38 @@
+name: Prepare Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+  sonar-check:
+    uses: ./.github/workflows/sonar-check.yml
+
+  update-parent:
+    needs: [ci, sonar-check]
+    name: Update Parent
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout parent repo
+        uses: actions/checkout@v4
+        with:
+          repository: 23deFevereiro/FATEC-API-5-Semestre
+          token: ${{ secrets.PARENT_REPO_PAT }}
+          submodules: true
+      
+      - name: Update submodule  
+        run: |
+          git submodule update --remote API_5_SEM_BACK
+
+      - name: Create or update PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.PARENT_REPO_PAT }}
+          branch: release
+          commit-message: "chore: update backend reference"
+          title: "Prepare Release"
+          delete-branch: true
