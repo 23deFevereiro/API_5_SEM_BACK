@@ -44,7 +44,7 @@ jobs:
           POSTGRES_PORT: 5432
           DJANGO_SETTINGS_MODULE: api.settings
         run: |
-          pytest api/tests/test_projeto.py --cov=api --cov-report=xml
+          pytest api/tests/ --cov=api --cov-report=xml
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
