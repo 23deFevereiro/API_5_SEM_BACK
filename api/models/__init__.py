@@ -1,9 +1,12 @@
 from .demo import Demo
-
-
-from .programa_empresa import ProgramaEmpresa
-from .projeto_programa import ProjetoPrograma
-from .tarefa_projeto import TarefaProjeto
+from .programa import Programa
 from .fornecedor import Fornecedor
+from .material import Material
+from .projeto import Projeto
+from .tarefa import Tarefa
+from .tempo_tarefa import TempoTarefa
+from .estoque_material_projeto import EstoqueMaterialProjeto
+from .empenho_material import EmpenhoMaterial
 from .pedido_compra import PedidoCompra
-from .compra_projeto import CompraProjeto
+from .solicitacao_compra import SolicitacaoCompra
+from .compras_projeto import ComprasProjeto
