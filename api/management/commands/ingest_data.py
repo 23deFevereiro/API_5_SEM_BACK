@@ -462,37 +462,37 @@ def ingerir_estoque_materiais_projeto() -> None:
     logger.info(f"[estoque_materiais_projeto] criados={criados} atualizados={atualizados} erros={erros}")
 
 
-class Command(BaseCommand):
-    help = "Ingere os arquivos CSV nas tabelas do banco. Uso: python manage.py ingest_data"
+# class Command(BaseCommand):
+#     help = "Ingere os arquivos CSV nas tabelas do banco. Uso: python manage.py ingest_data"
 
-    def handle(self, *args, **kwargs):
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s [%(levelname)s] %(message)s",
-            handlers=[logging.StreamHandler(sys.stdout)],
-        )
+#     def handle(self, *args, **kwargs):
+#         logging.basicConfig(
+#             level=logging.INFO,
+#             format="%(asctime)s [%(levelname)s] %(message)s",
+#             handlers=[logging.StreamHandler(sys.stdout)],
+#         )
 
-        etapas = [
-            ("programas",                 ingerir_programas),
-            ("fornecedores",              ingerir_fornecedores),
-            ("materiais",                 ingerir_materiais),
-            ("projetos",                  ingerir_projetos),
-            ("tarefas_projeto",           ingerir_tarefas),
-            ("tempo_tarefas",             ingerir_tempo_tarefas),
-            ("solicitacoes_compra",       ingerir_solicitacoes_compra),
-            ("empenho_materiais",         ingerir_empenho_materiais),
-            ("estoque_materiais_projeto", ingerir_estoque_materiais_projeto),
-            ("pedidos_compra",            ingerir_pedidos_compra),
-            ("lead_time",                 calcular_e_atualizar_lead_time),
-            ("compras_projeto",           ingerir_compras_projeto),
-        ]
+#         etapas = [
+#             ("programas",                 ingerir_programas),
+#             ("fornecedores",              ingerir_fornecedores),
+#             ("materiais",                 ingerir_materiais),
+#             ("projetos",                  ingerir_projetos),
+#             ("tarefas_projeto",           ingerir_tarefas),
+#             ("tempo_tarefas",             ingerir_tempo_tarefas),
+#             ("solicitacoes_compra",       ingerir_solicitacoes_compra),
+#             ("empenho_materiais",         ingerir_empenho_materiais),
+#             ("estoque_materiais_projeto", ingerir_estoque_materiais_projeto),
+#             ("pedidos_compra",            ingerir_pedidos_compra),
+#             ("lead_time",                 calcular_e_atualizar_lead_time),
+#             ("compras_projeto",           ingerir_compras_projeto),
+#         ]
 
-        self.stdout.write("=== Iniciando ingestão de dados ===")
-        for nome, funcao in etapas:
-            self.stdout.write(f"--- {nome} ---")
-            try:
-                funcao()
-            except Exception as e:
-                self.stderr.write(f"Falha crítica em '{nome}': {e}")
-                raise
-        self.stdout.write("=== Ingestão concluída com sucesso ===")
+#         self.stdout.write("=== Iniciando ingestão de dados ===")
+#         for nome, funcao in etapas:
+#             self.stdout.write(f"--- {nome} ---")
+#             try:
+#                 funcao()
+#             except Exception as e:
+#                 self.stderr.write(f"Falha crítica em '{nome}': {e}")
+#                 raise
+#         self.stdout.write("=== Ingestão concluída com sucesso ===")
