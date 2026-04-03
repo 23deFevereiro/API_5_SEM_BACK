@@ -5,7 +5,8 @@ from pathlib import Path
 from django.db import transaction
 from django.core.management.base import BaseCommand
 
-from .models import (
+# Importação corrigida para o Django encontrar o __init__.py
+from api.models import (
     ProgramaEmpresa, ProjetoPrograma, TarefaProjeto, TempoTarefa,
     Fornecedor, Material, SolicitacaoCompra, PedidoCompra,
     CompraProjeto, EmpenhoMaterial, EstoqueMaterialProjeto,
@@ -60,6 +61,7 @@ def logar_nulos(df: pd.DataFrame, contexto: str) -> None:
 def ingerir_programas() -> None:
     df = ler_csv("programas.csv")
     df = limpar_strings(df)
+    if "id" in df.columns: df["id"] = para_inteiro(df["id"])
     df["data_inicio"]       = para_data(df["data_inicio"])
     df["data_fim_prevista"] = para_data(df["data_fim_prevista"])
     logar_nulos(df, "programas")
@@ -68,17 +70,17 @@ def ingerir_programas() -> None:
     criados = atualizados = erros = 0
     for _, row in df.iterrows():
         try:
-            _, created = ProgramaEmpresa.objects.update_or_create(
-                codigo_programa=row["codigo_programa"],
-                defaults={
-                    "nome_programa":     row["nome_programa"],
-                    "gerente_programa":  row["gerente_programa"],
-                    "gerente_tecnico":   row.get("gerente_tecnico"),
-                    "data_inicio":       row["data_inicio"] if pd.notna(row["data_inicio"]) else None,
-                    "data_fim_prevista": row["data_fim_prevista"] if pd.notna(row["data_fim_prevista"]) else None,
-                    "status":            row["status"],
-                },
-            )
+            lookup = {"id": row["id"]} if "id" in row and pd.notna(row["id"]) else {"codigo_programa": row["codigo_programa"]}
+            defaults = {
+                "codigo_programa":   row["codigo_programa"],
+                "nome_programa":     row["nome_programa"],
+                "gerente_programa":  row["gerente_programa"],
+                "gerente_tecnico":   row.get("gerente_tecnico"),
+                "data_inicio":       row["data_inicio"] if pd.notna(row["data_inicio"]) else None,
+                "data_fim_prevista": row["data_fim_prevista"] if pd.notna(row["data_fim_prevista"]) else None,
+                "status":            row["status"],
+            }
+            _, created = ProgramaEmpresa.objects.update_or_create(**lookup, defaults=defaults)
             if created: criados += 1
             else: atualizados += 1
         except Exception as e:
@@ -91,22 +93,23 @@ def ingerir_programas() -> None:
 def ingerir_fornecedores() -> None:
     df = ler_csv("fornecedores.csv")
     df = limpar_strings(df)
+    if "id" in df.columns: df["id"] = para_inteiro(df["id"])
     logar_nulos(df, "fornecedores")
     df = corrigir_inconsistencias(df, "fornecedores")
 
     criados = atualizados = erros = 0
     for _, row in df.iterrows():
         try:
-            _, created = Fornecedor.objects.update_or_create(
-                codigo_fornecedor=row["codigo_fornecedor"],
-                defaults={
-                    "razao_social": row["razao_social"],
-                    "cidade":       row["cidade"],
-                    "estado":       row["estado"],
-                    "categoria":    row["categoria"],
-                    "status":       row["status"],
-                },
-            )
+            lookup = {"id": row["id"]} if "id" in row and pd.notna(row["id"]) else {"codigo_fornecedor": row["codigo_fornecedor"]}
+            defaults = {
+                "codigo_fornecedor": row["codigo_fornecedor"],
+                "razao_social":      row["razao_social"],
+                "cidade":            row["cidade"],
+                "estado":            row["estado"],
+                "categoria":         row["categoria"],
+                "status":            row["status"],
+            }
+            _, created = Fornecedor.objects.update_or_create(**lookup, defaults=defaults)
             if created: criados += 1
             else: atualizados += 1
         except Exception as e:
@@ -119,6 +122,7 @@ def ingerir_fornecedores() -> None:
 def ingerir_materiais() -> None:
     df = ler_csv("materiais.csv")
     df = limpar_strings(df)
+    if "id" in df.columns: df["id"] = para_inteiro(df["id"])
     df["custo_estimado"] = para_decimal(df["custo_estimado"])
     logar_nulos(df, "materiais")
     df = corrigir_inconsistencias(df, "materiais")
@@ -126,16 +130,16 @@ def ingerir_materiais() -> None:
     criados = atualizados = erros = 0
     for _, row in df.iterrows():
         try:
-            _, created = Material.objects.update_or_create(
-                codigo_material=row["codigo_material"],
-                defaults={
-                    "descricao":      row["descricao"],
-                    "categoria":      row["categoria"],
-                    "fabricante":     row["fabricante"],
-                    "custo_estimado": row["custo_estimado"] if pd.notna(row["custo_estimado"]) else None,
-                    "status":         row["status"],
-                },
-            )
+            lookup = {"id": row["id"]} if "id" in row and pd.notna(row["id"]) else {"codigo_material": row["codigo_material"]}
+            defaults = {
+                "codigo_material": row["codigo_material"],
+                "descricao":       row["descricao"],
+                "categoria":       row["categoria"],
+                "fabricante":      row["fabricante"],
+                "custo_estimado":  row["custo_estimado"] if pd.notna(row["custo_estimado"]) else None,
+                "status":          row["status"],
+            }
+            _, created = Material.objects.update_or_create(**lookup, defaults=defaults)
             if created: criados += 1
             else: atualizados += 1
         except Exception as e:
@@ -148,6 +152,7 @@ def ingerir_materiais() -> None:
 def ingerir_projetos() -> None:
     df = ler_csv("projetos.csv")
     df = limpar_strings(df)
+    if "id" in df.columns: df["id"] = para_inteiro(df["id"])
     df["programa_id"]       = para_inteiro(df["programa_id"])
     df["custo_hora"]        = para_decimal(df["custo_hora"])
     df["data_inicio"]       = para_data(df["data_inicio"])
@@ -159,18 +164,18 @@ def ingerir_projetos() -> None:
     for _, row in df.iterrows():
         try:
             programa = ProgramaEmpresa.objects.get(id=row["programa_id"])
-            _, created = ProjetoPrograma.objects.update_or_create(
-                codigo_projeto=row["codigo_projeto"],
-                defaults={
-                    "nome_projeto":      row["nome_projeto"],
-                    "programa":          programa,
-                    "responsavel":       row["responsavel"],
-                    "custo_hora":        row["custo_hora"] if pd.notna(row["custo_hora"]) else None,
-                    "data_inicio":       row["data_inicio"] if pd.notna(row["data_inicio"]) else None,
-                    "data_fim_prevista": row["data_fim_prevista"] if pd.notna(row["data_fim_prevista"]) else None,
-                    "status":            row["status"],
-                },
-            )
+            lookup = {"id": row["id"]} if "id" in row and pd.notna(row["id"]) else {"codigo_projeto": row["codigo_projeto"]}
+            defaults = {
+                "codigo_projeto":    row["codigo_projeto"],
+                "nome_projeto":      row["nome_projeto"],
+                "programa":          programa,
+                "responsavel":       row["responsavel"],
+                "custo_hora":        row["custo_hora"] if pd.notna(row["custo_hora"]) else None,
+                "data_inicio":       row["data_inicio"] if pd.notna(row["data_inicio"]) else None,
+                "data_fim_prevista": row["data_fim_prevista"] if pd.notna(row["data_fim_prevista"]) else None,
+                "status":            row["status"],
+            }
+            _, created = ProjetoPrograma.objects.update_or_create(**lookup, defaults=defaults)
             if created: criados += 1
             else: atualizados += 1
         except ProgramaEmpresa.DoesNotExist:
@@ -186,6 +191,7 @@ def ingerir_projetos() -> None:
 def ingerir_tarefas() -> None:
     df = ler_csv("tarefas_projeto.csv")
     df = limpar_strings(df)
+    if "id" in df.columns: df["id"] = para_inteiro(df["id"])
     df["projeto_id"]        = para_inteiro(df["projeto_id"])
     df["estimativa_horas"]  = para_decimal(df["estimativa_horas"])
     df["data_inicio"]       = para_data(df["data_inicio"])
@@ -197,18 +203,18 @@ def ingerir_tarefas() -> None:
     for _, row in df.iterrows():
         try:
             projeto = ProjetoPrograma.objects.get(id=row["projeto_id"])
-            _, created = TarefaProjeto.objects.update_or_create(
-                codigo_tarefa=row["codigo_tarefa"],
-                defaults={
-                    "projeto":           projeto,
-                    "titulo":            row["titulo"],
-                    "responsavel":       row["responsavel"],
-                    "estimativa_horas":  row["estimativa_horas"] if pd.notna(row["estimativa_horas"]) else None,
-                    "data_inicio":       row["data_inicio"] if pd.notna(row["data_inicio"]) else None,
-                    "data_fim_prevista": row["data_fim_prevista"] if pd.notna(row["data_fim_prevista"]) else None,
-                    "status":            row["status"],
-                },
-            )
+            lookup = {"id": row["id"]} if "id" in row and pd.notna(row["id"]) else {"codigo_tarefa": row["codigo_tarefa"]}
+            defaults = {
+                "codigo_tarefa":     row["codigo_tarefa"],
+                "projeto":           projeto,
+                "titulo":            row["titulo"],
+                "responsavel":       row["responsavel"],
+                "estimativa_horas":  row["estimativa_horas"] if pd.notna(row["estimativa_horas"]) else None,
+                "data_inicio":       row["data_inicio"] if pd.notna(row["data_inicio"]) else None,
+                "data_fim_prevista": row["data_fim_prevista"] if pd.notna(row["data_fim_prevista"]) else None,
+                "status":            row["status"],
+            }
+            _, created = TarefaProjeto.objects.update_or_create(**lookup, defaults=defaults)
             if created: criados += 1
             else: atualizados += 1
         except ProjetoPrograma.DoesNotExist:
@@ -232,12 +238,17 @@ def ingerir_tempo_tarefas() -> None:
 
     criados = atualizados = erros = 0
     for _, row in df.iterrows():
+        if pd.isna(row["data"]):
+            logger.warning(f"[tempo_tarefas] Linha {row.get('id', '?')} ignorada: campo 'data' é nulo e faz parte do unique_together.")
+            erros += 1
+            continue
+            
         try:
             tarefa = TarefaProjeto.objects.get(id=row["tarefa_id"])
             _, created = TempoTarefa.objects.update_or_create(
                 tarefa=tarefa,
                 usuario=row["usuario"],
-                data=row["data"].date() if pd.notna(row["data"]) else None,
+                data=row["data"].date(),
                 defaults={
                     "horas_trabalhadas": row["horas_trabalhadas"] if pd.notna(row["horas_trabalhadas"]) else None,
                 },
@@ -257,6 +268,7 @@ def ingerir_tempo_tarefas() -> None:
 def ingerir_solicitacoes_compra() -> None:
     df = ler_csv("solicitacoes_compra.csv")
     df = limpar_strings(df)
+    if "id" in df.columns: df["id"] = para_inteiro(df["id"])
     df["projeto_id"]       = para_inteiro(df["projeto_id"])
     df["material_id"]      = para_inteiro(df["material_id"])
     df["quantidade"]       = para_inteiro(df["quantidade"])
@@ -269,17 +281,17 @@ def ingerir_solicitacoes_compra() -> None:
         try:
             projeto  = ProjetoPrograma.objects.get(id=row["projeto_id"])
             material = Material.objects.get(id=row["material_id"])
-            _, created = SolicitacaoCompra.objects.update_or_create(
-                numero_solicitacao=row["numero_solicitacao"],
-                defaults={
-                    "projeto":          projeto,
-                    "material":         material,
-                    "quantidade":       row["quantidade"] if pd.notna(row["quantidade"]) else None,
-                    "data_solicitacao": row["data_solicitacao"] if pd.notna(row["data_solicitacao"]) else None,
-                    "prioridade":       row["prioridade"],
-                    "status":           row["status"],
-                },
-            )
+            lookup = {"id": row["id"]} if "id" in row and pd.notna(row["id"]) else {"numero_solicitacao": row["numero_solicitacao"]}
+            defaults = {
+                "numero_solicitacao": row["numero_solicitacao"],
+                "projeto":            projeto,
+                "material":           material,
+                "quantidade":         row["quantidade"] if pd.notna(row["quantidade"]) else None,
+                "data_solicitacao":   row["data_solicitacao"] if pd.notna(row["data_solicitacao"]) else None,
+                "prioridade":         row["prioridade"],
+                "status":             row["status"],
+            }
+            _, created = SolicitacaoCompra.objects.update_or_create(**lookup, defaults=defaults)
             if created: criados += 1
             else: atualizados += 1
         except (ProjetoPrograma.DoesNotExist, Material.DoesNotExist) as e:
@@ -295,6 +307,7 @@ def ingerir_solicitacoes_compra() -> None:
 def ingerir_pedidos_compra() -> None:
     df = ler_csv("pedidos_compra.csv")
     df = limpar_strings(df)
+    if "id" in df.columns: df["id"] = para_inteiro(df["id"])
     df["solicitacao_id"]        = para_inteiro(df["solicitacao_id"])
     df["fornecedor_id"]         = para_inteiro(df["fornecedor_id"])
     df["data_pedido"]           = para_data(df["data_pedido"])
@@ -308,17 +321,17 @@ def ingerir_pedidos_compra() -> None:
         try:
             fornecedor  = Fornecedor.objects.get(id=row["fornecedor_id"])
             solicitacao = SolicitacaoCompra.objects.get(id=row["solicitacao_id"])
-            _, created = PedidoCompra.objects.update_or_create(
-                numero_pedido=row["numero_pedido"],
-                defaults={
-                    "solicitacao":           solicitacao,
-                    "fornecedor":            fornecedor,
-                    "data_pedido":           row["data_pedido"] if pd.notna(row["data_pedido"]) else None,
-                    "data_previsao_entrega": row["data_previsao_entrega"] if pd.notna(row["data_previsao_entrega"]) else None,
-                    "valor_total":           row["valor_total"] if pd.notna(row["valor_total"]) else None,
-                    "status":                row["status"],
-                },
-            )
+            lookup = {"id": row["id"]} if "id" in row and pd.notna(row["id"]) else {"numero_pedido": row["numero_pedido"]}
+            defaults = {
+                "numero_pedido":         row["numero_pedido"],
+                "solicitacao":           solicitacao,
+                "fornecedor":            fornecedor,
+                "data_pedido":           row["data_pedido"] if pd.notna(row["data_pedido"]) else None,
+                "data_previsao_entrega": row["data_previsao_entrega"] if pd.notna(row["data_previsao_entrega"]) else None,
+                "valor_total":           row["valor_total"] if pd.notna(row["valor_total"]) else None,
+                "status":                row["status"],
+            }
+            _, created = PedidoCompra.objects.update_or_create(**lookup, defaults=defaults)
             if created: criados += 1
             else: atualizados += 1
         except (Fornecedor.DoesNotExist, SolicitacaoCompra.DoesNotExist) as e:
@@ -461,38 +474,38 @@ def ingerir_estoque_materiais_projeto() -> None:
             erros += 1
     logger.info(f"[estoque_materiais_projeto] criados={criados} atualizados={atualizados} erros={erros}")
 
+# Classe Command descomentada e ativada!
+class Command(BaseCommand):
+    help = "Ingere os arquivos CSV nas tabelas do banco. Uso: python manage.py ingest_data"
 
-# class Command(BaseCommand):
-#     help = "Ingere os arquivos CSV nas tabelas do banco. Uso: python manage.py ingest_data"
+    def handle(self, *args, **kwargs):
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            handlers=[logging.StreamHandler(sys.stdout)],
+        )
 
-#     def handle(self, *args, **kwargs):
-#         logging.basicConfig(
-#             level=logging.INFO,
-#             format="%(asctime)s [%(levelname)s] %(message)s",
-#             handlers=[logging.StreamHandler(sys.stdout)],
-#         )
+        etapas = [
+            ("programas",                 ingerir_programas),
+            ("fornecedores",              ingerir_fornecedores),
+            ("materiais",                 ingerir_materiais),
+            ("projetos",                  ingerir_projetos),
+            ("tarefas_projeto",           ingerir_tarefas),
+            ("tempo_tarefas",             ingerir_tempo_tarefas),
+            ("solicitacoes_compra",       ingerir_solicitacoes_compra),
+            ("empenho_materiais",         ingerir_empenho_materiais),
+            ("estoque_materiais_projeto", ingerir_estoque_materiais_projeto),
+            ("pedidos_compra",            ingerir_pedidos_compra),
+            ("lead_time",                 calcular_e_atualizar_lead_time),
+            ("compras_projeto",           ingerir_compras_projeto),
+        ]
 
-#         etapas = [
-#             ("programas",                 ingerir_programas),
-#             ("fornecedores",              ingerir_fornecedores),
-#             ("materiais",                 ingerir_materiais),
-#             ("projetos",                  ingerir_projetos),
-#             ("tarefas_projeto",           ingerir_tarefas),
-#             ("tempo_tarefas",             ingerir_tempo_tarefas),
-#             ("solicitacoes_compra",       ingerir_solicitacoes_compra),
-#             ("empenho_materiais",         ingerir_empenho_materiais),
-#             ("estoque_materiais_projeto", ingerir_estoque_materiais_projeto),
-#             ("pedidos_compra",            ingerir_pedidos_compra),
-#             ("lead_time",                 calcular_e_atualizar_lead_time),
-#             ("compras_projeto",           ingerir_compras_projeto),
-#         ]
-
-#         self.stdout.write("=== Iniciando ingestão de dados ===")
-#         for nome, funcao in etapas:
-#             self.stdout.write(f"--- {nome} ---")
-#             try:
-#                 funcao()
-#             except Exception as e:
-#                 self.stderr.write(f"Falha crítica em '{nome}': {e}")
-#                 raise
-#         self.stdout.write("=== Ingestão concluída com sucesso ===")
+        self.stdout.write("=== Iniciando ingestão de dados ===")
+        for nome, funcao in etapas:
+            self.stdout.write(f"--- {nome} ---")
+            try:
+                funcao()
+            except Exception as e:
+                self.stderr.write(f"Falha crítica em '{nome}': {e}")
+                raise
+        self.stdout.write("=== Ingestão concluída com sucesso ===")
