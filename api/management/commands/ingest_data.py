@@ -7,9 +7,9 @@ from django.db import transaction
 from django.core.management.base import BaseCommand
 
 from api.models import (
-    ProgramaEmpresa, ProjetoPrograma, TarefaProjeto, TempoTarefa,
+    Programa, Projeto, Tarefa, TempoTarefa,
     Fornecedor, Material, SolicitacaoCompra, PedidoCompra,
-    CompraProjeto, EmpenhoMaterial, EstoqueMaterialProjeto,
+    ComprasProjeto, EmpenhoMaterial, EstoqueMaterialProjeto,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,6 +92,10 @@ def safe_val(valor) -> object:
     return valor if pd.notna(valor) else None
 
 
+# ---------------------------------------------------------------------------
+# Funções de ingestão por entidade
+# ---------------------------------------------------------------------------
+
 @transaction.atomic
 def ingerir_programas() -> None:
     df = ler_csv("programas.csv")
@@ -121,7 +125,7 @@ def ingerir_programas() -> None:
                 "data_fim_prevista": safe_date(row["data_fim_prevista"]),
                 "status":            row["status"],
             }
-            _, created = ProgramaEmpresa.objects.update_or_create(**lookup, defaults=defaults)
+            _, created = Programa.objects.update_or_create(**lookup, defaults=defaults)
             if created:
                 criados += 1
             else:
@@ -224,7 +228,7 @@ def ingerir_projetos() -> None:
     criados = atualizados = erros = 0
     for _, row in df.iterrows():
         try:
-            programa = ProgramaEmpresa.objects.get(id=row["programa_id"])
+            programa = Programa.objects.get(id=row["programa_id"])
             lookup = (
                 {"id": row["id"]}
                 if "id" in row and pd.notna(row["id"])
@@ -240,13 +244,13 @@ def ingerir_projetos() -> None:
                 "data_fim_prevista": safe_date(row["data_fim_prevista"]),
                 "status":            row["status"],
             }
-            _, created = ProjetoPrograma.objects.update_or_create(**lookup, defaults=defaults)
+            _, created = Projeto.objects.update_or_create(**lookup, defaults=defaults)
             if created:
                 criados += 1
             else:
                 atualizados += 1
-        except ProgramaEmpresa.DoesNotExist:
-            logger.error(f"[projetos] ProgramaEmpresa id={row['programa_id']} não encontrada — linha ignorada")
+        except Programa.DoesNotExist:
+            logger.error(f"[projetos] Programa id={row['programa_id']} não encontrada — linha ignorada")
             erros += 1
         except Exception as e:
             logger.error(f"[projetos] linha {row.get('id', '?')}: {e}")
@@ -271,7 +275,7 @@ def ingerir_tarefas() -> None:
     criados = atualizados = erros = 0
     for _, row in df.iterrows():
         try:
-            projeto = ProjetoPrograma.objects.get(id=row["projeto_id"])
+            projeto = Projeto.objects.get(id=row["projeto_id"])
             lookup = (
                 {"id": row["id"]}
                 if "id" in row and pd.notna(row["id"])
@@ -287,13 +291,13 @@ def ingerir_tarefas() -> None:
                 "data_fim_prevista": safe_date(row["data_fim_prevista"]),
                 "status":            row["status"],
             }
-            _, created = TarefaProjeto.objects.update_or_create(**lookup, defaults=defaults)
+            _, created = Tarefa.objects.update_or_create(**lookup, defaults=defaults)
             if created:
                 criados += 1
             else:
                 atualizados += 1
-        except ProjetoPrograma.DoesNotExist:
-            logger.error(f"[tarefas] ProjetoPrograma id={row['projeto_id']} não encontrada — linha ignorada")
+        except Projeto.DoesNotExist:
+            logger.error(f"[tarefas] Projeto id={row['projeto_id']} não encontrada — linha ignorada")
             erros += 1
         except Exception as e:
             logger.error(f"[tarefas] linha {row.get('id', '?')}: {e}")
@@ -323,7 +327,7 @@ def ingerir_tempo_tarefas() -> None:
             erros += 1
             continue
         try:
-            tarefa = TarefaProjeto.objects.get(id=row["tarefa_id"])
+            tarefa = Tarefa.objects.get(id=row["tarefa_id"])
             _, created = TempoTarefa.objects.update_or_create(
                 tarefa=tarefa,
                 usuario=row["usuario"],
@@ -336,8 +340,8 @@ def ingerir_tempo_tarefas() -> None:
                 criados += 1
             else:
                 atualizados += 1
-        except TarefaProjeto.DoesNotExist:
-            logger.error(f"[tempo_tarefas] TarefaProjeto id={row['tarefa_id']} não encontrada — linha ignorada")
+        except Tarefa.DoesNotExist:
+            logger.error(f"[tempo_tarefas] Tarefa id={row['tarefa_id']} não encontrada — linha ignorada")
             erros += 1
         except Exception as e:
             logger.error(f"[tempo_tarefas] linha {idx}: {e}")
@@ -362,7 +366,7 @@ def ingerir_solicitacoes_compra() -> None:
     criados = atualizados = erros = 0
     for _, row in df.iterrows():
         try:
-            projeto  = ProjetoPrograma.objects.get(id=row["projeto_id"])
+            projeto  = Projeto.objects.get(id=row["projeto_id"])
             material = Material.objects.get(id=row["material_id"])
             lookup = (
                 {"id": row["id"]}
@@ -383,7 +387,7 @@ def ingerir_solicitacoes_compra() -> None:
                 criados += 1
             else:
                 atualizados += 1
-        except (ProjetoPrograma.DoesNotExist, Material.DoesNotExist) as e:
+        except (Projeto.DoesNotExist, Material.DoesNotExist) as e:
             logger.error(f"[solicitacoes_compra] FK não encontrada linha {row.get('id', '?')}: {e} — linha ignorada")
             erros += 1
         except Exception as e:
@@ -454,9 +458,9 @@ def ingerir_compras_projeto() -> None:
     criados = atualizados = erros = 0
     for idx, row in df.iterrows():
         try:
-            projeto = ProjetoPrograma.objects.get(id=row["projeto_id"])
+            projeto = Projeto.objects.get(id=row["projeto_id"])
             pedido  = PedidoCompra.objects.get(id=row["pedido_compra_id"])
-            _, created = CompraProjeto.objects.update_or_create(
+            _, created = ComprasProjeto.objects.update_or_create(
                 projeto=projeto,
                 pedido=pedido,
                 defaults={
@@ -467,7 +471,7 @@ def ingerir_compras_projeto() -> None:
                 criados += 1
             else:
                 atualizados += 1
-        except (ProjetoPrograma.DoesNotExist, PedidoCompra.DoesNotExist) as e:
+        except (Projeto.DoesNotExist, PedidoCompra.DoesNotExist) as e:
             logger.error(f"[compras_projeto] FK não encontrada linha {idx}: {e} — linha ignorada")
             erros += 1
         except Exception as e:
@@ -491,7 +495,7 @@ def ingerir_empenho_materiais() -> None:
     criados = atualizados = erros = 0
     for idx, row in df.iterrows():
         try:
-            projeto  = ProjetoPrograma.objects.get(id=row["projeto_id"])
+            projeto  = Projeto.objects.get(id=row["projeto_id"])
             material = Material.objects.get(id=row["material_id"])
             _, created = EmpenhoMaterial.objects.update_or_create(
                 projeto=projeto,
@@ -505,7 +509,7 @@ def ingerir_empenho_materiais() -> None:
                 criados += 1
             else:
                 atualizados += 1
-        except (ProjetoPrograma.DoesNotExist, Material.DoesNotExist) as e:
+        except (Projeto.DoesNotExist, Material.DoesNotExist) as e:
             logger.error(f"[empenho_materiais] FK não encontrada linha {idx}: {e} — linha ignorada")
             erros += 1
         except Exception as e:
@@ -528,7 +532,7 @@ def ingerir_estoque_materiais_projeto() -> None:
     criados = atualizados = erros = 0
     for idx, row in df.iterrows():
         try:
-            projeto  = ProjetoPrograma.objects.get(id=row["projeto_id"])
+            projeto  = Projeto.objects.get(id=row["projeto_id"])
             material = Material.objects.get(id=row["material_id"])
             _, created = EstoqueMaterialProjeto.objects.update_or_create(
                 projeto=projeto,
@@ -542,7 +546,7 @@ def ingerir_estoque_materiais_projeto() -> None:
                 criados += 1
             else:
                 atualizados += 1
-        except (ProjetoPrograma.DoesNotExist, Material.DoesNotExist) as e:
+        except (Projeto.DoesNotExist, Material.DoesNotExist) as e:
             logger.error(f"[estoque_materiais_projeto] FK não encontrada linha {idx}: {e} — linha ignorada")
             erros += 1
         except Exception as e:
