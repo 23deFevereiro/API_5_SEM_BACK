@@ -1,7 +1,10 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from ..services.projeto_svc import listar_projetos, get_resumo_projeto, get_materiais_projeto
+from ..services.projeto_svc import listar_projetos, get_resumo_projeto, get_materiais_projeto, get_overview_data_all
 
+@require_GET
+def get_overview_projetos(request):
+    return JsonResponse(get_overview_data_all(), safe=False)
 
 @require_GET
 def listar_projetos_view(request):
