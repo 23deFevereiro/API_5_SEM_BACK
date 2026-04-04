@@ -18,7 +18,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from .views import demo_view, projeto_view, horas_view
+from .views import demo_view, projeto_view, horas_view, funcionario_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,4 +27,5 @@ urlpatterns = [
     path('projetos/<int:projeto_id>/resumo/', projeto_view.get_resumo_projeto_view),
     path('projetos/<int:projeto_id>/materiais/', projeto_view.get_materiais_projeto_view),
     path('projetos/<int:projeto_id>/horas-por-funcionario/', horas_view.get_horas_por_funcionario_view),
+    path('projetos/<int:projeto_id>/funcionarios/', funcionario_view.get_funcionarios_projeto_view),
 ]
