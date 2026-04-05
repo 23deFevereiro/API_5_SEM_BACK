@@ -1,5 +1,6 @@
 from math import ceil
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
+from django.db.models.functions import TruncWeek
 from ..models import Projeto, Tarefa, TempoTarefa, EstoqueMaterialProjeto, ComprasProjeto, EmpenhoMaterial
 
 
@@ -80,4 +81,53 @@ def get_materiais_projeto(projeto_id, page=1, page_size=10):
         'page_size': page_size,
         'total_pages': total_pages,
         'results': resultados,
+    }
+
+def obter_dados_grafico_horas_acumuladas():
+
+    dados_agrupados = (
+        TempoTarefa.objects
+        .annotate(semana=TruncWeek('data'))
+        .values('tarefa__projeto__nome_projeto', 'semana')
+        .annotate(total_horas=Sum('horas_trabalhadas'))
+        .order_by('semana')
+    )
+
+    semanas_unicas = sorted(list(set(
+        d['semana'].strftime('%Y-%m-%d') for d in dados_agrupados if d['semana']
+    )))
+    
+    projetos_dict = {}
+
+    for item in dados_agrupados:
+        if not item['semana']:
+            continue
+            
+        projeto_nome = item['tarefa__projeto__nome_projeto']
+        semana_str = item['semana'].strftime('%Y-%m-%d')
+        horas = float(item['total_horas'])
+
+        if projeto_nome not in projetos_dict:
+            projetos_dict[projeto_nome] = {s: 0.0 for s in semanas_unicas}
+        
+        projetos_dict[projeto_nome][semana_str] = horas
+
+    projetos_data = []
+    for projeto, dados_semana in projetos_dict.items():
+        acumulado = 0
+        data_points = []
+        for semana in semanas_unicas:
+            acumulado += dados_semana[semana]
+            data_points.append(acumulado)
+            
+        projetos_data.append({
+            "nome": projeto,
+            "valores": data_points
+        })
+
+    labels_formatadas = [f"Semana {i+1}" for i in range(len(semanas_unicas))]
+
+    return {
+        "labels": labels_formatadas,
+        "projetos": projetos_data
     }
