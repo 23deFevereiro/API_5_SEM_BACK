@@ -5,6 +5,9 @@ on:
       - develop
       - main
   workflow_call:
+    secrets:
+      SONAR_TOKEN:
+        required: true
 
 env:
   POSTGRES_HOST: localhost
