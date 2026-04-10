@@ -1,5 +1,6 @@
 from api.utils.pagination import normalizar_pagina, calcular_paginacao
 from api.services.projeto_svc import formatar_material
+from pytest import approx
 
 
 class TestNormalizarPagina:
@@ -32,15 +33,15 @@ class TestCalcularPaginacao:
         assert end == 20
 
     def test_zero_itens_retorna_uma_pagina(self):
-        total_pages, start, end = calcular_paginacao(0, 1, 10)
+        total_pages, _, _ = calcular_paginacao(0, 1, 10)
         assert total_pages == 1
 
     def test_itens_exatos_sem_resto(self):
-        total_pages, start, end = calcular_paginacao(20, 1, 10)
+        total_pages, _, _ = calcular_paginacao(20, 1, 10)
         assert total_pages == 2
 
     def test_itens_com_resto_arredonda_para_cima(self):
-        total_pages, start, end = calcular_paginacao(21, 1, 10)
+        total_pages, _, _ = calcular_paginacao(21, 1, 10)
         assert total_pages == 3
 
 
@@ -66,7 +67,7 @@ class TestFormatarMaterial:
             'custo_total_estimado': None,
         }
         resultado = formatar_material(item)
-        assert resultado['custo_total_estimado'] == 0.0
+        assert resultado['custo_total_estimado'] == approx(0.0)
 
     def test_remove_campos_internos_do_orm(self):
         item = {
