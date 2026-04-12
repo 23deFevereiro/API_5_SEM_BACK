@@ -52,9 +52,12 @@ jobs:
       - name: Run tests with coverage
         
         run: |
-          pytest --cov=api --cov-report=xml:coverage.xml
+          pytest --cov=api --cov-report=xml:coverage.xml --cov-fail-under=80
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >
+            -Dsonar.python.coverage.reportPaths=coverage.xml  

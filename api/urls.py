@@ -22,11 +22,11 @@ from .views import demo_view, projeto_view, horas_view, funcionario_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('demo/', demo_view.get_demo_view),
-    path('projetos-overview', projeto_view.get_overview_projetos),
-    path('projetos/', projeto_view.listar_projetos_view),
-    path('projetos/<int:projeto_id>/resumo/', projeto_view.get_resumo_projeto_view),
-    path('projetos/<int:projeto_id>/materiais/', projeto_view.get_materiais_projeto_view),
-    path('projetos/<int:projeto_id>/horas-por-funcionario/', horas_view.get_horas_por_funcionario_view),
-    path('projetos/<int:projeto_id>/funcionarios/', funcionario_view.get_funcionarios_projeto_view),
+    path('demo/', demo_view.get_demo_view, name='demo'),
+    path('projetos-overview', projeto_view.get_overview_projetos, name='projetos_overview'),
+    path('projetos/', projeto_view.listar_projetos_view, name='listar_projetos'),
+    path('projetos/<int:projeto_id>/resumo/', projeto_view.get_resumo_projeto_view, name='resumo_projeto'),
+    path('projetos/<int:projeto_id>/materiais/', projeto_view.get_materiais_projeto_view, name='materiais_projeto'),
+    path('projetos/<int:projeto_id>/horas-por-funcionario/', horas_view.get_horas_por_funcionario_view, name='horas_por_funcionario'),
+    path('projetos/<int:projeto_id>/funcionarios/', funcionario_view.get_funcionarios_projeto_view, name='funcionarios_projeto'),
 ]
