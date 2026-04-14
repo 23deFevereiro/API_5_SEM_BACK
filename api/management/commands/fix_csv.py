@@ -17,6 +17,9 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 INPUT_FOLDER = os.path.join(SCRIPT_DIR, 'original_documents')
 OUTPUT_FOLDER = os.path.join(SCRIPT_DIR, 'corrected_documents')
 
+STATUS_CONCLUIDO = 'Concluído'
+STATUS_CONCLUIDA = 'Concluída'
+
 def criar_pasta_saida():
     """Cria a pasta de saída se não existir"""
     if not os.path.exists(OUTPUT_FOLDER):
@@ -61,15 +64,15 @@ def corrigir_inconsistencia_2(df_projetos, df_programas):
     """
     print("\n📌 #2 - Corrigindo status de projeto inconsistente com programa...")
     
-    programas_concluidos = df_programas[df_programas['status'] == 'Concluído']['id'].tolist()
+    programas_concluidos = df_programas[df_programas['status'] == STATUS_CONCLUIDO]['id'].tolist()
     
     df_projetos_corrigido = df_projetos.copy()
     registros_alterados = 0
     
     for idx, row in df_projetos_corrigido.iterrows():
         programa_id = row['programa_id']
-        if programa_id in programas_concluidos and row['status'] != 'Concluído':
-            df_projetos_corrigido.at[idx, 'status'] = 'Concluído'
+        if programa_id in programas_concluidos and row['status'] != STATUS_CONCLUIDO:
+            df_projetos_corrigido.at[idx, 'status'] = STATUS_CONCLUIDO
             registros_alterados += 1
     
     print(f"   ✅ {registros_alterados} registros corrigidos")
@@ -82,19 +85,36 @@ def corrigir_inconsistencia_3(df_tarefas, df_projetos):
     """
     print("\n📌 #3 - Corrigindo status de tarefa inconsistente com projeto...")
     
-    projetos_concluidos = df_projetos[df_projetos['status'] == 'Concluído']['id'].tolist()
+    projetos_concluidos = df_projetos[df_projetos['status'] == STATUS_CONCLUIDO]['id'].tolist()
     
     df_tarefas_corrigido = df_tarefas.copy()
     registros_alterados = 0
     
     for idx, row in df_tarefas_corrigido.iterrows():
         projeto_id = row['projeto_id']
-        if projeto_id in projetos_concluidos and row['status'] != 'Concluída':
-            df_tarefas_corrigido.at[idx, 'status'] = 'Concluída'
+        if projeto_id in projetos_concluidos and row['status'] != STATUS_CONCLUIDA:
+            df_tarefas_corrigido.at[idx, 'status'] = STATUS_CONCLUIDA
             registros_alterados += 1
     
     print(f"   ✅ {registros_alterados} registros corrigidos")
     return df_tarefas_corrigido
+
+def _parsear_data_fim(data_fim):
+    """Converte data_fim para formato date, tratando diferentes tipos."""
+    if pd.isna(data_fim):
+        return None
+    if isinstance(data_fim, str):
+        try:
+            return datetime.strptime(data_fim, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            return None
+    return data_fim
+
+def _determinar_novo_status(data_fim, data_atual):
+    """Determina o novo status baseado na data de conclusão prevista."""
+    if data_fim and data_fim < data_atual:
+        return STATUS_CONCLUIDA
+    return 'Em andamento'
 
 def corrigir_inconsistencia_4(df_tarefas, df_tempo):
     """
@@ -117,21 +137,13 @@ def corrigir_inconsistencia_4(df_tarefas, df_tempo):
         tarefa_id = row['id']
         status_atual = row['status']
         
-        if status_atual in ['Não iniciada'] and tarefa_id in tarefas_com_horas:
-            data_fim = row['data_fim_prevista']
-            if pd.notna(data_fim):
-                if isinstance(data_fim, str):
-                    try:
-                        data_fim = datetime.strptime(data_fim, '%Y-%m-%d').date()
-                    except:
-                        data_fim = None
-            
-            if data_fim and data_fim < data_atual:
-                df_tarefas_corrigido.at[idx, 'status'] = 'Concluída'
-            else:
-                df_tarefas_corrigido.at[idx, 'status'] = 'Em andamento'
-            
-            registros_alterados += 1
+        if status_atual not in ['Não iniciada'] or tarefa_id not in tarefas_com_horas:
+            continue
+        
+        data_fim = _parsear_data_fim(row['data_fim_prevista'])
+        novo_status = _determinar_novo_status(data_fim, data_atual)
+        df_tarefas_corrigido.at[idx, 'status'] = novo_status
+        registros_alterados += 1
     
     print(f"   ✅ {registros_alterados} registros corrigidos")
     return df_tarefas_corrigido
@@ -143,19 +155,19 @@ def corrigir_programas_concluidos(df_programas, df_projetos, df_tarefas):
     """
     print("\n📌 #5 - Aplicando correção em cascata (Programa -> Projeto -> Tarefa)...")
     
-    programas_concluidos = df_programas[df_programas['status'] == 'Concluído']['id'].tolist()
+    programas_concluidos = df_programas[df_programas['status'] == STATUS_CONCLUIDO]['id'].tolist()
     
     projetos_corrigidos = 0
     for idx, row in df_projetos.iterrows():
-        if row['programa_id'] in programas_concluidos and row['status'] != 'Concluído':
-            df_projetos.at[idx, 'status'] = 'Concluído'
+        if row['programa_id'] in programas_concluidos and row['status'] != STATUS_CONCLUIDO:
+            df_projetos.at[idx, 'status'] = STATUS_CONCLUIDO
             projetos_corrigidos += 1
     
-    projetos_concluidos = df_projetos[df_projetos['status'] == 'Concluído']['id'].tolist()
+    projetos_concluidos = df_projetos[df_projetos['status'] == STATUS_CONCLUIDO]['id'].tolist()
     tarefas_corrigidas = 0
     for idx, row in df_tarefas.iterrows():
-        if row['projeto_id'] in projetos_concluidos and row['status'] != 'Concluída':
-            df_tarefas.at[idx, 'status'] = 'Concluída'
+        if row['projeto_id'] in projetos_concluidos and row['status'] != STATUS_CONCLUIDA:
+            df_tarefas.at[idx, 'status'] = STATUS_CONCLUIDA
             tarefas_corrigidas += 1
     
     print(f"   ✅ Projetos corrigidos em cascata: {projetos_corrigidos}")
