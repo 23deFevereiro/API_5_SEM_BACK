@@ -37,27 +37,29 @@ class TestListarProjetos:
 class TestGetResumoProjeto:
 
     def test_retorna_zeros_quando_projeto_sem_dados(self):
-        projeto = baker.make('api.Projeto')
+        projeto = baker.make('api.Projeto', custo_hora=0)
         resultado = get_resumo_projeto(projeto.id)
-        assert resultado['custo_materiais'] == approx(0.0)
-        assert resultado['custo_compras'] == approx(0.0)
+        assert resultado['custo_total'] == approx(0.0)
         assert resultado['tempo_total'] == approx(0.0)
 
     def test_calcula_custo_materiais_corretamente(self):
-        projeto = baker.make('api.Projeto')
+        projeto = baker.make('api.Projeto', custo_hora=0)
         material = baker.make('api.Material', custo_estimado=100.00)
-        baker.make('api.EstoqueMaterialProjeto', projeto=projeto, material=material, quantidade=5)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=5)
         resultado = get_resumo_projeto(projeto.id)
-        assert resultado['custo_materiais'] == approx(500.0)
+        assert resultado['custo_total'] == approx(500.0)
 
-    def test_exclui_compras_canceladas_do_calculo(self):
-        projeto = baker.make('api.Projeto')
-        pedido_cancelado = baker.make('api.PedidoCompra', status='Cancelado')
-        pedido_ativo = baker.make('api.PedidoCompra', status='Entregue')
-        baker.make('api.ComprasProjeto', projeto=projeto, pedido_compra=pedido_cancelado, valor_alocado=1000.00)
-        baker.make('api.ComprasProjeto', projeto=projeto, pedido_compra=pedido_ativo, valor_alocado=500.00)
+    def test_calcula_custo_total_com_mao_de_obra_e_materiais(self):
+        projeto = baker.make('api.Projeto', custo_hora=50.00)
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=10.0)
+        material = baker.make('api.Material', custo_estimado=100.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=5)
         resultado = get_resumo_projeto(projeto.id)
-        assert resultado['custo_compras'] == approx(500.0)
+        # custo_mao_de_obra = 10 * 50 = 500
+        # custo_materiais = 5 * 100 = 500
+        # custo_total = 1000
+        assert resultado['custo_total'] == approx(1000.0)
 
     def test_calcula_tempo_total_das_tarefas(self):
         projeto = baker.make('api.Projeto')
