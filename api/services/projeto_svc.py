@@ -54,18 +54,20 @@ def get_resumo_projeto(projeto_id):
     projeto = get_object_or_404(Projeto, id=projeto_id)
     custo_hora = projeto.custo_hora or Decimal('0')
 
-    custo_mao_de_obra = (
-        TempoTarefa.objects
-        .filter(tarefa__projeto_id=projeto_id)
-        .aggregate(
-            total=Sum(
-                ExpressionWrapper(
-                    F('horas_trabalhadas') * custo_hora,
-                    output_field=DecimalField(max_digits=14, decimal_places=2)
-                )
+    tempo_agg = TempoTarefa.objects.filter(
+        tarefa__projeto_id=projeto_id
+    ).aggregate(
+        horas=Sum('horas_trabalhadas'),
+        custo=Sum(
+            ExpressionWrapper(
+                F('horas_trabalhadas') * custo_hora,
+                output_field=DecimalField(max_digits=14, decimal_places=2)
             )
-        )['total'] or Decimal('0')
+        )
     )
+
+    tempo_total = tempo_agg['horas'] or Decimal('0')
+    custo_mao_de_obra = tempo_agg['custo'] or Decimal('0')
 
     custo_materiais = (
         EmpenhoMaterial.objects
@@ -80,10 +82,9 @@ def get_resumo_projeto(projeto_id):
         )['total'] or Decimal('0')
     )
 
-    custo_total = custo_mao_de_obra + custo_materiais
-
     return {
-        'custo_total': custo_total
+        'custo_total': custo_mao_de_obra + custo_materiais,
+        'tempo_total': tempo_total,
     }
 
 
