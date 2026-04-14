@@ -1,0 +1,101 @@
+id,projeto_id,material_id,quantidade,localizacao
+1,76,40,86,Laboratório A
+2,6,39,486,Laboratório C
+3,59,94,267,Linha Protótipo
+4,68,44,223,Almoxarifado
+5,18,44,462,Depósito Central
+6,46,97,97,Laboratório B
+7,52,3,117,Laboratório B
+8,94,17,109,Almoxarifado
+9,3,76,259,Laboratório B
+10,16,47,365,Almoxarifado
+11,5,49,449,Almoxarifado
+12,33,99,274,Linha Protótipo
+13,7,77,25,Almoxarifado
+14,14,84,429,Laboratório A
+15,7,89,60,Depósito Central
+16,57,49,64,Linha Protótipo
+17,33,61,360,Laboratório B
+18,27,89,352,Almoxarifado
+19,2,39,216,Almoxarifado
+20,13,85,267,Laboratório C
+21,80,78,359,Laboratório B
+22,54,14,262,Almoxarifado
+23,80,16,145,Laboratório A
+24,14,64,102,Linha Protótipo
+25,26,100,135,Linha Protótipo
+26,26,46,361,Depósito Central
+27,38,21,21,Linha Protótipo
+28,64,27,353,Depósito Central
+29,43,31,2,Laboratório A
+30,86,12,465,Laboratório A
+31,74,86,253,Laboratório B
+32,12,100,262,Laboratório A
+33,93,93,52,Laboratório C
+34,83,30,234,Laboratório C
+35,34,60,26,Laboratório A
+36,23,6,437,Laboratório C
+37,47,87,161,Depósito Central
+38,95,15,49,Laboratório A
+39,2,18,340,Almoxarifado
+40,22,43,184,Depósito Central
+41,80,35,450,Almoxarifado
+42,12,48,418,Laboratório C
+43,24,15,206,Depósito Central
+44,59,35,428,Depósito Central
+45,89,62,410,Depósito Central
+46,84,22,58,Laboratório B
+47,90,93,31,Laboratório B
+48,14,54,467,Linha Protótipo
+49,62,73,348,Depósito Central
+50,24,79,195,Laboratório C
+51,79,4,442,Almoxarifado
+52,94,17,248,Depósito Central
+53,15,53,226,Laboratório A
+54,9,34,336,Laboratório C
+55,2,91,445,Almoxarifado
+56,68,99,381,Linha Protótipo
+57,93,73,115,Almoxarifado
+58,44,67,268,Almoxarifado
+59,90,80,49,Depósito Central
+60,85,94,128,Depósito Central
+61,45,85,347,Almoxarifado
+62,50,20,430,Linha Protótipo
+63,79,7,6,Almoxarifado
+64,21,65,435,Depósito Central
+65,64,22,39,Depósito Central
+66,42,31,170,Laboratório C
+67,7,65,115,Linha Protótipo
+68,83,49,207,Laboratório B
+69,11,59,228,Linha Protótipo
+70,58,12,439,Depósito Central
+71,58,41,61,Depósito Central
+72,96,84,10,Laboratório A
+73,52,53,19,Linha Protótipo
+74,71,1,423,Laboratório A
+75,78,80,327,Laboratório C
+76,66,72,106,Almoxarifado
+77,86,59,487,Laboratório C
+78,47,7,419,Laboratório B
+79,59,43,287,Linha Protótipo
+80,77,61,367,Almoxarifado
+81,47,92,232,Laboratório A
+82,13,98,338,Laboratório B
+83,1,44,182,Almoxarifado
+84,38,71,268,Laboratório C
+85,90,14,24,Laboratório B
+86,64,18,421,Almoxarifado
+87,96,93,210,Laboratório A
+88,33,79,101,Laboratório B
+89,16,51,111,Depósito Central
+90,25,92,174,Laboratório A
+91,97,54,24,Almoxarifado
+92,87,76,64,Depósito Central
+93,59,85,302,Linha Protótipo
+94,18,64,3,Linha Protótipo
+95,95,7,284,Depósito Central
+96,75,62,474,Linha Protótipo
+97,100,23,355,Linha Protótipo
+98,23,94,418,Laboratório B
+99,14,50,337,Linha Protótipo
+100,78,42,259,Depósito Central
