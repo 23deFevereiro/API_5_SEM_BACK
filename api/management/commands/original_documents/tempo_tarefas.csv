@@ -1,0 +1,101 @@
+id,tarefa_id,usuario,data,horas_trabalhadas
+1,10,Gustavo Ribeiro,2025-01-31,7.91
+2,75,Pedro Henrique Souza,2025-04-22,1.5
+3,58,Camila Batista,2025-03-30,4.36
+4,69,Carla Souza,2022-03-30,4.79
+5,60,André Barbosa,2025-03-10,1.36
+6,88,Ricardo Teixeira,2024-11-21,7.12
+7,6,Gustavo Ribeiro,2025-04-09,1.91
+8,92,Felipe Rocha,2022-06-12,4.26
+9,7,Marcelo Cardoso,2025-04-22,2.97
+10,23,João Pedro Alves,2024-12-11,8.62
+11,72,Renato Barros,2025-06-23,2.87
+12,60,Pedro Henrique Souza,2025-03-11,1.65
+13,8,Roberto Nogueira,2022-07-11,1.74
+14,52,Carla Souza,2025-05-31,06.03
+15,34,Luciana Pinto,2022-12-26,0.71
+16,9,Gustavo Ribeiro,2022-10-25,4.71
+17,17,Lucas Pereira,2025-03-16,1.66
+18,60,Gabriel Martins,2025-03-12,9.28
+19,56,Roberto Nogueira,2023-01-26,4.25
+20,4,Patrícia Lima,2024-11-15,4.55
+21,46,Gustavo Ribeiro,2024-12-21,3.11
+22,58,Isabela Mendes,2025-03-24,0.83
+23,80,Marina Lopes,2022-03-31,6.65
+24,64,Fernanda Gomes,2025-04-27,05.05
+25,12,André Barbosa,2022-07-20,1.8
+26,26,Eduardo Fernandes,2022-10-16,2.87
+27,70,Vinícius Moreira,2022-05-26,9.9
+28,92,Carla Souza,2022-06-28,5.67
+29,63,Carla Souza,2025-05-12,3.56
+30,35,Bruno Oliveira,2024-11-08,3.53
+31,29,João Pedro Alves,2025-02-14,01.06
+32,61,Beatriz Monteiro,2025-05-18,7.79
+33,30,Bruno Oliveira,2024-10-17,2.85
+34,31,André Barbosa,2025-05-05,8.25
+35,95,Gabriel Martins,2022-12-11,5.97
+36,50,Carla Souza,2024-12-12,2.17
+37,76,Juliana Costa,2024-09-01,7.51
+38,46,Luciana Pinto,2025-01-16,0.77
+39,90,Carla Souza,2025-07-19,5.85
+40,25,Roberto Nogueira,2025-09-01,5.65
+41,23,Ana Carolina Duarte,2024-12-05,1.36
+42,30,Marina Lopes,2024-10-25,0.69
+43,62,João Pedro Alves,2024-09-05,9.22
+44,26,Vinícius Moreira,2022-08-26,3.74
+45,23,Luciana Pinto,2024-12-10,01.07
+46,19,Tatiane Duarte,2023-01-03,7.86
+47,68,Amanda Ferreira,2024-12-16,9.63
+48,48,Diego Santana,2024-10-13,6.79
+49,76,Pedro Henrique Souza,2024-08-02,3.37
+50,18,Bruno Oliveira,2025-03-18,08.02
+51,63,Eduardo Fernandes,2025-05-09,2.15
+52,72,Diego Santana,2025-05-29,2.62
+53,76,Roberto Nogueira,2024-07-23,04.09
+54,94,Diego Santana,2022-11-03,1.71
+55,94,João Pedro Alves,2022-12-25,9.51
+56,51,Amanda Ferreira,2023-02-22,0.81
+57,78,Juliana Costa,2025-01-04,9.69
+58,29,Eduardo Fernandes,2025-02-24,1.49
+59,64,Rafael Carvalho,2025-03-30,7.58
+60,31,Carla Souza,2025-04-21,02.09
+61,12,Roberto Nogueira,2022-08-21,7.43
+62,43,Camila Batista,2024-10-27,03.02
+63,32,Diego Santana,2022-11-03,3.83
+64,14,Renato Barros,2024-11-22,0.96
+65,57,Renato Barros,2025-02-04,9.71
+66,53,Ana Carolina Duarte,2022-05-23,3.84
+67,49,Pedro Henrique Souza,2025-01-02,7.99
+68,74,Eduardo Fernandes,2022-11-19,02.05
+69,10,Vinícius Moreira,2025-01-18,3.3
+70,41,André Barbosa,2024-11-14,1.2
+71,22,Isabela Mendes,2024-10-27,02.03
+72,10,Larissa Freitas,2025-01-25,3.71
+73,79,Isabela Mendes,2022-11-07,7.19
+74,56,Eduardo Fernandes,2022-12-21,6.27
+75,56,Bruno Oliveira,2022-12-14,1.46
+76,27,Gustavo Ribeiro,2022-09-09,7.12
+77,93,Luciana Pinto,2024-10-17,03.02
+78,37,Ricardo Teixeira,2025-01-12,1.41
+79,51,Tatiane Duarte,2023-02-20,8.48
+80,20,Gabriel Martins,2022-07-06,0.54
+81,12,Ricardo Teixeira,2022-08-20,6.2
+82,26,Pedro Henrique Souza,2022-08-13,2.47
+83,82,Ricardo Teixeira,2025-03-19,5.0
+84,15,Ricardo Teixeira,2024-09-11,4.97
+85,85,André Barbosa,2022-07-01,6.6
+86,50,Bruno Oliveira,2024-12-24,8.91
+87,48,Bruno Oliveira,2024-09-11,0.92
+88,57,Camila Batista,2025-01-15,2.65
+89,35,Tatiane Duarte,2024-11-12,1.94
+90,90,Marcelo Cardoso,2025-07-13,1.31
+91,45,Vinícius Moreira,2022-08-11,4.43
+92,97,Tatiane Duarte,2024-11-06,5.76
+93,50,Roberto Nogueira,2025-01-03,4.48
+94,69,Marcelo Cardoso,2022-04-03,5.94
+95,31,Ana Carolina Duarte,2025-04-20,1.25
+96,92,Gabriel Martins,2022-07-01,5.93
+97,67,Vinícius Moreira,2022-09-29,6.94
+98,80,Rafael Carvalho,2022-03-23,9.52
+99,58,Bruno Oliveira,2025-03-25,9.74
+100,25,Rafael Carvalho,2025-07-05,4.52

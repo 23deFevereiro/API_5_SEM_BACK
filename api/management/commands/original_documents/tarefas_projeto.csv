@@ -1,0 +1,101 @@
+id,codigo_tarefa,projeto_id,titulo,responsavel,estimativa_horas,data_inicio,data_fim_prevista,status
+1,TSK001,46,Teste de isolação,Gabriel Martins,148,2024-11-19,2025-02-14,Bloqueada
+2,TSK002,97,Prototipação da placa,João Pedro Alves,29,2022-08-08,2022-10-07,Concluída
+3,TSK003,29,Roteamento multicamada,Tatiane Duarte,180,2024-12-29,2025-03-10,Em andamento
+4,TSK004,58,Teste de compatibilidade,Thiago Nascimento,177,2024-10-03,2024-11-27,Em andamento
+5,TSK005,45,Prototipação da placa,Ricardo Teixeira,110,2025-01-13,2025-03-20,Não iniciada
+6,TSK006,15,Documentação técnica,Juliana Costa,120,2025-03-20,2025-05-08,Em andamento
+7,TSK007,67,Revisão design DFM,Pedro Henrique Souza,116,2025-04-03,2025-05-22,Bloqueada
+8,TSK008,41,Layout da PCB,Vinícius Moreira,185,2022-06-27,2022-08-09,Não iniciada
+9,TSK009,3,Prototipação da placa,Marcelo Cardoso,46,2022-08-04,2022-10-30,Em andamento
+10,TSK010,67,Validação EMC,Juliana Costa,147,2025-01-14,2025-03-30,Bloqueada
+11,TSK011,60,Medição potência consumida,Bruno Oliveira,51,2022-06-09,2022-08-04,Bloqueada
+12,TSK012,51,Burn-in de componentes,Gustavo Ribeiro,119,2022-06-01,2022-08-23,Bloqueada
+13,TSK013,50,Calibração de sensores,André Barbosa,196,2025-01-27,2025-02-28,Não iniciada
+14,TSK014,74,Validação EMC,Carla Souza,87,2024-11-22,2025-02-03,Em andamento
+15,TSK015,59,Análise de sinal,Amanda Ferreira,129,2024-08-17,2024-09-24,Concluída
+16,TSK016,77,Programação microcontrolador,Tatiane Duarte,33,2022-05-12,2022-08-03,Concluída
+17,TSK017,46,Validação EMC,Roberto Nogueira,176,2025-02-02,2025-04-27,Concluída
+18,TSK018,79,Análise de sinal,Rafael Carvalho,84,2025-03-05,2025-03-20,Não iniciada
+19,TSK019,31,Validação EMC,Carla Souza,181,2022-12-30,2023-01-18,Em andamento
+20,TSK020,66,Teste de isolação,Rafael Carvalho,151,2022-06-13,2022-08-10,Bloqueada
+21,TSK021,55,Medição potência consumida,Larissa Freitas,181,2025-01-29,2025-04-06,Em andamento
+22,TSK022,72,Documentação técnica,Rafael Carvalho,51,2024-09-09,2024-11-15,Concluída
+23,TSK023,58,Teste de descarga ESD,Carla Souza,6,2024-12-05,2024-12-16,Bloqueada
+24,TSK024,18,Roteamento multicamada,Beatriz Monteiro,171,2024-11-14,2025-01-07,Bloqueada
+25,TSK025,53,Montagem protótipo,Diego Santana,117,2025-06-30,2025-09-05,Bloqueada
+26,TSK026,22,Esquemático do circuito,Vinícius Moreira,198,2022-08-10,2022-10-26,Em andamento
+27,TSK027,38,Integração firmware,Larissa Freitas,77,2022-08-14,2022-09-23,Em andamento
+28,TSK028,100,Teste vibração mecânica,Thiago Nascimento,200,2025-03-06,2025-05-22,Bloqueada
+29,TSK029,71,Inspeção visual AOI,Pedro Henrique Souza,72,2025-02-06,2025-02-25,Concluída
+30,TSK030,70,Roteamento multicamada,Gustavo Ribeiro,112,2024-10-11,2024-12-11,Não iniciada
+31,TSK031,95,Documentação técnica,Amanda Ferreira,12,2025-04-01,2025-05-07,Bloqueada
+32,TSK032,34,Teste de compatibilidade,Amanda Ferreira,34,2022-11-01,2022-11-17,Em andamento
+33,TSK033,27,Teste de descarga ESD,Diego Santana,160,2025-03-06,2025-04-24,Bloqueada
+34,TSK034,22,Verificação impedância,Gustavo Ribeiro,56,2022-12-24,2023-01-15,Não iniciada
+35,TSK035,73,Teste de estresse térmico,Marina Lopes,141,2024-11-05,2025-01-17,Em andamento
+36,TSK036,42,Documentação técnica,Tatiane Duarte,72,2025-04-06,2025-05-18,Não iniciada
+37,TSK037,18,Teste de estresse térmico,Amanda Ferreira,171,2025-01-09,2025-01-21,Em andamento
+38,TSK038,90,Teste funcional,Diego Santana,86,2024-08-07,2024-09-12,Em andamento
+39,TSK039,98,Revisão design DFM,Rafael Carvalho,151,2024-11-01,2024-12-26,Concluída
+40,TSK040,81,Teste de compatibilidade,Lucas Pereira,166,2022-12-15,2023-02-06,Não iniciada
+41,TSK041,52,Elaboração relatório técnico,Luciana Pinto,98,2024-11-08,2024-12-18,Bloqueada
+42,TSK042,63,Esquemático do circuito,Amanda Ferreira,191,2022-04-15,2022-07-03,Não iniciada
+43,TSK043,94,Análise de sinal,Diego Santana,95,2024-10-26,2025-01-20,Não iniciada
+44,TSK044,69,Montagem protótipo,Roberto Nogueira,58,2025-01-30,2025-03-03,Bloqueada
+45,TSK045,35,Análise de tolerância,Larissa Freitas,151,2022-07-08,2022-08-18,Em andamento
+46,TSK046,73,Burn-in de componentes,Marcelo Cardoso,199,2024-12-10,2025-01-27,Não iniciada
+47,TSK047,6,Verificação impedância,Roberto Nogueira,121,2022-03-23,2022-06-16,Não iniciada
+48,TSK048,16,Teste de compatibilidade,João Pedro Alves,113,2024-08-14,2024-10-14,Em andamento
+49,TSK049,89,Documentação técnica,Bruno Oliveira,74,2024-11-02,2025-01-29,Não iniciada
+50,TSK050,84,Revisão de BOM,Carla Souza,174,2024-12-01,2025-01-07,Em andamento
+51,TSK051,7,Documentação técnica,Renato Barros,183,2022-12-12,2023-03-07,Em andamento
+52,TSK052,55,Elaboração relatório técnico,Pedro Henrique Souza,4,2025-05-29,2025-06-14,Em andamento
+53,TSK053,62,Inspeção visual AOI,Felipe Rocha,136,2022-05-11,2022-06-01,Bloqueada
+54,TSK054,2,Configuração barramento I2C,Pedro Henrique Souza,112,2025-02-06,2025-03-26,Em andamento
+55,TSK055,62,Programação microcontrolador,Lucas Pereira,191,2022-05-10,2022-06-13,Não iniciada
+56,TSK056,14,Burn-in de componentes,Ricardo Teixeira,39,2022-12-11,2023-02-01,Bloqueada
+57,TSK057,100,Análise de sinal,Rafael Carvalho,21,2024-12-13,2025-03-10,Não iniciada
+58,TSK058,79,Teste de compatibilidade,Carla Souza,188,2025-03-20,2025-04-15,Em andamento
+59,TSK059,81,Teste de isolação,Marcelo Cardoso,117,2022-10-08,2022-12-04,Em andamento
+60,TSK060,12,Soldagem componentes SMD,Pedro Henrique Souza,154,2025-03-07,2025-03-29,Bloqueada
+61,TSK061,45,Verificação impedância,Rafael Carvalho,67,2025-04-26,2025-06-10,Concluída
+62,TSK062,83,Roteamento multicamada,Marina Lopes,157,2024-08-15,2024-09-20,Concluída
+63,TSK063,100,Teste de descarga ESD,Amanda Ferreira,172,2025-05-04,2025-05-12,Concluída
+64,TSK064,27,Simulação SPICE,Gustavo Ribeiro,195,2025-02-16,2025-05-09,Bloqueada
+65,TSK065,38,Verificação impedância,Isabela Mendes,65,2023-01-18,2023-01-29,Bloqueada
+66,TSK066,50,Revisão design DFM,Eduardo Fernandes,156,2025-02-23,2025-03-30,Não iniciada
+67,TSK067,68,Validação norma IPC,Juliana Costa,37,2022-08-24,2022-10-14,Bloqueada
+68,TSK068,73,Roteamento multicamada,Marcelo Cardoso,48,2024-11-23,2025-01-13,Bloqueada
+69,TSK069,99,Inspeção visual AOI,Lucas Pereira,7,2022-03-27,2022-04-03,Concluída
+70,TSK070,28,Verificação impedância,Patrícia Lima,133,2022-05-26,2022-06-07,Concluída
+71,TSK071,81,Montagem protótipo,Diego Santana,106,2023-01-06,2023-03-05,Não iniciada
+72,TSK072,82,Teste de isolação,Rafael Carvalho,75,2025-04-14,2025-06-26,Não iniciada
+73,TSK073,40,Validação norma IPC,Gustavo Ribeiro,43,2024-11-06,2025-01-15,Concluída
+74,TSK074,51,Soldagem componentes SMD,Roberto Nogueira,170,2022-10-22,2023-01-16,Não iniciada
+75,TSK075,40,Teste vibração mecânica,Amanda Ferreira,65,2025-04-13,2025-06-12,Não iniciada
+76,TSK076,32,Prototipação da placa,Camila Batista,160,2024-07-12,2024-09-10,Não iniciada
+77,TSK077,40,Teste vibração mecânica,Bruno Oliveira,34,2025-04-05,2025-07-03,Não iniciada
+78,TSK078,91,Validação EMC,Ana Carolina Duarte,92,2024-12-29,2025-01-04,Concluída
+79,TSK079,22,Teste vibração mecânica,Thiago Nascimento,72,2022-10-23,2022-11-13,Não iniciada
+80,TSK080,99,Verificação impedância,Fernanda Gomes,73,2022-03-16,2022-05-02,Não iniciada
+81,TSK081,34,Revisão de BOM,Ana Carolina Duarte,120,2022-12-29,2023-03-24,Concluída
+82,TSK082,8,Validação EMC,Carla Souza,44,2025-03-09,2025-05-25,Concluída
+83,TSK083,99,Análise de sinal,Renato Barros,33,2022-04-04,2022-06-21,Em andamento
+84,TSK084,95,Layout da PCB,Amanda Ferreira,7,2025-02-23,2025-02-28,Em andamento
+85,TSK085,6,Programação microcontrolador,Luciana Pinto,42,2022-06-26,2022-08-16,Em andamento
+86,TSK086,5,Montagem protótipo,Felipe Rocha,86,2025-04-23,2025-07-20,Em andamento
+87,TSK087,54,Configuração barramento I2C,Lucas Pereira,150,2022-04-02,2022-05-11,Concluída
+88,TSK088,16,Validação EMC,Felipe Rocha,136,2024-11-10,2024-11-21,Não iniciada
+89,TSK089,52,Teste de descarga ESD,Ricardo Teixeira,83,2024-07-17,2024-09-19,Concluída
+90,TSK090,12,Esquemático do circuito,Carla Souza,55,2025-07-01,2025-09-02,Concluída
+91,TSK091,73,Integração firmware,Camila Batista,98,2024-10-24,2025-01-16,Bloqueada
+92,TSK092,99,Soldagem componentes SMD,Vinícius Moreira,66,2022-04-28,2022-07-11,Em andamento
+93,TSK093,1,Integração firmware,Larissa Freitas,92,2024-10-09,2024-10-17,Não iniciada
+94,TSK094,43,Programação microcontrolador,Amanda Ferreira,192,2022-09-27,2022-12-25,Concluída
+95,TSK095,14,Integração firmware,Fernanda Gomes,129,2022-11-13,2023-01-24,Não iniciada
+96,TSK096,19,Layout da PCB,Luciana Pinto,63,2024-09-07,2024-09-23,Bloqueada
+97,TSK097,90,Teste vibração mecânica,Lucas Pereira,152,2024-10-08,2024-12-10,Não iniciada
+98,TSK098,65,Configuração barramento I2C,Patrícia Lima,23,2022-04-13,2022-07-08,Não iniciada
+99,TSK099,56,Integração firmware,Ricardo Teixeira,70,2025-01-01,2025-01-22,Concluída
+100,TSK100,51,Análise de tolerância,Camila Batista,73,2022-11-20,2023-01-05,Em andamento
