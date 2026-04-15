@@ -2,8 +2,8 @@ import pytest
 from pytest import approx
 from model_bakery import baker
 from django.test import RequestFactory
-from api.views.projeto_view import listar_projetos_view, get_resumo_projeto_view, get_materiais_projeto_view
-from api.services.projeto_svc import listar_projetos, get_resumo_projeto, get_materiais_projeto
+from api.views.projeto_view import listar_projetos_view, get_resumo_projeto_view, get_materiais_projeto_view, get_overview_projetos
+from api.services.projeto_svc import listar_projetos, get_resumo_projeto, get_materiais_projeto, get_overview_data_all
 
 
 @pytest.mark.django_db
@@ -68,6 +68,44 @@ class TestGetResumoProjeto:
         baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=4.5)
         resultado = get_resumo_projeto(projeto.id)
         assert resultado['tempo_total'] == approx(12.5)
+
+
+@pytest.mark.django_db
+class TestGetOverviewDataAll:
+
+    def test_retorna_lista_vazia_sem_projetos_em_andamento(self):
+        resultado = get_overview_data_all()
+        assert resultado == []
+
+    def test_nao_retorna_projetos_fora_de_andamento(self):
+        baker.make('api.Projeto', status='Concluido')
+        resultado = get_overview_data_all()
+        assert resultado == []
+
+    def test_retorna_dados_de_projeto_em_andamento(self):
+        projeto = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=100.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=5)
+        resultado = get_overview_data_all()
+        assert len(resultado) > 0
+
+    def test_estrutura_do_retorno(self):
+        projeto = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=50.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=2)
+        resultado = get_overview_data_all()
+        assert 'date_str' in resultado[0]
+        assert 'values' in resultado[0]
+
+    def test_values_contem_campos_corretos(self):
+        projeto = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=50.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=2)
+        resultado = get_overview_data_all()
+        value = resultado[0]['values'][0]
+        assert 'codigo_projeto' in value
+        assert 'nome_projeto' in value
+        assert 'cost' in value
 
 
 @pytest.mark.django_db
@@ -146,6 +184,22 @@ class TestListarProjetosView:
 
 
 @pytest.mark.django_db
+class TestGetOverviewProjetosView:
+
+    def test_retorna_200_para_get(self):
+        factory = RequestFactory()
+        request = factory.get('/projetos-overview/')
+        response = get_overview_projetos(request)
+        assert response.status_code == 200
+
+    def test_retorna_405_para_post(self):
+        factory = RequestFactory()
+        request = factory.post('/projetos-overview/')
+        response = get_overview_projetos(request)
+        assert response.status_code == 405
+
+
+@pytest.mark.django_db
 class TestGetResumoProjetoView:
 
     def test_retorna_200_para_projeto_existente(self):
@@ -154,6 +208,12 @@ class TestGetResumoProjetoView:
         request = factory.get(f'/projetos/{projeto.id}/resumo/')
         response = get_resumo_projeto_view(request, projeto.id)
         assert response.status_code == 200
+
+    def test_retorna_404_para_projeto_inexistente(self):
+        factory = RequestFactory()
+        request = factory.get('/projetos/99999/resumo/')
+        response = get_resumo_projeto_view(request, 99999)
+        assert response.status_code == 404
 
     def test_retorna_405_para_post(self):
         factory = RequestFactory()
