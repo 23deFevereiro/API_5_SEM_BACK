@@ -1,9 +1,21 @@
+DROP TABLE IF EXISTS fato_estoque CASCADE;
+DROP TABLE IF EXISTS fato_compras CASCADE;
+DROP TABLE IF EXISTS fato_materiais CASCADE;
+DROP TABLE IF EXISTS fato_horas CASCADE;
+DROP TABLE IF EXISTS dim_tempo CASCADE;
+DROP TABLE IF EXISTS dim_status_pedido CASCADE;
+DROP TABLE IF EXISTS dim_funcionario CASCADE;
+DROP TABLE IF EXISTS dim_fornecedor CASCADE;
+DROP TABLE IF EXISTS dim_material CASCADE;
+DROP TABLE IF EXISTS dim_tarefa CASCADE;
+DROP TABLE IF EXISTS dim_projeto CASCADE;
+DROP TABLE IF EXISTS dim_programa CASCADE;
+
 CREATE TABLE IF NOT EXISTS dim_programa (
     id INTEGER PRIMARY KEY,
     codigo_programa VARCHAR(20) NOT NULL UNIQUE,
     nome_programa VARCHAR(100) NOT NULL,
     gerente_programa VARCHAR(100),
-    gerente_tecnico VARCHAR(100),
     data_inicio DATE,
     data_fim_prevista DATE,
     status VARCHAR(30)
@@ -16,8 +28,6 @@ CREATE TABLE IF NOT EXISTS dim_projeto (
     programa_id INTEGER REFERENCES dim_programa(id),
     responsavel VARCHAR(100),
     custo_hora DECIMAL(10,2),
-    data_inicio DATE,
-    data_fim_prevista DATE,
     status VARCHAR(30)
 );
 
@@ -27,9 +37,7 @@ CREATE TABLE IF NOT EXISTS dim_tarefa (
     projeto_id INTEGER REFERENCES dim_projeto(id),
     titulo VARCHAR(200) NOT NULL,
     responsavel VARCHAR(100),
-    estimativa_horas DECIMAL(10,2),
-    data_inicio DATE,
-    data_fim_prevista DATE,
+    horas_estimadas DECIMAL(10,2),
     status VARCHAR(30)
 );
 
@@ -62,7 +70,6 @@ CREATE TABLE IF NOT EXISTS dim_status_pedido (
     id SERIAL PRIMARY KEY,
     nome_status VARCHAR(30) NOT NULL UNIQUE,
     categoria VARCHAR(20) NOT NULL,
-    cor_indicador VARCHAR(10),
     ordem_prioridade INTEGER DEFAULT 0
 );
 
@@ -84,8 +91,7 @@ CREATE TABLE IF NOT EXISTS fato_horas (
     tarefa_id INTEGER NOT NULL REFERENCES dim_tarefa(id),
     funcionario_id INTEGER NOT NULL REFERENCES dim_funcionario(id),
     horas_trabalhadas DECIMAL(10,2) DEFAULT 0,
-    custo_horas DECIMAL(10,2) DEFAULT 0,
-    origem_id INTEGER
+    custo_horas DECIMAL(10,2) DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS fato_materiais (
@@ -96,8 +102,7 @@ CREATE TABLE IF NOT EXISTS fato_materiais (
     material_id INTEGER NOT NULL REFERENCES dim_material(id),
     fornecedor_id INTEGER REFERENCES dim_fornecedor(id),
     quantidade_empenhada INTEGER DEFAULT 0,
-    custo_materiais DECIMAL(10,2) DEFAULT 0,
-    origem_id INTEGER
+    custo_materiais DECIMAL(10,2) DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS fato_compras (
@@ -112,9 +117,7 @@ CREATE TABLE IF NOT EXISTS fato_compras (
     valor_alocado DECIMAL(10,2) DEFAULT 0,
     valor_total DECIMAL(10,2) DEFAULT 0,
     lead_time INTEGER,
-    data_previsao_entrega DATE,
-    solicitacao_origem_id INTEGER,
-    pedido_origem_id INTEGER
+    data_previsao_entrega DATE
 );
 
 CREATE TABLE IF NOT EXISTS fato_estoque (
@@ -122,9 +125,7 @@ CREATE TABLE IF NOT EXISTS fato_estoque (
     tempo_id INTEGER NOT NULL REFERENCES dim_tempo(id),
     material_id INTEGER NOT NULL REFERENCES dim_material(id),
     projeto_id INTEGER NOT NULL REFERENCES dim_projeto(id),
-    quantidade_estoque INTEGER DEFAULT 0,
-    localizacao VARCHAR(50),
-    origem_id INTEGER
+    quantidade_estoque INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_fato_horas_tempo ON fato_horas(tempo_id);

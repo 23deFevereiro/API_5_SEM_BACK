@@ -1,11 +1,3 @@
-"""
-Script de Correção de Inconsistências - Dados de Projetos
-Autor: Equipe 23 de Fevereiro
-Descrição: Aplica todas as correções documentadas nos arquivos CSV fornecidos pelo cliente.
-Versão: 1.0
-Data: Abril/2026
-"""
-
 import pandas as pd
 import numpy as np
 from datetime import datetime
