@@ -56,9 +56,6 @@ class TestGetResumoProjeto:
         material = baker.make('api.Material', custo_estimado=100.00)
         baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=5)
         resultado = get_resumo_projeto(projeto.id)
-        # custo_mao_de_obra = 10 * 50 = 500
-        # custo_materiais = 5 * 100 = 500
-        # custo_total = 1000
         assert resultado['custo_total'] == approx(1000.0)
 
     def test_calcula_tempo_total_das_tarefas(self):
