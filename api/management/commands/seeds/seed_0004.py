@@ -3,6 +3,8 @@ import psycopg2
 from datetime import datetime, timedelta
 import os
 from pathlib import Path
+from django.core.management.base import BaseCommand
+
 
 DB_CONFIG = {
     'host': os.getenv('POSTGRES_HOST', 'database'),
@@ -12,40 +14,19 @@ DB_CONFIG = {
     'password': os.getenv('POSTGRES_PASSWORD')
 }
 
+MIGRATION_REF = '0004'
+CSV_DIR = Path(__file__).parent / 'corrected_documents'
+
 
 def get_connection():
     return psycopg2.connect(**DB_CONFIG)
-
-
-def executar_sql_inicializacao(cursor, conn):
-    current_dir = Path(__file__).parent
-    sql_file = current_dir / 'star_model_tables' / 'tables.sql'
-    
-    if not sql_file.exists():
-        print(f"⚠️  Arquivo SQL não encontrado em: {sql_file}")
-        return
-    
-    with open(sql_file, 'r', encoding='utf-8') as f:
-        sql_content = f.read()
-    
-    statements = [stmt.strip() for stmt in sql_content.split(';') if stmt.strip()]
-    
-    for statement in statements:
-        try:
-            cursor.execute(statement)
-        except Exception as e:
-            conn.rollback()
-            print(f"❌ Erro ao executar SQL: {e}")
-            raise
-    
-    print("   ✅ Tabelas do modelo estrela criadas/verificadas")
 
 
 def carregar_dim_programa(df, cursor):
     cursor.execute("TRUNCATE TABLE dim_programa RESTART IDENTITY CASCADE;")
     for _, row in df.iterrows():
         cursor.execute("""
-            INSERT INTO dim_programa (id, codigo_programa, nome_programa, gerente_programa, 
+            INSERT INTO dim_programa (id, codigo_programa, nome_programa, gerente_programa,
                                       data_inicio, data_fim_prevista, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
@@ -57,8 +38,7 @@ def carregar_dim_programa(df, cursor):
                 status = EXCLUDED.status
         """, (
             row['id'], row['codigo_programa'], row['nome_programa'],
-            row['gerente_programa'],
-            row['data_inicio'], row['data_fim_prevista'], row['status']
+            row['gerente_programa'], row['data_inicio'], row['data_fim_prevista'], row['status']
         ))
     print(f"   ✅ dim_programa: {len(df)} registros")
 
@@ -79,8 +59,7 @@ def carregar_dim_projeto(df, cursor):
                 status = EXCLUDED.status
         """, (
             row['id'], row['codigo_projeto'], row['nome_projeto'],
-            row['programa_id'], row['responsavel'], row['custo_hora'],
-            row['status']
+            row['programa_id'], row['responsavel'], row['custo_hora'], row['status']
         ))
     print(f"   ✅ dim_projeto: {len(df)} registros")
 
@@ -110,7 +89,7 @@ def carregar_dim_material(df, cursor):
     cursor.execute("TRUNCATE TABLE dim_material RESTART IDENTITY CASCADE;")
     for _, row in df.iterrows():
         cursor.execute("""
-            INSERT INTO dim_material (id, codigo_material, descricao, categoria, 
+            INSERT INTO dim_material (id, codigo_material, descricao, categoria,
                                       fabricante, custo_estimado, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO UPDATE SET
@@ -180,13 +159,12 @@ def carregar_dim_status_pedido(cursor):
 
 def carregar_dim_tempo(cursor):
     cursor.execute("TRUNCATE TABLE dim_tempo RESTART IDENTITY CASCADE;")
-    
+
     start_date = datetime(2022, 1, 1)
     end_date = datetime(2026, 12, 31)
-    
+
     registros = 0
     current_date = start_date
-    
     while current_date <= end_date:
         tempo_id = int(current_date.strftime('%Y%m%d'))
         cursor.execute("""
@@ -194,48 +172,45 @@ def carregar_dim_tempo(cursor):
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (id) DO NOTHING
         """, (
-            tempo_id,
-            current_date,
-            current_date.year,
-            current_date.month,
+            tempo_id, current_date,
+            current_date.year, current_date.month,
             (current_date.month - 1) // 3 + 1,
             1 if current_date.month <= 6 else 2,
             current_date.weekday()
         ))
         registros += 1
-        current_date = current_date + timedelta(days=1)
-    
+        current_date += timedelta(days=1)
+
     print(f"   ✅ dim_tempo: {registros} registros")
 
 
 def carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_funcionario, cursor):
     cursor.execute("TRUNCATE TABLE fato_horas RESTART IDENTITY CASCADE;")
-    
+
     projeto_programa = dict(zip(df_projetos['id'], df_projetos['programa_id']))
     projeto_custo = dict(zip(df_projetos['id'], df_projetos['custo_hora']))
     funcionario_map = {row['nome']: row['id'] for _, row in df_funcionario.iterrows()}
-    
+
     registros = 0
     for _, row in df_tempo.iterrows():
         horas = row['horas_trabalhadas']
         if pd.isna(horas) or horas <= 0:
             continue
-        
+
         data = pd.to_datetime(row['data'])
         tempo_id = int(data.strftime('%Y%m%d'))
-        
+
         tarefa_id = int(row['tarefa_id'])
         tarefa_row = df_tarefas[df_tarefas['id'] == tarefa_id]
         if tarefa_row.empty:
             continue
+
         projeto_id = int(tarefa_row.iloc[0]['projeto_id'])
-        
         programa_id = int(projeto_programa.get(projeto_id))
         custo_hora = float(projeto_custo.get(projeto_id, 0))
         custo_horas = float(horas) * custo_hora
-        
         funcionario_id = int(funcionario_map.get(row['usuario'], 1))
-        
+
         cursor.execute("""
             INSERT INTO fato_horas (tempo_id, projeto_id, programa_id, tarefa_id,
                                     funcionario_id, horas_trabalhadas, custo_horas)
@@ -243,28 +218,28 @@ def carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_func
         """, (tempo_id, projeto_id, programa_id, tarefa_id,
               funcionario_id, float(horas), custo_horas))
         registros += 1
-    
+
     print(f"   ✅ fato_horas: {registros} registros")
 
 
 def carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, cursor):
     cursor.execute("TRUNCATE TABLE fato_materiais RESTART IDENTITY CASCADE;")
-    
+
     projeto_programa = dict(zip(df_projetos['id'], df_projetos['programa_id']))
     material_custo = dict(zip(df_materiais['id'], df_materiais['custo_estimado']))
-    
+
     registros = 0
     for _, row in df_empenho.iterrows():
         data = pd.to_datetime(row['data_empenho'])
         tempo_id = int(data.strftime('%Y%m%d'))
-        
+
         projeto_id = int(row['projeto_id'])
         programa_id = int(projeto_programa.get(projeto_id))
         material_id = int(row['material_id'])
         fornecedor_id = int(row['fornecedor_id']) if pd.notna(row.get('fornecedor_id')) else None
         custo_material = float(material_custo.get(material_id, 0))
         custo_materiais = float(row['quantidade_empenhada']) * custo_material
-        
+
         cursor.execute("""
             INSERT INTO fato_materiais (tempo_id, projeto_id, programa_id, material_id,
                                         fornecedor_id, quantidade_empenhada, custo_materiais)
@@ -272,60 +247,59 @@ def carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais,
         """, (tempo_id, projeto_id, programa_id, material_id,
               fornecedor_id, int(row['quantidade_empenhada']), custo_materiais))
         registros += 1
-    
+
     print(f"   ✅ fato_materiais: {registros} registros")
 
 
-def carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, df_projetos, 
+def carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, df_projetos,
                           df_materiais, df_fornecedores, df_status_pedido, cursor):
     cursor.execute("TRUNCATE TABLE fato_compras RESTART IDENTITY CASCADE;")
-    
+
     status_map = {row['nome_status']: row['id'] for _, row in df_status_pedido.iterrows()}
-    
+
     df_compras = df_solicitacoes.merge(
         df_pedidos, left_on='id', right_on='solicitacao_id', suffixes=('_sol', '_ped')
     )
-    
     df_compras = df_compras.merge(
         df_compras_projeto[['pedido_compra_id', 'valor_alocado']],
         left_on='id_ped', right_on='pedido_compra_id',
         how='left'
     )
-    
+
     registros = 0
     for _, row in df_compras.iterrows():
         data = pd.to_datetime(row['data_solicitacao'])
         tempo_id = int(data.strftime('%Y%m%d'))
-        
+
         lead_time = None
         if pd.notna(row.get('data_previsao_entrega')) and pd.notna(row.get('data_pedido')):
             previsao = pd.to_datetime(row['data_previsao_entrega'])
             pedido = pd.to_datetime(row['data_pedido'])
             lead_time = (previsao - pedido).days
-        
+
         status_id = int(status_map.get(row['status_ped'], 1))
-        
+
         cursor.execute("""
             INSERT INTO fato_compras (tempo_id, projeto_id, material_id, fornecedor_id, status_id,
-                                      quantidade_solicitada, valor_alocado, valor_total, 
+                                      quantidade_solicitada, valor_alocado, valor_total,
                                       lead_time, data_previsao_entrega)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            tempo_id, int(row['projeto_id']), int(row['material_id']), int(row['fornecedor_id']), status_id,
-            int(row['quantidade']), float(row.get('valor_alocado', 0)), float(row['valor_total']),
-            lead_time, row.get('data_previsao_entrega')
+            tempo_id, int(row['projeto_id']), int(row['material_id']), int(row['fornecedor_id']),
+            status_id, int(row['quantidade']), float(row.get('valor_alocado', 0)),
+            float(row['valor_total']), lead_time, row.get('data_previsao_entrega')
         ))
         registros += 1
-    
+
     print(f"   ✅ fato_compras: {registros} registros")
 
 
-def carregar_fato_estoque(df_estoque, df_projetos, cursor):
+def carregar_fato_estoque(df_estoque, cursor):
     cursor.execute("TRUNCATE TABLE fato_estoque RESTART IDENTITY CASCADE;")
-    
+
     data_snapshot = datetime.now().date()
     tempo_id = int(data_snapshot.strftime('%Y%m%d'))
-    
+
     registros = 0
     for _, row in df_estoque.iterrows():
         cursor.execute("""
@@ -333,42 +307,32 @@ def carregar_fato_estoque(df_estoque, df_projetos, cursor):
             VALUES (%s, %s, %s, %s)
         """, (tempo_id, int(row['material_id']), int(row['projeto_id']), int(row['quantidade'])))
         registros += 1
-    
+
     print(f"   ✅ fato_estoque: {registros} registros")
 
 
-def main():
-    print("=" * 70)
-    print("🚀 ETL - MODELO ESTRELA LUNAE")
-    print("=" * 70)
-    
-    csv_dir = Path(__file__).parent / 'corrected_documents'
-    
-    print("\n📖 Carregando arquivos CSV...")
-    
-    df_programas = pd.read_csv(csv_dir / 'programas.csv')
-    df_projetos = pd.read_csv(csv_dir / 'projetos_corrigido.csv')
-    df_tarefas = pd.read_csv(csv_dir / 'tarefas_projeto_corrigido.csv')
-    df_materiais = pd.read_csv(csv_dir / 'materiais.csv')
-    df_fornecedores = pd.read_csv(csv_dir / 'fornecedores.csv')
-    df_tempo_tarefas = pd.read_csv(csv_dir / 'tempo_tarefas_corrigido.csv')
-    df_empenho = pd.read_csv(csv_dir / 'empenho_materiais.csv')
-    df_solicitacoes = pd.read_csv(csv_dir / 'solicitacoes_compra.csv')
-    df_pedidos = pd.read_csv(csv_dir / 'pedidos_compra.csv')
-    df_compras_projeto = pd.read_csv(csv_dir / 'compras_projeto.csv')
-    df_estoque = pd.read_csv(csv_dir / 'estoque_materiais_projeto.csv')
-    
-    print("   ✅ Todos os arquivos carregados")
-    
+def run():
+    print(f"\n📦 Seed {MIGRATION_REF} - Carregando dimensões e fatos do Star Model...")
+
+    print("\n   📖 Lendo CSVs...")
+    df_programas = pd.read_csv(CSV_DIR / 'programas.csv')
+    df_projetos = pd.read_csv(CSV_DIR / 'projetos_corrigido.csv')
+    df_tarefas = pd.read_csv(CSV_DIR / 'tarefas_projeto_corrigido.csv')
+    df_materiais = pd.read_csv(CSV_DIR / 'materiais.csv')
+    df_fornecedores = pd.read_csv(CSV_DIR / 'fornecedores.csv')
+    df_tempo_tarefas = pd.read_csv(CSV_DIR / 'tempo_tarefas_corrigido.csv')
+    df_empenho = pd.read_csv(CSV_DIR / 'empenho_materiais_corrigido.csv')
+    df_solicitacoes = pd.read_csv(CSV_DIR / 'solicitacoes_compra_corrigido.csv')
+    df_pedidos = pd.read_csv(CSV_DIR / 'pedidos_compra_corrigido.csv')
+    df_compras_projeto = pd.read_csv(CSV_DIR / 'compras_projeto.csv')
+    df_estoque = pd.read_csv(CSV_DIR / 'estoque_materiais_projeto.csv')
+    print("   ✅ CSVs carregados")
+
     conn = get_connection()
     cursor = conn.cursor()
-    
+
     try:
-        print("\n🛠️  Inicializando banco de dados...")
-        executar_sql_inicializacao(cursor, conn)
-        
-        print("\n📦 Carregando dimensões...")
-        
+        print("\n   📥 Carregando dimensões...")
         carregar_dim_programa(df_programas, cursor)
         carregar_dim_projeto(df_projetos, cursor)
         carregar_dim_tarefa(df_tarefas, cursor)
@@ -377,35 +341,34 @@ def main():
         carregar_dim_funcionario(df_tempo_tarefas, cursor)
         carregar_dim_status_pedido(cursor)
         carregar_dim_tempo(cursor)
-        
+
         cursor.execute("SELECT id, nome FROM dim_funcionario")
         df_funcionario = pd.DataFrame(cursor.fetchall(), columns=['id', 'nome'])
-        
-        print("\n📊 Carregando tabelas fato...")
-        
+
+        print("\n   📊 Carregando fatos...")
         carregar_fato_horas(df_tempo_tarefas, df_tarefas, df_projetos, df_programas, df_funcionario, cursor)
         carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, cursor)
-        
+
         cursor.execute("SELECT id, nome_status FROM dim_status_pedido")
         df_status_pedido = pd.DataFrame(cursor.fetchall(), columns=['id', 'nome_status'])
-        
+
         carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, df_projetos,
                               df_materiais, df_fornecedores, df_status_pedido, cursor)
-        carregar_fato_estoque(df_estoque, df_projetos, cursor)
-        
+        carregar_fato_estoque(df_estoque, cursor)
+
         conn.commit()
-        
-        print("\n" + "=" * 70)
-        print("✅ ETL CONCLUÍDO COM SUCESSO!")
-        print("=" * 70)
-        
+        print(f"\n   ✅ Seed {MIGRATION_REF} concluído com sucesso!")
+
     except Exception as e:
         conn.rollback()
-        print(f"\n❌ Erro durante o ETL: {e}")
-        raise
+        raise e
     finally:
         cursor.close()
         conn.close()
 
-if __name__ == "__main__":
-    main()
+
+class Command(BaseCommand):
+    help = f'Seed {MIGRATION_REF}: popula as tabelas do Star Model (dimensões e fatos)'
+
+    def handle(self, *args, **options):
+        run()
