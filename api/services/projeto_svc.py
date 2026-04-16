@@ -1,5 +1,7 @@
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import ExtractMonth, ExtractYear
+from decimal import Decimal
+from django.shortcuts import get_object_or_404
 from ..models import Projeto, Tarefa, TempoTarefa, EstoqueMaterialProjeto, ComprasProjeto, EmpenhoMaterial
 from ..utils.pagination import normalizar_pagina, calcular_paginacao
 
@@ -49,30 +51,40 @@ def get_overview_data_all():
 
 
 def get_resumo_projeto(projeto_id):
-    custo_materiais = EstoqueMaterialProjeto.objects.filter(
-        projeto_id=projeto_id
-    ).annotate(
-        custo_total=F('quantidade') * F('material__custo_estimado')
-    ).aggregate(total=Sum('custo_total'))
+    projeto = get_object_or_404(Projeto, id=projeto_id)
+    custo_hora = projeto.custo_hora or Decimal('0')
 
-    custo_compras = ComprasProjeto.objects.filter(
-        projeto_id=projeto_id
-    ).exclude(
-        pedido_compra__status='Cancelado'
-    ).aggregate(total=Sum('valor_alocado'))
+    tempo_agg = TempoTarefa.objects.filter(
+        tarefa__projeto_id=projeto_id
+    ).aggregate(
+        horas=Sum('horas_trabalhadas'),
+        custo=Sum(
+            ExpressionWrapper(
+                F('horas_trabalhadas') * custo_hora,
+                output_field=DecimalField(max_digits=14, decimal_places=2)
+            )
+        )
+    )
 
-    tarefas_ids = Tarefa.objects.filter(
-        projeto_id=projeto_id
-    ).values_list('id', flat=True)
+    tempo_total = tempo_agg['horas'] or Decimal('0')
+    custo_mao_de_obra = tempo_agg['custo'] or Decimal('0')
 
-    tempo_total = TempoTarefa.objects.filter(
-        tarefa_id__in=tarefas_ids
-    ).aggregate(total=Sum('horas_trabalhadas'))
+    custo_materiais = (
+        EmpenhoMaterial.objects
+        .filter(projeto_id=projeto_id)
+        .aggregate(
+            total=Sum(
+                ExpressionWrapper(
+                    F('quantidade_empenhada') * F('material__custo_estimado'),
+                    output_field=DecimalField(max_digits=14, decimal_places=2)
+                )
+            )
+        )['total'] or Decimal('0')
+    )
 
     return {
-        'custo_materiais': float(custo_materiais['total'] or 0),
-        'custo_compras': float(custo_compras['total'] or 0),
-        'tempo_total': float(tempo_total['total'] or 0),
+        'custo_total': custo_mao_de_obra + custo_materiais,
+        'tempo_total': tempo_total,
     }
 
 
