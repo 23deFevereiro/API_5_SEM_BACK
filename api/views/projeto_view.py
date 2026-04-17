@@ -9,7 +9,12 @@ def get_overview_projetos(request):
 @require_GET
 def listar_projetos_view(request):
     search = request.GET.get('search', '')
-    projetos = listar_projetos(search)
+    programa_id_raw = request.GET.get('programa_id')
+    try:
+        programa_id = int(programa_id_raw) if programa_id_raw else None
+    except ValueError:
+        programa_id = None
+    projetos = listar_projetos(search, programa_id=programa_id)
     return JsonResponse(projetos, safe=False)
 
 @require_GET
