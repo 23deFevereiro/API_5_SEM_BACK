@@ -28,7 +28,7 @@ def load_seed(migration_number):
         )
     if not hasattr(module, 'run'):
         raise CommandError(
-            f"O arquivo seed_{migration_number}.py não possui a função 'run()'."
+            f"O arquivo seed_{migration_number}.py não possui a função 'run'."
         )
     return module
 

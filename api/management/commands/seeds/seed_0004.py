@@ -22,6 +22,15 @@ def get_connection():
     return psycopg2.connect(**DB_CONFIG)
 
 
+def _none(val):
+    try:
+        if pd.isna(val):
+            return None
+    except (TypeError, ValueError):
+        pass
+    return val
+
+
 def carregar_dim_programa(df, cursor):
     cursor.execute("TRUNCATE TABLE dim_programa RESTART IDENTITY CASCADE;")
     for _, row in df.iterrows():
@@ -38,7 +47,7 @@ def carregar_dim_programa(df, cursor):
                 status = EXCLUDED.status
         """, (
             row['id'], row['codigo_programa'], row['nome_programa'],
-            row['gerente_programa'], row['data_inicio'], row['data_fim_prevista'], row['status']
+            _none(row['gerente_programa']), row['data_inicio'], _none(row['data_fim_prevista']), row['status']
         ))
     print(f"   ✅ dim_programa: {len(df)} registros")
 
@@ -80,7 +89,7 @@ def carregar_dim_tarefa(df, cursor):
                 status = EXCLUDED.status
         """, (
             row['id'], row['codigo_tarefa'], row['projeto_id'], row['titulo'],
-            row['responsavel'], row['estimativa_horas'], row['status']
+            row['responsavel'], _none(row['estimativa_horas']), row['status']
         ))
     print(f"   ✅ dim_tarefa: {len(df)} registros")
 
@@ -277,7 +286,7 @@ def carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, df_pr
             pedido = pd.to_datetime(row['data_pedido'])
             lead_time = (previsao - pedido).days
 
-        status_id = int(status_map.get(row['status_ped'], 1))
+        status_id = int(status_map.get(row['status'], 1))
 
         cursor.execute("""
             INSERT INTO fato_compras (tempo_id, projeto_id, material_id, fornecedor_id, status_id,

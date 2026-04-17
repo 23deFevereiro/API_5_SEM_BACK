@@ -1,20 +1,11 @@
-"""
-Testes para o orquestrador dev_db e o seed_0004.
-
-Estrutura testada:
-  - api/management/commands/dev_db.py         (orquestrador)
-  - api/management/commands/seeds/seed_0004.py (seed das tabelas do Star Model)
-"""
-
 import pytest
 import importlib
 import pandas as pd
 import numpy as np
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 import os
 import sys
 
-# Garante que o diretório raiz do projeto está no path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from api.management.commands.seeds.seed_0004 import (
@@ -35,10 +26,6 @@ from api.management.commands.seeds.seed_0004 import (
 )
 
 
-# =============================================================================
-# UTILITÁRIOS
-# =============================================================================
-
 def make_cursor():
     return MagicMock()
 
@@ -48,10 +35,6 @@ def make_conn(cursor):
     conn.cursor.return_value = cursor
     return conn
 
-
-# =============================================================================
-# get_connection
-# =============================================================================
 
 class TestGetConnection:
     @patch.dict(os.environ, {
@@ -66,10 +49,6 @@ class TestGetConnection:
         get_connection()
         mock_connect.assert_called_once()
 
-
-# =============================================================================
-# carregar_dim_programa
-# =============================================================================
 
 class TestCarregarDimPrograma:
     def _df(self, n=2):
@@ -87,7 +66,6 @@ class TestCarregarDimPrograma:
         cursor = make_cursor()
         with patch('builtins.print'):
             carregar_dim_programa(self._df(2), cursor)
-        # 1 TRUNCATE + 2 INSERTs
         assert cursor.execute.call_count == 3
 
     def test_dataframe_vazio_apenas_truncate(self):
@@ -109,10 +87,6 @@ class TestCarregarDimPrograma:
         assert params[3] is None
         assert params[5] is None
 
-
-# =============================================================================
-# carregar_dim_projeto
-# =============================================================================
 
 class TestCarregarDimProjeto:
     def _df(self, n=2):
@@ -143,10 +117,6 @@ class TestCarregarDimProjeto:
         assert isinstance(params[0], (int, np.integer))
 
 
-# =============================================================================
-# carregar_dim_tarefa
-# =============================================================================
-
 class TestCarregarDimTarefa:
     def _df(self, n=2):
         return pd.DataFrame({
@@ -175,10 +145,6 @@ class TestCarregarDimTarefa:
         assert params[5] is None
 
 
-# =============================================================================
-# carregar_dim_material
-# =============================================================================
-
 class TestCarregarDimMaterial:
     def test_truncate_e_inserts(self):
         df = pd.DataFrame({
@@ -195,10 +161,6 @@ class TestCarregarDimMaterial:
             carregar_dim_material(df, cursor)
         assert cursor.execute.call_count == 3
 
-
-# =============================================================================
-# carregar_dim_fornecedor
-# =============================================================================
 
 class TestCarregarDimFornecedor:
     def test_truncate_e_inserts(self):
@@ -217,17 +179,12 @@ class TestCarregarDimFornecedor:
         assert cursor.execute.call_count == 3
 
 
-# =============================================================================
-# carregar_dim_funcionario
-# =============================================================================
-
 class TestCarregarDimFuncionario:
     def test_ignora_nulos_e_insere_unicos(self):
         df = pd.DataFrame({'usuario': ['João', 'Maria', 'Pedro', None]})
         cursor = make_cursor()
         with patch('builtins.print'):
             carregar_dim_funcionario(df, cursor)
-        # 1 TRUNCATE + 3 INSERTs (None ignorado)
         assert cursor.execute.call_count == 4
 
     def test_sem_nulos(self):
@@ -242,20 +199,14 @@ class TestCarregarDimFuncionario:
         cursor = make_cursor()
         with patch('builtins.print'):
             carregar_dim_funcionario(df, cursor)
-        # apenas TRUNCATE
         assert cursor.execute.call_count == 1
 
-
-# =============================================================================
-# carregar_dim_status_pedido
-# =============================================================================
 
 class TestCarregarDimStatusPedido:
     def test_insere_cinco_status(self):
         cursor = make_cursor()
         with patch('builtins.print'):
             carregar_dim_status_pedido(cursor)
-        # 1 TRUNCATE + 5 INSERTs
         assert cursor.execute.call_count == 6
 
     def test_contem_status_entregue(self):
@@ -273,16 +224,11 @@ class TestCarregarDimStatusPedido:
         assert 'Cancelado' in chamadas
 
 
-# =============================================================================
-# carregar_dim_tempo
-# =============================================================================
-
 class TestCarregarDimTempo:
     def test_gera_datas_de_2022_a_2026(self):
         cursor = make_cursor()
         with patch('builtins.print'):
             carregar_dim_tempo(cursor)
-        # 1 TRUNCATE + ao menos 1826 dias
         assert cursor.execute.call_count >= 1827
 
     def test_primeira_chamada_e_truncate(self):
@@ -291,10 +237,6 @@ class TestCarregarDimTempo:
             carregar_dim_tempo(cursor)
         assert "TRUNCATE" in str(cursor.execute.call_args_list[0])
 
-
-# =============================================================================
-# carregar_fato_horas
-# =============================================================================
 
 class TestCarregarFatoHoras:
     def _base(self):
@@ -322,7 +264,6 @@ class TestCarregarFatoHoras:
         cursor = make_cursor()
         with patch('builtins.print'):
             carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_func, cursor)
-        # 1 TRUNCATE + 1 INSERT (linha com 0 ignorada)
         assert cursor.execute.call_count == 2
 
     def test_tarefa_inexistente_ignorada(self):
@@ -348,12 +289,8 @@ class TestCarregarFatoHoras:
         with patch('builtins.print'):
             carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_func, cursor)
         params = cursor.execute.call_args_list[1][0][1]
-        assert params[6] == 1000.0  # custo_horas = 10h * R$100
+        assert params[6] == 1000.0
 
-
-# =============================================================================
-# carregar_fato_materiais
-# =============================================================================
 
 class TestCarregarFatoMateriais:
     def _base(self):
@@ -401,12 +338,8 @@ class TestCarregarFatoMateriais:
         with patch('builtins.print'):
             carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, cursor)
         params = cursor.execute.call_args_list[1][0][1]
-        assert params[6] == 500.0  # 10 * 50
+        assert params[6] == 500.0
 
-
-# =============================================================================
-# carregar_fato_compras
-# =============================================================================
 
 class TestCarregarFatoCompras:
     def _base(self):
@@ -444,7 +377,7 @@ class TestCarregarFatoCompras:
         with patch('builtins.print'):
             carregar_fato_compras(*self._base(), cursor)
         params = cursor.execute.call_args_list[1][0][1]
-        assert params[8] == 7  # 8 - 1 de janeiro = 7 dias
+        assert params[8] == 7
 
     def test_lead_time_nulo_quando_sem_datas(self):
         df_sol, df_ped, df_cp, df_proj, df_mat, df_forn, df_status = self._base()
@@ -455,10 +388,6 @@ class TestCarregarFatoCompras:
         params = cursor.execute.call_args_list[1][0][1]
         assert params[8] is None
 
-
-# =============================================================================
-# carregar_fato_estoque
-# =============================================================================
 
 class TestCarregarFatoEstoque:
     def test_truncate_e_inserts(self):
@@ -479,10 +408,6 @@ class TestCarregarFatoEstoque:
             carregar_fato_estoque(df, cursor)
         assert cursor.execute.call_count == 1
 
-
-# =============================================================================
-# run() — função principal do seed_0004
-# =============================================================================
 
 class TestRun:
     def _dfs_vazios(self):
@@ -562,10 +487,6 @@ class TestRun:
                 run()
 
 
-# =============================================================================
-# dev_db — orquestrador
-# =============================================================================
-
 class TestDevDbOrquestrador:
     def _import_dev_db(self):
         return importlib.import_module('api.management.commands.dev_db')
@@ -580,7 +501,7 @@ class TestDevDbOrquestrador:
         result = dev_db.get_latest_applied_migration.__wrapped__(mock_conn, 'api') \
             if hasattr(dev_db.get_latest_applied_migration, '__wrapped__') \
             else '0004'
-        assert result == '0004' or True  # aceita resultado indireto pelo mock
+        assert result == '0004' or True
 
     def test_load_seed_modulo_inexistente_lanca_command_error(self):
         from django.core.management.base import CommandError
@@ -591,7 +512,7 @@ class TestDevDbOrquestrador:
     def test_load_seed_sem_funcao_run_lanca_command_error(self):
         from django.core.management.base import CommandError
         dev_db = self._import_dev_db()
-        modulo_falso = MagicMock(spec=[])  # sem atributo 'run'
+        modulo_falso = MagicMock(spec=[])
         with patch('importlib.import_module', return_value=modulo_falso):
             with pytest.raises(CommandError, match="não possui a função 'run'"):
                 dev_db.load_seed('0004')
@@ -604,7 +525,6 @@ class TestDevDbOrquestrador:
     @patch('api.management.commands.seeds.seed_0004.get_connection')
     @patch('api.management.commands.seeds.seed_0004.pd.read_csv')
     def test_handle_chama_run_do_seed_correto(self, mock_csv, mock_conn):
-        # Prepara seed para não falhar
         mock_csv.side_effect = FileNotFoundError("skip")
         cursor = MagicMock()
         conn = MagicMock()
@@ -641,10 +561,6 @@ class TestDevDbOrquestrador:
                 mock_detect.assert_not_called()
                 mock_load.assert_called_once_with('0004')
 
-
-# =============================================================================
-# Testes de integração / edge cases
-# =============================================================================
 
 class TestEdgeCases:
     def test_unicode_em_nome_programa(self):
