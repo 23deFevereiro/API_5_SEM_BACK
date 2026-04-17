@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'management', 'commands'))
 
-from command_fix_csv import (
+from fix_csv import (
     criar_pasta_saida,
     salvar_csv,
     corrigir_inconsistencia_1,
@@ -46,7 +46,7 @@ class TestSalvarCsv:
         df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
         arquivo = tmp_path / 'test.csv'
         
-        with patch('command_fix_csv.OUTPUT_FOLDER', str(tmp_path)):
+        with patch('fix_csv.OUTPUT_FOLDER', str(tmp_path)):
             resultado = salvar_csv(df, 'test.csv')
         
         assert os.path.exists(resultado)
@@ -55,7 +55,7 @@ class TestSalvarCsv:
     def test_salvar_csv_encoding_utf8(self, tmp_path):
         df = pd.DataFrame({'nome': ['José', 'Mário'], 'status': ['Concluído', 'Em andamento']})
         
-        with patch('command_fix_csv.OUTPUT_FOLDER', str(tmp_path)):
+        with patch('fix_csv.OUTPUT_FOLDER', str(tmp_path)):
             caminho = salvar_csv(df, 'test_utf8.csv')
         
         df_lido = pd.read_csv(caminho, encoding='utf-8-sig')
@@ -254,7 +254,7 @@ class TestCorrigirInconsistencia4:
             'horas_trabalhadas': [5.0]
         })
         
-        with patch('command_fix_csv.datetime') as mock_dt:
+        with patch('fix_csv.datetime') as mock_dt:
             mock_dt.now.return_value.date.return_value = hoje
             mock_dt.strptime = datetime.strptime
             resultado = corrigir_inconsistencia_4(df_tarefas, df_tempo)
@@ -275,7 +275,7 @@ class TestCorrigirInconsistencia4:
             'horas_trabalhadas': [5.0]
         })
         
-        with patch('command_fix_csv.datetime') as mock_dt:
+        with patch('fix_csv.datetime') as mock_dt:
             mock_dt.now.return_value.date.return_value = hoje
             mock_dt.strptime = datetime.strptime
             resultado = corrigir_inconsistencia_4(df_tarefas, df_tempo)
@@ -418,14 +418,14 @@ class TestCorrigirProgramasConcluidos:
 
 class TestMain:
     @patch('builtins.print')
-    @patch('command_fix_csv.salvar_csv')
-    @patch('command_fix_csv.corrigir_programas_concluidos')
-    @patch('command_fix_csv.corrigir_inconsistencia_4')
-    @patch('command_fix_csv.corrigir_inconsistencia_3')
-    @patch('command_fix_csv.corrigir_inconsistencia_2')
-    @patch('command_fix_csv.corrigir_inconsistencia_1')
-    @patch('command_fix_csv.criar_pasta_saida')
-    @patch('command_fix_csv.pd.read_csv')
+    @patch('fix_csv.salvar_csv')
+    @patch('fix_csv.corrigir_programas_concluidos')
+    @patch('fix_csv.corrigir_inconsistencia_4')
+    @patch('fix_csv.corrigir_inconsistencia_3')
+    @patch('fix_csv.corrigir_inconsistencia_2')
+    @patch('fix_csv.corrigir_inconsistencia_1')
+    @patch('fix_csv.criar_pasta_saida')
+    @patch('fix_csv.pd.read_csv')
     def test_main_sucesso(
         self,
         mock_read_csv,
@@ -457,7 +457,7 @@ class TestMain:
         assert mock_salvar.call_count == 3
 
     @patch('builtins.print')
-    @patch('command_fix_csv.pd.read_csv')
+    @patch('fix_csv.pd.read_csv')
     def test_main_arquivo_nao_encontrado(self, mock_read_csv, mock_print):
         mock_read_csv.side_effect = FileNotFoundError("Arquivo não encontrado")
         
@@ -467,14 +467,14 @@ class TestMain:
         assert exc_info.value.code == 1
 
     @patch('builtins.print')
-    @patch('command_fix_csv.salvar_csv')
-    @patch('command_fix_csv.corrigir_programas_concluidos')
-    @patch('command_fix_csv.corrigir_inconsistencia_4')
-    @patch('command_fix_csv.corrigir_inconsistencia_3')
-    @patch('command_fix_csv.corrigir_inconsistencia_2')
-    @patch('command_fix_csv.corrigir_inconsistencia_1')
-    @patch('command_fix_csv.criar_pasta_saida')
-    @patch('command_fix_csv.pd.read_csv')
+    @patch('fix_csv.salvar_csv')
+    @patch('fix_csv.corrigir_programas_concluidos')
+    @patch('fix_csv.corrigir_inconsistencia_4')
+    @patch('fix_csv.corrigir_inconsistencia_3')
+    @patch('fix_csv.corrigir_inconsistencia_2')
+    @patch('fix_csv.corrigir_inconsistencia_1')
+    @patch('fix_csv.criar_pasta_saida')
+    @patch('fix_csv.pd.read_csv')
     def test_main_com_dados_reais_simulados(
         self,
         mock_read_csv,
