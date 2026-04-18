@@ -12,7 +12,6 @@ def listar_projetos(search='', programa_id=None):
         projetos = projetos.filter(nome_projeto__icontains=search)
     if programa_id:
         projetos = projetos.filter(programa=programa_id)
-    print(f"Search: '{search}', Programa ID: {programa_id}, SQL: {projetos.query}, Count: {projetos.count()}")
     return list(projetos.values('id', 'codigo_projeto', 'nome_projeto'))
 
 

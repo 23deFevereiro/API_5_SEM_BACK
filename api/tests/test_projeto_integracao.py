@@ -32,6 +32,49 @@ class TestListarProjetos:
         assert 'codigo_projeto' in resultado[0]
         assert 'nome_projeto' in resultado[0]
 
+    def test_filtra_por_programa_id(self):
+        programa_a = baker.make('api.Programa')
+        programa_b = baker.make('api.Programa')
+        baker.make('api.Projeto', nome_projeto='Projeto A1', programa=programa_a)
+        baker.make('api.Projeto', nome_projeto='Projeto A2', programa=programa_a)
+        baker.make('api.Projeto', nome_projeto='Projeto B1', programa=programa_b)
+
+        resultado = listar_projetos(programa_id=programa_a.id)
+
+        assert len(resultado) == 2
+        nomes = [p['nome_projeto'] for p in resultado]
+        assert 'Projeto A1' in nomes
+        assert 'Projeto A2' in nomes
+        assert 'Projeto B1' not in nomes
+
+    def test_programa_id_none_retorna_todos(self):
+        programa = baker.make('api.Programa')
+        baker.make('api.Projeto', programa=programa, _quantity=2)
+        baker.make('api.Projeto', _quantity=1)
+
+        resultado = listar_projetos(programa_id=None)
+
+        assert len(resultado) == 3
+
+    def test_retorna_vazio_para_programa_sem_projetos(self):
+        baker.make('api.Projeto', _quantity=3)
+        programa_vazio = baker.make('api.Programa')
+
+        resultado = listar_projetos(programa_id=programa_vazio.id)
+
+        assert resultado == []
+
+    def test_combina_search_com_programa_id(self):
+        programa = baker.make('api.Programa')
+        baker.make('api.Projeto', nome_projeto='Conversor DC-DC', programa=programa)
+        baker.make('api.Projeto', nome_projeto='Driver LED', programa=programa)
+        baker.make('api.Projeto', nome_projeto='Conversor AC')
+
+        resultado = listar_projetos(search='Conversor', programa_id=programa.id)
+
+        assert len(resultado) == 1
+        assert resultado[0]['nome_projeto'] == 'Conversor DC-DC'
+
 
 @pytest.mark.django_db
 class TestGetResumoProjeto:
@@ -178,6 +221,33 @@ class TestListarProjetosView:
         request = factory.post('/projetos/')
         response = listar_projetos_view(request)
         assert response.status_code == 405
+
+    def test_view_filtra_por_programa_id_na_query_string(self):
+        programa = baker.make('api.Programa')
+        baker.make('api.Projeto', nome_projeto='Do programa', programa=programa)
+        baker.make('api.Projeto', nome_projeto='De outro programa')
+
+        factory = RequestFactory()
+        request = factory.get('/projetos/', {'programa_id': str(programa.id)})
+        response = listar_projetos_view(request)
+
+        import json
+        data = json.loads(response.content)
+        assert response.status_code == 200
+        assert len(data) == 1
+        assert data[0]['nome_projeto'] == 'Do programa'
+
+    def test_view_ignora_programa_id_invalido_e_retorna_todos(self):
+        baker.make('api.Projeto', _quantity=2)
+
+        factory = RequestFactory()
+        request = factory.get('/projetos/', {'programa_id': 'abc'})
+        response = listar_projetos_view(request)
+
+        import json
+        data = json.loads(response.content)
+        assert response.status_code == 200
+        assert len(data) == 2
 
 
 @pytest.mark.django_db
