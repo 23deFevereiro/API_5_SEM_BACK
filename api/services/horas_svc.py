@@ -1,5 +1,6 @@
 from django.db.models import Sum
 from ..models import Tarefa, TempoTarefa
+from collections import defaultdict
 
 
 def get_horas_por_funcionario(projeto_id):
@@ -23,3 +24,44 @@ def get_horas_por_funcionario(projeto_id):
         }
         for r in registros
     ]
+
+def get_burnup_horas_projetos():
+    registros = (
+        TempoTarefa.objects
+        .select_related('tarefa__projeto')
+        .values(
+            'tarefa__projeto__id',
+            'tarefa__projeto__nome_projeto',
+            'data'
+        )
+        .annotate(total_horas=Sum('horas_trabalhadas'))
+        .order_by('tarefa__projeto__id', 'data')
+    )
+
+    projetos_map = defaultdict(list)
+
+    for registro in registros:
+        projeto_id = registro['tarefa__projeto__id']
+        projeto_nome = registro['tarefa__projeto__nome_projeto']
+
+        projetos_map[(projeto_id, projeto_nome)].append({
+            'data': registro['data'].isoformat(),
+            'horas': float(registro['total_horas'] or 0),
+        })
+
+    resultado = []
+
+    for (projeto_id, projeto_nome), serie in projetos_map.items():
+        acumulado = 0
+
+        for ponto in serie:
+            acumulado += ponto['horas']
+            ponto['horas_acumuladas'] = acumulado
+
+        resultado.append({
+            'projeto_id': projeto_id,
+            'projeto': projeto_nome,
+            'serie': serie
+        })
+
+    return resultado
