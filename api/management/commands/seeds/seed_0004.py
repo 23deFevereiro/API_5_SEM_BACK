@@ -231,11 +231,20 @@ def carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_func
     print(f"   ✅ fato_horas: {registros} registros")
 
 
-def carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, cursor):
+def carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_solicitacoes, df_pedidos, cursor):
     cursor.execute("TRUNCATE TABLE fato_materiais RESTART IDENTITY CASCADE;")
 
     projeto_programa = dict(zip(df_projetos['id'], df_projetos['programa_id']))
     material_custo = dict(zip(df_materiais['id'], df_materiais['custo_estimado']))
+
+    df_sol_ped = df_solicitacoes.merge(
+        df_pedidos[['solicitacao_id', 'fornecedor_id']],
+        left_on='id', right_on='solicitacao_id', how='inner'
+    )
+    df_sol_ped = df_sol_ped[pd.notna(df_sol_ped['fornecedor_id'])]
+    fornecedor_map = {}
+    for (proj, mat), grupo in df_sol_ped.groupby(['projeto_id', 'material_id']):
+        fornecedor_map[(int(proj), int(mat))] = int(grupo['fornecedor_id'].mode().iloc[0])
 
     registros = 0
     for _, row in df_empenho.iterrows():
@@ -245,7 +254,7 @@ def carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais,
         projeto_id = int(row['projeto_id'])
         programa_id = int(projeto_programa.get(projeto_id))
         material_id = int(row['material_id'])
-        fornecedor_id = int(row['fornecedor_id']) if pd.notna(row.get('fornecedor_id')) else None
+        fornecedor_id = fornecedor_map.get((projeto_id, material_id))
         custo_material = float(material_custo.get(material_id, 0))
         custo_materiais = float(row['quantidade_empenhada']) * custo_material
 
@@ -287,15 +296,18 @@ def carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, df_pr
             lead_time = (previsao - pedido).days
 
         status_id = int(status_map.get(row['status_ped'], 1))
+        quantidade_solicitada = int(row['quantidade'])
+        quantidade_entregue = quantidade_solicitada if row['status_ped'] == 'Entregue' else 0
+        valor_alocado = float(row['valor_alocado']) if pd.notna(row.get('valor_alocado')) else 0.0
 
         cursor.execute("""
             INSERT INTO fato_compras (tempo_id, projeto_id, material_id, fornecedor_id, status_id,
-                                      quantidade_solicitada, valor_alocado, valor_total,
+                                      quantidade_solicitada, quantidade_entregue, valor_alocado, valor_total,
                                       lead_time, data_previsao_entrega)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             tempo_id, int(row['projeto_id']), int(row['material_id']), int(row['fornecedor_id']),
-            status_id, int(row['quantidade']), float(row.get('valor_alocado', 0)),
+            status_id, quantidade_solicitada, quantidade_entregue, valor_alocado,
             float(row['valor_total']), lead_time, row.get('data_previsao_entrega')
         ))
         registros += 1
@@ -356,7 +368,7 @@ def run():
 
         print("\n   📊 Carregando fatos...")
         carregar_fato_horas(df_tempo_tarefas, df_tarefas, df_projetos, df_programas, df_funcionario, cursor)
-        carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, cursor)
+        carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_solicitacoes, df_pedidos, cursor)
 
         cursor.execute("SELECT id, nome_status FROM dim_status_pedido")
         df_status_pedido = pd.DataFrame(cursor.fetchall(), columns=['id', 'nome_status'])
