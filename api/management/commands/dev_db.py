@@ -6,6 +6,24 @@ from django.db import connection
 
 CORRECTED_DOCUMENTS_DIR = Path(__file__).parent / 'corrected_documents'
 
+MIGRATION_WARNINGS = {
+    '0003': (
+        '\n' + '!' * 70 + '\n'
+        '  ⚠️  AVISO DE INCOMPATIBILIDADE\n\n'
+        '  A seed 0003 popula o modelo RELACIONAL:\n'
+        '    programa, projeto, tarefa, tempo_tarefa, fornecedor, material,\n'
+        '    pedido_compra, solicitacao_compra, empenho_material, estoque_material_projeto\n\n'
+        '  A partir da migration 0004 o sistema utiliza o modelo ESTRELA:\n'
+        '    dim_programa, dim_projeto, dim_tarefa, dim_material, dim_fornecedor,\n'
+        '    dim_funcionario, dim_status_pedido, dim_tempo,\n'
+        '    fato_horas, fato_materiais, fato_compras, fato_estoque\n\n'
+        '  ➡️  A aplicação atual (views, services, APIs) NÃO É COMPATÍVEL com\n'
+        '      o banco gerado por esta seed. Use apenas para testes isolados\n'
+        '      do modelo relacional ou para fins de desenvolvimento da sprint 3.\n'
+        + '!' * 70
+    ),
+}
+
 
 def ensure_corrected_documents():
     if not CORRECTED_DOCUMENTS_DIR.exists() or not any(CORRECTED_DOCUMENTS_DIR.glob('*.csv')):
@@ -69,6 +87,9 @@ class Command(BaseCommand):
 
         if migration_number:
             self.stdout.write(f'\n🔧 Migration forçada via argumento: {migration_number}')
+            warning = MIGRATION_WARNINGS.get(migration_number)
+            if warning:
+                self.stdout.write(self.style.WARNING(warning))
         else:
             self.stdout.write('\n🔍 Detectando última migration aplicada...')
             migration_number = get_latest_applied_migration()
