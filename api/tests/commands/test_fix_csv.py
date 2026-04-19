@@ -418,6 +418,7 @@ class TestCorrigirProgramasConcluidos:
 
 class TestMain:
     @patch('builtins.print')
+    @patch('fix_csv.shutil.copy2')
     @patch('fix_csv.salvar_csv')
     @patch('fix_csv.corrigir_programas_concluidos')
     @patch('fix_csv.corrigir_inconsistencia_4')
@@ -436,6 +437,7 @@ class TestMain:
         mock_corr4,
         mock_corr_cascata,
         mock_salvar,
+        mock_copy2,
         mock_print,
     ):
         df_tempo = pd.DataFrame({'tarefa_id': [1], 'usuario': ['João']})
@@ -467,6 +469,7 @@ class TestMain:
         assert exc_info.value.code == 1
 
     @patch('builtins.print')
+    @patch('fix_csv.shutil.copy2')
     @patch('fix_csv.salvar_csv')
     @patch('fix_csv.corrigir_programas_concluidos')
     @patch('fix_csv.corrigir_inconsistencia_4')
@@ -485,6 +488,7 @@ class TestMain:
         mock_corr4,
         mock_corr_cascata,
         mock_salvar,
+        mock_copy2,
         mock_print,
     ):
         df_tempo = pd.DataFrame({
