@@ -1,6 +1,17 @@
 import importlib
+from pathlib import Path
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
+
+CORRECTED_DOCUMENTS_DIR = Path(__file__).parent / 'corrected_documents'
+
+
+def ensure_corrected_documents():
+    if not CORRECTED_DOCUMENTS_DIR.exists() or not any(CORRECTED_DOCUMENTS_DIR.glob('*.csv')):
+        print('   ⚠️  Arquivos de corrected_documents não encontrados. Executando fix_csv...')
+        call_command('fix_csv')
+        print('   ✅ fix_csv concluído.')
 
 
 def get_latest_applied_migration(app_label='api'):
@@ -52,6 +63,9 @@ class Command(BaseCommand):
         self.stdout.write('=' * 70)
 
         migration_number = options.get('migration')
+
+        self.stdout.write('\n🗂️  Verificando arquivos de corrected_documents...')
+        ensure_corrected_documents()
 
         if migration_number:
             self.stdout.write(f'\n🔧 Migration forçada via argumento: {migration_number}')

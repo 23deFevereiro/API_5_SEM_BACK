@@ -1,0 +1,101 @@
+id,codigo_fornecedor,razao_social,cidade,estado,categoria,status
+1,FOR001,RTech Distribuidora 1 Ltda,Jundiaí,SP,Materiais de Solda,Ativo
+2,FOR002,Circuitech Distribuidora 2 Ltda,Santos,SP,Componentes Mecânicos,Ativo
+3,FOR003,NovaTech Supply 3 Ltda,São Paulo,SP,Placas de Circuito Impresso,Ativo
+4,FOR004,BR Supply Eletrônicos 4 Ltda,Guarulhos,SP,Equipamentos de Teste,Ativo
+5,FOR005,HiTech Parts 5 Ltda,Ribeirão Preto,SP,Placas de Circuito Impresso,Ativo
+6,FOR006,LiderComp Distribuição 6 Ltda,Ribeirão Preto,SP,Equipamentos de Teste,Ativo
+7,FOR007,Xpert Eletrônica 7 Ltda,Campinas,SP,Equipamentos de Teste,Ativo
+8,FOR008,ProComp Eletrônica 8 Ltda,Taubaté,SP,Conectores e Cabos,Ativo
+9,FOR009,LiderComp Distribuição 9 Ltda,Sorocaba,SP,Equipamentos de Teste,Ativo
+10,FOR010,HiTech Parts 10 Ltda,Jundiaí,SP,Componentes Eletrônicos,Bloqueado
+11,FOR011,LiderComp Distribuição 11 Ltda,Ribeirão Preto,SP,Componentes Mecânicos,Ativo
+12,FOR012,MegaChip Comércio 12 Ltda,Guarulhos,SP,Placas de Circuito Impresso,Bloqueado
+13,FOR013,OmegaParts 13 Ltda,São Paulo,SP,Componentes Mecânicos,Ativo
+14,FOR014,UniComp Eletrônicos 14 Ltda,São José dos Campos,SP,Componentes Eletrônicos,Ativo
+15,FOR015,HiTech Parts 15 Ltda,Campinas,SP,Sensores e Transdutores,Ativo
+16,FOR016,Circuitech Distribuidora 16 Ltda,Ribeirão Preto,SP,Placas de Circuito Impresso,Ativo
+17,FOR017,HiTech Parts 17 Ltda,Jundiaí,SP,Sensores e Transdutores,Ativo
+18,FOR018,TechnoSupply 18 Ltda,São José dos Campos,SP,Conectores e Cabos,Inativo
+19,FOR019,Eletrosul Componentes 19 Ltda,Campinas,SP,Materiais de Solda,Ativo
+20,FOR020,Farnell Brasil 20 Ltda,São Paulo,SP,Componentes Mecânicos,Inativo
+21,FOR021,Eletrosul Componentes 21 Ltda,São José dos Campos,SP,Conectores e Cabos,Ativo
+22,FOR022,HiTech Parts 22 Ltda,Jundiaí,SP,Componentes Eletrônicos,Ativo
+23,FOR023,BR Supply Eletrônicos 23 Ltda,Campinas,SP,Componentes Mecânicos,Ativo
+24,FOR024,DigiParts Brasil 24 Ltda,São Paulo,SP,Equipamentos de Teste,Ativo
+25,FOR025,LiderComp Distribuição 25 Ltda,Ribeirão Preto,SP,Materiais de Solda,Ativo
+26,FOR026,QualyParts 26 Ltda,Sorocaba,SP,Materiais de Solda,Ativo
+27,FOR027,ZetaComp Brasil 27 Ltda,Ribeirão Preto,SP,Conectores e Cabos,Ativo
+28,FOR028,Abratec Componentes 28 Ltda,São José dos Campos,SP,Equipamentos de Teste,Inativo
+29,FOR029,NovaTech Supply 29 Ltda,São Paulo,SP,Equipamentos de Teste,Ativo
+30,FOR030,OmegaParts 30 Ltda,São Paulo,SP,Componentes Eletrônicos,Ativo
+31,FOR031,Eletrosul Componentes 31 Ltda,São Paulo,SP,Placas de Circuito Impresso,Ativo
+32,FOR032,UniComp Eletrônicos 32 Ltda,Ribeirão Preto,SP,Componentes Mecânicos,Ativo
+33,FOR033,TechnoSupply 33 Ltda,Ribeirão Preto,SP,Conectores e Cabos,Ativo
+34,FOR034,TechnoSupply 34 Ltda,Taubaté,SP,Componentes Eletrônicos,Ativo
+35,FOR035,DigiParts Brasil 35 Ltda,Ribeirão Preto,SP,Componentes Mecânicos,Inativo
+36,FOR036,NovaTech Supply 36 Ltda,Santos,SP,Placas de Circuito Impresso,Ativo
+37,FOR037,OmegaParts 37 Ltda,Taubaté,SP,Equipamentos de Teste,Ativo
+38,FOR038,Komponen Brasil 38 Ltda,Taubaté,SP,Conectores e Cabos,Ativo
+39,FOR039,LiderComp Distribuição 39 Ltda,Campinas,SP,Componentes Mecânicos,Bloqueado
+40,FOR040,Circuitech Distribuidora 40 Ltda,São Paulo,SP,Sensores e Transdutores,Ativo
+41,FOR041,NovaTech Supply 41 Ltda,São Paulo,SP,Componentes Mecânicos,Ativo
+42,FOR042,ZetaComp Brasil 42 Ltda,Campinas,SP,Materiais de Solda,Ativo
+43,FOR043,RTech Distribuidora 43 Ltda,Ribeirão Preto,SP,Conectores e Cabos,Ativo
+44,FOR044,NovaTech Supply 44 Ltda,Jundiaí,SP,Sensores e Transdutores,Ativo
+45,FOR045,Yaskawa Parts 45 Ltda,Taubaté,SP,Sensores e Transdutores,Inativo
+46,FOR046,BR Supply Eletrônicos 46 Ltda,Guarulhos,SP,Materiais de Solda,Ativo
+47,FOR047,DigiParts Brasil 47 Ltda,Ribeirão Preto,SP,Placas de Circuito Impresso,Ativo
+48,FOR048,ProComp Eletrônica 48 Ltda,Sorocaba,SP,Sensores e Transdutores,Ativo
+49,FOR049,RTech Distribuidora 49 Ltda,Jundiaí,SP,Componentes Eletrônicos,Ativo
+50,FOR050,SilconWay Brasil 50 Ltda,Sorocaba,SP,Sensores e Transdutores,Ativo
+51,FOR051,RTech Distribuidora 51 Ltda,Ribeirão Preto,SP,Componentes Eletrônicos,Ativo
+52,FOR052,VoltParts 52 Ltda,Guarulhos,SP,Componentes Eletrônicos,Ativo
+53,FOR053,WaveTech Componentes 53 Ltda,Guarulhos,SP,Conectores e Cabos,Ativo
+54,FOR054,Farnell Brasil 54 Ltda,Campinas,SP,Materiais de Solda,Ativo
+55,FOR055,Circuitech Distribuidora 55 Ltda,Campinas,SP,Componentes Mecânicos,Ativo
+56,FOR056,Abratec Componentes 56 Ltda,São Paulo,SP,Componentes Mecânicos,Ativo
+57,FOR057,MegaChip Comércio 57 Ltda,Taubaté,SP,Equipamentos de Teste,Ativo
+58,FOR058,LiderComp Distribuição 58 Ltda,Guarulhos,SP,Componentes Mecânicos,Ativo
+59,FOR059,SilconWay Brasil 59 Ltda,São Paulo,SP,Componentes Eletrônicos,Ativo
+60,FOR060,Yaskawa Parts 60 Ltda,São José dos Campos,SP,Componentes Mecânicos,Ativo
+61,FOR061,OmegaParts 61 Ltda,Taubaté,SP,Equipamentos de Teste,Ativo
+62,FOR062,NovaTech Supply 62 Ltda,Guarulhos,SP,Placas de Circuito Impresso,Ativo
+63,FOR063,DigiParts Brasil 63 Ltda,Jundiaí,SP,Equipamentos de Teste,Ativo
+64,FOR064,VoltParts 64 Ltda,Santos,SP,Materiais de Solda,Ativo
+65,FOR065,BR Supply Eletrônicos 65 Ltda,Sorocaba,SP,Equipamentos de Teste,Bloqueado
+66,FOR066,BR Supply Eletrônicos 66 Ltda,São José dos Campos,SP,Placas de Circuito Impresso,Ativo
+67,FOR067,GlobalChip Importação 67 Ltda,Campinas,SP,Sensores e Transdutores,Ativo
+68,FOR068,Komponen Brasil 68 Ltda,São Paulo,SP,Componentes Eletrônicos,Ativo
+69,FOR069,NovaTech Supply 69 Ltda,Campinas,SP,Placas de Circuito Impresso,Ativo
+70,FOR070,WaveTech Componentes 70 Ltda,Sorocaba,SP,Materiais de Solda,Ativo
+71,FOR071,VoltParts 71 Ltda,Jundiaí,SP,Componentes Eletrônicos,Ativo
+72,FOR072,Xpert Eletrônica 72 Ltda,São José dos Campos,SP,Equipamentos de Teste,Ativo
+73,FOR073,Circuitech Distribuidora 73 Ltda,Jundiaí,SP,Materiais de Solda,Ativo
+74,FOR074,MegaChip Comércio 74 Ltda,Taubaté,SP,Conectores e Cabos,Ativo
+75,FOR075,Abratec Componentes 75 Ltda,Jundiaí,SP,Placas de Circuito Impresso,Inativo
+76,FOR076,TechnoSupply 76 Ltda,Santos,SP,Sensores e Transdutores,Ativo
+77,FOR077,LiderComp Distribuição 77 Ltda,São Paulo,SP,Equipamentos de Teste,Inativo
+78,FOR078,HiTech Parts 78 Ltda,Taubaté,SP,Materiais de Solda,Ativo
+79,FOR079,Circuitech Distribuidora 79 Ltda,Taubaté,SP,Sensores e Transdutores,Ativo
+80,FOR080,Komponen Brasil 80 Ltda,Sorocaba,SP,Conectores e Cabos,Ativo
+81,FOR081,Circuitech Distribuidora 81 Ltda,Ribeirão Preto,SP,Componentes Mecânicos,Ativo
+82,FOR082,QualyParts 82 Ltda,Sorocaba,SP,Sensores e Transdutores,Ativo
+83,FOR083,Xpert Eletrônica 83 Ltda,Campinas,SP,Placas de Circuito Impresso,Ativo
+84,FOR084,InfraTech Suprimentos 84 Ltda,Sorocaba,SP,Placas de Circuito Impresso,Ativo
+85,FOR085,Yaskawa Parts 85 Ltda,São Paulo,SP,Placas de Circuito Impresso,Bloqueado
+86,FOR086,UniComp Eletrônicos 86 Ltda,Santos,SP,Equipamentos de Teste,Ativo
+87,FOR087,Yaskawa Parts 87 Ltda,Santos,SP,Componentes Mecânicos,Bloqueado
+88,FOR088,SilconWay Brasil 88 Ltda,Jundiaí,SP,Sensores e Transdutores,Bloqueado
+89,FOR089,Komponen Brasil 89 Ltda,Campinas,SP,Equipamentos de Teste,Ativo
+90,FOR090,OmegaParts 90 Ltda,Guarulhos,SP,Sensores e Transdutores,Ativo
+91,FOR091,BR Supply Eletrônicos 91 Ltda,Jundiaí,SP,Materiais de Solda,Ativo
+92,FOR092,OmegaParts 92 Ltda,Santos,SP,Componentes Eletrônicos,Ativo
+93,FOR093,JK Eletrônica 93 Ltda,São Paulo,SP,Componentes Mecânicos,Inativo
+94,FOR094,Circuitech Distribuidora 94 Ltda,Ribeirão Preto,SP,Equipamentos de Teste,Ativo
+95,FOR095,RTech Distribuidora 95 Ltda,São José dos Campos,SP,Equipamentos de Teste,Inativo
+96,FOR096,SilconWay Brasil 96 Ltda,Sorocaba,SP,Conectores e Cabos,Ativo
+97,FOR097,QualyParts 97 Ltda,Campinas,SP,Componentes Eletrônicos,Ativo
+98,FOR098,ZetaComp Brasil 98 Ltda,Jundiaí,SP,Componentes Mecânicos,Ativo
+99,FOR099,UniComp Eletrônicos 99 Ltda,Campinas,SP,Componentes Eletrônicos,Ativo
+100,FOR100,OmegaParts 100 Ltda,Santos,SP,Materiais de Solda,Ativo
