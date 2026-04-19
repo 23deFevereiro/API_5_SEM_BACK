@@ -298,14 +298,15 @@ class TestCarregarFatoMateriais:
             'data_empenho': ['2026-01-01', '2026-01-02'],
             'projeto_id': [10, 10],
             'material_id': [1, 2],
-            'fornecedor_id': [100, 101],
             'quantidade_empenhada': [10, 20],
         })
         df_projetos = pd.DataFrame({'id': [10], 'programa_id': [100]})
         df_programas = pd.DataFrame({'id': [100]})
         df_materiais = pd.DataFrame({'id': [1, 2], 'custo_estimado': [50.0, 100.0]})
         df_fornecedores = pd.DataFrame({'id': [100, 101]})
-        return df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores
+        df_solicitacoes = pd.DataFrame({'id': [1, 2], 'projeto_id': [10, 10], 'material_id': [1, 2]})
+        df_pedidos = pd.DataFrame({'solicitacao_id': [1, 2], 'fornecedor_id': [100, 101]})
+        return df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_solicitacoes, df_pedidos
 
     def test_truncate_e_dois_inserts(self):
         cursor = make_cursor()
@@ -314,11 +315,12 @@ class TestCarregarFatoMateriais:
         assert cursor.execute.call_count == 3
 
     def test_fornecedor_nulo_permitido(self):
-        df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores = self._base()
-        df_empenho.at[0, 'fornecedor_id'] = None
+        df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_sol, df_ped = self._base()
+        df_empenho = df_empenho.copy()
+        df_empenho.at[0, 'material_id'] = 99
         cursor = make_cursor()
         with patch('builtins.print'):
-            carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, cursor)
+            carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_sol, df_ped, cursor)
         params = cursor.execute.call_args_list[1][0][1]
         assert params[4] is None
 
@@ -327,16 +329,17 @@ class TestCarregarFatoMateriais:
             'data_empenho': ['2026-01-01'],
             'projeto_id': [10],
             'material_id': [1],
-            'fornecedor_id': [100],
             'quantidade_empenhada': [10],
         })
         df_projetos = pd.DataFrame({'id': [10], 'programa_id': [100]})
         df_programas = pd.DataFrame({'id': [100]})
         df_materiais = pd.DataFrame({'id': [1], 'custo_estimado': [50.0]})
         df_fornecedores = pd.DataFrame({'id': [100]})
+        df_sol = pd.DataFrame({'id': [1], 'projeto_id': [10], 'material_id': [1]})
+        df_ped = pd.DataFrame({'solicitacao_id': [1], 'fornecedor_id': [100]})
         cursor = make_cursor()
         with patch('builtins.print'):
-            carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, cursor)
+            carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_sol, df_ped, cursor)
         params = cursor.execute.call_args_list[1][0][1]
         assert params[6] == 500.0
 
@@ -345,18 +348,20 @@ class TestCarregarFatoCompras:
     def _base(self):
         df_sol = pd.DataFrame({
             'id': [1, 2],
+            'projeto_id': [1, 1],
+            'material_id': [1, 1],
+            'quantidade': [10, 20],
             'data_solicitacao': ['2026-01-01', '2026-01-02'],
+            'status': ['Pendente', 'Pendente'],
         })
+
         df_ped = pd.DataFrame({
             'id': [10, 11],
             'solicitacao_id': [1, 2],
             'data_pedido': ['2026-01-01', '2026-01-02'],
             'data_previsao_entrega': ['2026-01-08', '2026-01-09'],
             'status': ['Entregue', 'Enviado'],
-            'projeto_id': [1, 1],
-            'material_id': [1, 1],
             'fornecedor_id': [1, 1],
-            'quantidade': [10, 20],
             'valor_total': [1000.0, 2000.0],
         })
         df_cp = pd.DataFrame({'pedido_compra_id': [10, 11], 'valor_alocado': [1000.0, 2000.0]})
@@ -377,7 +382,7 @@ class TestCarregarFatoCompras:
         with patch('builtins.print'):
             carregar_fato_compras(*self._base(), cursor)
         params = cursor.execute.call_args_list[1][0][1]
-        assert params[8] == 7
+        assert params[9] == 7
 
     def test_lead_time_nulo_quando_sem_datas(self):
         df_sol, df_ped, df_cp, df_proj, df_mat, df_forn, df_status = self._base()
@@ -386,7 +391,7 @@ class TestCarregarFatoCompras:
         with patch('builtins.print'):
             carregar_fato_compras(df_sol, df_ped, df_cp, df_proj, df_mat, df_forn, df_status, cursor)
         params = cursor.execute.call_args_list[1][0][1]
-        assert params[8] is None
+        assert params[9] is None
 
 
 class TestCarregarFatoEstoque:
@@ -436,8 +441,8 @@ class TestRun:
             'empenho': pd.DataFrame({
                 'data_empenho': [], 'projeto_id': [], 'material_id': [], 'fornecedor_id': [], 'quantidade_empenhada': [],
             }),
-            'solicitacoes': pd.DataFrame({'id': [], 'data_solicitacao': []}),
-            'pedidos': pd.DataFrame({'id': [], 'solicitacao_id': [], 'data_pedido': [], 'status': []}),
+            'solicitacoes': pd.DataFrame({'id': [], 'projeto_id': [], 'material_id': [], 'data_solicitacao': [], 'status': []}),
+            'pedidos': pd.DataFrame({'id': [], 'solicitacao_id': [], 'data_pedido': [], 'data_previsao_entrega': [], 'valor_total': [], 'fornecedor_id': [], 'status': []}),
             'compras_projeto': pd.DataFrame({'pedido_compra_id': [], 'valor_alocado': []}),
             'estoque': pd.DataFrame({'material_id': [], 'projeto_id': [], 'quantidade': []}),
         }
@@ -581,15 +586,17 @@ class TestEdgeCases:
         df_empenho = pd.DataFrame({
             'data_empenho': ['2026-01-01'],
             'projeto_id': [10], 'material_id': [1],
-            'fornecedor_id': [100], 'quantidade_empenhada': [999999],
+            'quantidade_empenhada': [999999],
         })
         df_proj = pd.DataFrame({'id': [10], 'programa_id': [100]})
         df_prog = pd.DataFrame({'id': [100]})
         df_mat = pd.DataFrame({'id': [1], 'custo_estimado': [9999.99]})
         df_forn = pd.DataFrame({'id': [100]})
+        df_sol = pd.DataFrame({'id': [], 'projeto_id': [], 'material_id': []})
+        df_ped = pd.DataFrame({'solicitacao_id': [], 'fornecedor_id': []})
         cursor = make_cursor()
         with patch('builtins.print'):
-            carregar_fato_materiais(df_empenho, df_proj, df_prog, df_mat, df_forn, cursor)
+            carregar_fato_materiais(df_empenho, df_proj, df_prog, df_mat, df_forn, df_sol, df_ped, cursor)
         assert cursor.execute.call_count == 2
 
     def test_datas_em_diferentes_formatos_fato_horas(self):
