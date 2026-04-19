@@ -527,15 +527,7 @@ class TestDevDbOrquestrador:
         modulo = dev_db.load_seed('0004')
         assert hasattr(modulo, 'run')
 
-    @patch('api.management.commands.seeds.seed_0004.get_connection')
-    @patch('api.management.commands.seeds.seed_0004.pd.read_csv')
-    def test_handle_chama_run_do_seed_correto(self, mock_csv, mock_conn):
-        mock_csv.side_effect = FileNotFoundError("skip")
-        cursor = MagicMock()
-        conn = MagicMock()
-        conn.cursor.return_value = cursor
-        mock_conn.return_value = conn
-
+    def test_handle_chama_run_do_seed_correto(self):
         from django.core.management.base import CommandError
         dev_db = self._import_dev_db()
 
@@ -543,13 +535,14 @@ class TestDevDbOrquestrador:
         cmd.stdout = MagicMock()
         cmd.style = MagicMock()
 
-        with patch.object(dev_db, 'get_latest_applied_migration', return_value='0004'):
-            with patch.object(dev_db, 'load_seed') as mock_load:
-                mock_seed = MagicMock()
-                mock_load.return_value = mock_seed
-                cmd.handle(migration=None)
-                mock_load.assert_called_once_with('0004')
-                mock_seed.run.assert_called_once()
+        with patch.object(dev_db, 'ensure_corrected_documents'), \
+             patch.object(dev_db, 'get_latest_applied_migration', return_value='0004'), \
+             patch.object(dev_db, 'load_seed') as mock_load:
+            mock_seed = MagicMock()
+            mock_load.return_value = mock_seed
+            cmd.handle(migration=None)
+            mock_load.assert_called_once_with('0004')
+            mock_seed.run.assert_called_once()
 
     def test_handle_com_migration_forcada_pula_deteccao(self):
         dev_db = self._import_dev_db()
@@ -558,13 +551,14 @@ class TestDevDbOrquestrador:
         cmd.stdout = MagicMock()
         cmd.style = MagicMock()
 
-        with patch.object(dev_db, 'get_latest_applied_migration') as mock_detect:
-            with patch.object(dev_db, 'load_seed') as mock_load:
-                mock_seed = MagicMock()
-                mock_load.return_value = mock_seed
-                cmd.handle(migration='0004')
-                mock_detect.assert_not_called()
-                mock_load.assert_called_once_with('0004')
+        with patch.object(dev_db, 'ensure_corrected_documents'), \
+             patch.object(dev_db, 'get_latest_applied_migration') as mock_detect, \
+             patch.object(dev_db, 'load_seed') as mock_load:
+            mock_seed = MagicMock()
+            mock_load.return_value = mock_seed
+            cmd.handle(migration='0004')
+            mock_detect.assert_not_called()
+            mock_load.assert_called_once_with('0004')
 
 
 class TestEdgeCases:
