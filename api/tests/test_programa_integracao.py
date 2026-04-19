@@ -2,6 +2,7 @@ import pytest
 from pytest import approx
 from model_bakery import baker
 from api.services.programa_svc import listar_programas, get_resumo_programa
+from model_bakery.recipe import seq
 
 
 @pytest.mark.django_db
@@ -12,7 +13,7 @@ class TestListarProgramas:
         assert resultado == []
 
     def test_retorna_programas_quando_existem(self):
-        baker.make('api.Programa', nome_programa='Programa Alpha', _quantity=3)
+        baker.make('api.Programa', nome_programa=seq('Programa Alpha '), _quantity=3)
         resultado = listar_programas()
         assert len(resultado) == 3
 
