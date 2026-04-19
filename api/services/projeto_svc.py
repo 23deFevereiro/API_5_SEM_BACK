@@ -15,8 +15,12 @@ def listar_projetos(search='', programa_id=None):
     return list(projetos.values('id', 'codigo_projeto', 'nome_projeto'))
 
 
-def get_overview_data_all():
-    cost_material = Projeto.objects.select_related('empenho_material', 'empenho_material__material'
+def get_overview_data_all(programa_id=None):
+    projetos = Projeto.objects.all()
+    if programa_id:
+        projetos = projetos.filter(programa=programa_id)
+    
+    cost_material = projetos.select_related('empenho_material', 'empenho_material__material'
     ).filter(status='Em andamento', empenhomaterial__isnull=False
     ).annotate(
         month=ExtractMonth('empenhomaterial__data_empenho'),

@@ -147,6 +147,45 @@ class TestGetOverviewDataAll:
         assert 'nome_projeto' in value
         assert 'cost' in value
 
+    def test_filtra_overview_por_programa_id(self):
+        programa_a = baker.make('api.Programa')
+        programa_b = baker.make('api.Programa')
+        projeto_a = baker.make('api.Projeto', nome_projeto='Do A', status='Em andamento', programa=programa_a)
+        projeto_b = baker.make('api.Projeto', nome_projeto='Do B', status='Em andamento', programa=programa_b)
+        material = baker.make('api.Material', custo_estimado=50.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_a, material=material, quantidade_empenhada=2)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_b, material=material, quantidade_empenhada=3)
+
+        resultado = get_overview_data_all(programa_id=programa_a.id)
+
+        nomes = [v['nome_projeto'] for grupo in resultado for v in grupo['values']]
+        assert 'Do A' in nomes
+        assert 'Do B' not in nomes
+
+    def test_overview_programa_id_none_retorna_todos(self):
+        programa = baker.make('api.Programa')
+        projeto1 = baker.make('api.Projeto', status='Em andamento', programa=programa)
+        projeto2 = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=10.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto1, material=material, quantidade_empenhada=1)
+        baker.make('api.EmpenhoMaterial', projeto=projeto2, material=material, quantidade_empenhada=1)
+
+        resultado = get_overview_data_all(programa_id=None)
+
+        codigos = {v['codigo_projeto'] for grupo in resultado for v in grupo['values']}
+        assert projeto1.codigo_projeto in codigos
+        assert projeto2.codigo_projeto in codigos
+
+    def test_overview_retorna_vazio_quando_programa_sem_projetos(self):
+        projeto = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=50.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=2)
+        programa_vazio = baker.make('api.Programa')
+
+        resultado = get_overview_data_all(programa_id=programa_vazio.id)
+
+        assert resultado == []
+
 
 @pytest.mark.django_db
 class TestGetMateriaisProjeto:
@@ -264,6 +303,39 @@ class TestGetOverviewProjetosView:
         request = factory.post('/projetos-overview/')
         response = get_overview_projetos(request)
         assert response.status_code == 405
+
+    def test_view_filtra_overview_por_programa_id(self):
+        programa = baker.make('api.Programa')
+        projeto_do_programa = baker.make('api.Projeto', nome_projeto='Do programa', status='Em andamento', programa=programa)
+        projeto_de_outro = baker.make('api.Projeto', nome_projeto='De outro', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=10.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_do_programa, material=material, quantidade_empenhada=1)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_de_outro, material=material, quantidade_empenhada=1)
+
+        factory = RequestFactory()
+        request = factory.get('/projetos-overview/', {'programa_id': str(programa.id)})
+        response = get_overview_projetos(request)
+
+        import json
+        data = json.loads(response.content)
+        assert response.status_code == 200
+        nomes = [v['nome_projeto'] for grupo in data for v in grupo['values']]
+        assert 'Do programa' in nomes
+        assert 'De outro' not in nomes
+
+    def test_view_ignora_programa_id_invalido_no_overview(self):
+        projeto = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=10.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=1)
+
+        factory = RequestFactory()
+        request = factory.get('/projetos-overview/', {'programa_id': 'abc'})
+        response = get_overview_projetos(request)
+
+        import json
+        data = json.loads(response.content)
+        assert response.status_code == 200
+        assert len(data) > 0
 
 
 @pytest.mark.django_db

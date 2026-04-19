@@ -96,3 +96,41 @@ class TestListarProjetosFiltroProgramaSistema:
 
         assert len(data) == 1
         assert data[0]['nome_projeto'] == 'Conversor DC-DC'
+
+
+@pytest.mark.django_db
+class TestOverviewProjetosFiltroProgramaSistema:
+
+    def test_overview_filtra_por_programa_id(self, api_client):
+        programa = baker.make('api.Programa')
+        projeto_do_programa = baker.make('api.Projeto', nome_projeto='Do programa', status='Em andamento', programa=programa)
+        projeto_de_outro = baker.make('api.Projeto', nome_projeto='De outro', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=10.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_do_programa, material=material, quantidade_empenhada=1)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_de_outro, material=material, quantidade_empenhada=1)
+
+        url = reverse('projetos_overview')
+
+        response = api_client.get(url, {'programa_id': programa.id})
+        data = response.json()
+
+        assert response.status_code == 200
+        nomes = [v['nome_projeto'] for grupo in data for v in grupo['values']]
+        assert 'Do programa' in nomes
+        assert 'De outro' not in nomes
+
+    def test_overview_sem_programa_id_retorna_todos(self, api_client):
+        projeto1 = baker.make('api.Projeto', status='Em andamento')
+        projeto2 = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=10.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto1, material=material, quantidade_empenhada=1)
+        baker.make('api.EmpenhoMaterial', projeto=projeto2, material=material, quantidade_empenhada=1)
+
+        url = reverse('projetos_overview')
+
+        response = api_client.get(url)
+        data = response.json()
+
+        codigos = {v['codigo_projeto'] for grupo in data for v in grupo['values']}
+        assert projeto1.codigo_projeto in codigos
+        assert projeto2.codigo_projeto in codigos

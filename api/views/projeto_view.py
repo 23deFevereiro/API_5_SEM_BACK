@@ -4,7 +4,15 @@ from ..services.projeto_svc import listar_projetos, get_resumo_projeto, get_mate
 
 @require_GET
 def get_overview_projetos(request):
-    return JsonResponse(get_overview_data_all(), safe=False)
+    programa_id_raw = request.GET.get('programa_id')
+    try:
+        programa_id = int(programa_id_raw) if programa_id_raw else None
+    except ValueError:
+        programa_id = None
+        
+    overview = get_overview_data_all(programa_id=programa_id)
+    
+    return JsonResponse(overview, safe=False)
 
 @require_GET
 def listar_projetos_view(request):
