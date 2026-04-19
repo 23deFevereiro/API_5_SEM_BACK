@@ -289,7 +289,7 @@ class TestCarregarFatoHoras:
         with patch('builtins.print'):
             carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_func, cursor)
         params = cursor.execute.call_args_list[1][0][1]
-        assert params[6] == 1000.0
+        assert params[6] == pytest.approx(1000.0)
 
 
 class TestCarregarFatoMateriais:
@@ -341,7 +341,7 @@ class TestCarregarFatoMateriais:
         with patch('builtins.print'):
             carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_sol, df_ped, cursor)
         params = cursor.execute.call_args_list[1][0][1]
-        assert params[6] == 500.0
+        assert params[6] == pytest.approx(500.0)
 
 
 class TestCarregarFatoCompras:

@@ -287,7 +287,7 @@ class TestCarregarTempoTarefa:
         assert args[0] == 2
         assert args[1] == 'Bob'
         assert args[2] == '2023-05-10'
-        assert args[3] == 3.5
+        assert args[3] == pytest.approx(3.5)
 
 class TestCarregarFornecedor:
     @patch('builtins.print')
@@ -418,7 +418,7 @@ class TestCarregarComprasProjeto:
         assert args[0] == 3
         assert args[1] == 5
         assert args[2] == 2
-        assert args[3] == 150.75
+        assert args[3] == pytest.approx(150.75)
 
 class TestCarregarSolicitacaoCompra:
     @patch('builtins.print')

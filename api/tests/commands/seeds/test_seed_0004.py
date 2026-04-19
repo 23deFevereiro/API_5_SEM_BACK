@@ -476,7 +476,7 @@ class TestCarregarFatoCompras:
         args = self._make_dfs(with_valor_alocado=False)
         carregar_fato_compras(*args, cursor)
         insert_args = cursor.execute.call_args_list[1][0][1]
-        assert insert_args[7] == 0.0
+        assert insert_args[7] == pytest.approx(0.0)
 
     @patch('builtins.print')
     def test_unknown_status_defaults_to_1(self, mock_print):

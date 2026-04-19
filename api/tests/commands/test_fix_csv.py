@@ -44,7 +44,6 @@ class TestSalvarCsv:
     @patch('builtins.print')
     def test_salvar_csv_com_sucesso(self, mock_print, tmp_path):
         df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
-        arquivo = tmp_path / 'test.csv'
         
         with patch('fix_csv.OUTPUT_FOLDER', str(tmp_path)):
             resultado = salvar_csv(df, 'test.csv')

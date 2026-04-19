@@ -193,7 +193,7 @@ def carregar_dim_tempo(cursor):
     print(f"   ✅ dim_tempo: {registros} registros")
 
 
-def carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_funcionario, cursor):
+def carregar_fato_horas(df_tempo, df_tarefas, df_projetos, _df_programas, df_funcionario, cursor):
     cursor.execute("TRUNCATE TABLE fato_horas RESTART IDENTITY CASCADE;")
 
     projeto_programa = dict(zip(df_projetos['id'], df_projetos['programa_id']))
@@ -231,7 +231,7 @@ def carregar_fato_horas(df_tempo, df_tarefas, df_projetos, df_programas, df_func
     print(f"   ✅ fato_horas: {registros} registros")
 
 
-def carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais, df_fornecedores, df_solicitacoes, df_pedidos, cursor):
+def carregar_fato_materiais(df_empenho, df_projetos, _df_programas, df_materiais, _df_fornecedores, df_solicitacoes, df_pedidos, cursor):
     cursor.execute("TRUNCATE TABLE fato_materiais RESTART IDENTITY CASCADE;")
 
     projeto_programa = dict(zip(df_projetos['id'], df_projetos['programa_id']))
@@ -269,8 +269,8 @@ def carregar_fato_materiais(df_empenho, df_projetos, df_programas, df_materiais,
     print(f"   ✅ fato_materiais: {registros} registros")
 
 
-def carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, df_projetos,
-                          df_materiais, df_fornecedores, df_status_pedido, cursor):
+def carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, _df_projetos,
+                          _df_materiais, _df_fornecedores, df_status_pedido, cursor):
     cursor.execute("TRUNCATE TABLE fato_compras RESTART IDENTITY CASCADE;")
 
     status_map = {row['nome_status']: row['id'] for _, row in df_status_pedido.iterrows()}
