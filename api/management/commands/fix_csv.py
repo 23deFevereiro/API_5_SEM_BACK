@@ -1,3 +1,4 @@
+import shutil
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -13,24 +14,17 @@ STATUS_CONCLUIDO = 'Concluído'
 STATUS_CONCLUIDA = 'Concluída'
 
 def criar_pasta_saida():
-    """Cria a pasta de saída se não existir"""
     if not os.path.exists(OUTPUT_FOLDER):
         os.makedirs(OUTPUT_FOLDER)
         print(f"📁 Pasta criada: {OUTPUT_FOLDER}")
 
 def salvar_csv(df, nome_arquivo):
-    """Salva um DataFrame como CSV na pasta de saída"""
     caminho = os.path.join(OUTPUT_FOLDER, nome_arquivo)
     df.to_csv(caminho, index=False, encoding='utf-8-sig')
     print(f"   ✅ Salvo: {nome_arquivo} ({len(df)} registros)")
     return caminho
 
 def corrigir_inconsistencia_1(df_tempo, df_tarefas):
-    """
-    #1 - Conflito de responsável por tarefa
-    Regra: tarefas_projeto é fonte de verdade.
-    Substitui usuario em tempo_tarefas pelo responsavel da tarefa correspondente.
-    """
     print("\n📌 #1 - Corrigindo conflito de responsável por tarefa...")
     
     mapa_responsavel = dict(zip(df_tarefas['id'], df_tarefas['responsavel']))
@@ -50,10 +44,6 @@ def corrigir_inconsistencia_1(df_tempo, df_tarefas):
     return df_tempo_corrigido
 
 def corrigir_inconsistencia_2(df_projetos, df_programas):
-    """
-    #2 - Status de projeto inconsistente com programa Concluído
-    Regra: Se programa está 'Concluído', todos os projetos filhos devem ser 'Concluído'
-    """
     print("\n📌 #2 - Corrigindo status de projeto inconsistente com programa...")
     
     programas_concluidos = df_programas[df_programas['status'] == STATUS_CONCLUIDO]['id'].tolist()
@@ -71,10 +61,6 @@ def corrigir_inconsistencia_2(df_projetos, df_programas):
     return df_projetos_corrigido
 
 def corrigir_inconsistencia_3(df_tarefas, df_projetos):
-    """
-    #3 - Status de tarefa inconsistente com projeto Concluído
-    Regra: Se projeto está 'Concluído', todas as tarefas filhas devem ser 'Concluída'
-    """
     print("\n📌 #3 - Corrigindo status de tarefa inconsistente com projeto...")
     
     projetos_concluidos = df_projetos[df_projetos['status'] == STATUS_CONCLUIDO]['id'].tolist()
@@ -92,7 +78,6 @@ def corrigir_inconsistencia_3(df_tarefas, df_projetos):
     return df_tarefas_corrigido
 
 def _parsear_data_fim(data_fim):
-    """Converte data_fim para formato date, tratando diferentes tipos."""
     if pd.isna(data_fim):
         return None
     if isinstance(data_fim, str):
@@ -103,17 +88,11 @@ def _parsear_data_fim(data_fim):
     return data_fim
 
 def _determinar_novo_status(data_fim, data_atual):
-    """Determina o novo status baseado na data de conclusão prevista."""
     if data_fim and data_fim < data_atual:
         return STATUS_CONCLUIDA
     return 'Em andamento'
 
 def corrigir_inconsistencia_4(df_tarefas, df_tempo):
-    """
-    #4 - Tarefas em backlog com horas trabalhadas registradas
-    Regra: Se tarefa tem horas registradas e data_fim_prevista já passou -> 'Concluída'
-          Se tem horas mas prazo não passou -> 'Em andamento'
-    """
     print("\n📌 #4 - Corrigindo tarefas em backlog com horas registradas...")
     
     horas_por_tarefa = df_tempo.groupby('tarefa_id')['horas_trabalhadas'].sum().reset_index()
@@ -141,10 +120,6 @@ def corrigir_inconsistencia_4(df_tarefas, df_tempo):
     return df_tarefas_corrigido
 
 def corrigir_programas_concluidos(df_programas, df_projetos, df_tarefas):
-    """
-    Correção em cascata: Garante que após correções #2, #3, #4,
-    todos os status estejam consistentes.
-    """
     print("\n📌 #5 - Aplicando correção em cascata (Programa -> Projeto -> Tarefa)...")
     
     programas_concluidos = df_programas[df_programas['status'] == STATUS_CONCLUIDO]['id'].tolist()
@@ -210,6 +185,24 @@ def main():
     salvar_csv(df_tarefas, 'tarefas_projeto_corrigido.csv')
     salvar_csv(df_projetos, 'projetos_corrigido.csv')
 
+    print("\n📋 Copiando arquivos sem correções...")
+
+    for nome in ['programas.csv', 'materiais.csv', 'fornecedores.csv', 'compras_projeto.csv', 'estoque_materiais_projeto.csv']:
+        src = os.path.join(INPUT_FOLDER, nome)
+        dst = os.path.join(OUTPUT_FOLDER, nome)
+        shutil.copy2(src, dst)
+        print(f"   ✅ Copiado: {nome}")
+
+    for nome_origem, nome_destino in [
+        ('empenho_materiais.csv',   'empenho_materiais_corrigido.csv'),
+        ('solicitacoes_compra.csv', 'solicitacoes_compra_corrigido.csv'),
+        ('pedidos_compra.csv',      'pedidos_compra_corrigido.csv'),
+    ]:
+        src = os.path.join(INPUT_FOLDER, nome_origem)
+        dst = os.path.join(OUTPUT_FOLDER, nome_destino)
+        shutil.copy2(src, dst)
+        print(f"   ✅ Copiado: {nome_origem} → {nome_destino}")
+
     print("\n" + "=" * 70)
     print("✅ CORREÇÕES CONCLUÍDAS COM SUCESSO!")
     print("=" * 70)
@@ -226,6 +219,18 @@ def main():
     print("   2. Executar o ETL para carregar os dados no banco")
     
     return 0
+
+from django.core.management.base import BaseCommand
+
+
+class Command(BaseCommand):
+    help = 'Corrige inconsistências nos CSVs de origem e salva na pasta corrected_documents.'
+
+    def handle(self, *args, **options):
+        result = main()
+        if result != 0:
+            raise SystemExit(result)
+
 
 if __name__ == "__main__":
     sys.exit(main())

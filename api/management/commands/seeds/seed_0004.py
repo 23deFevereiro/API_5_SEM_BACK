@@ -15,7 +15,7 @@ DB_CONFIG = {
 }
 
 MIGRATION_REF = '0004'
-CSV_DIR = Path(__file__).parent / 'corrected_documents'
+CSV_DIR = Path(__file__).parent.parent / 'corrected_documents'
 
 
 def get_connection():
@@ -286,7 +286,7 @@ def carregar_fato_compras(df_solicitacoes, df_pedidos, df_compras_projeto, df_pr
             pedido = pd.to_datetime(row['data_pedido'])
             lead_time = (previsao - pedido).days
 
-        status_id = int(status_map.get(row['status'], 1))
+        status_id = int(status_map.get(row['status_ped'], 1))
 
         cursor.execute("""
             INSERT INTO fato_compras (tempo_id, projeto_id, material_id, fornecedor_id, status_id,

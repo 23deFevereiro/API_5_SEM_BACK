@@ -14,7 +14,7 @@ DB_CONFIG = {
 }
 
 MIGRATION_REF = '0003'
-CSV_DIR = Path(__file__).parent / 'corrected_documents'
+CSV_DIR = Path(__file__).parent.parent / 'corrected_documents'
 
 
 def get_connection():
@@ -27,6 +27,8 @@ def _none(val):
             return None
     except (TypeError, ValueError):
         pass
+    if hasattr(val, 'item'):
+        return val.item()
     return val
 
 
@@ -46,7 +48,7 @@ def carregar_programa(df, cursor):
                 data_fim_prevista = EXCLUDED.data_fim_prevista,
                 status = EXCLUDED.status
         """, (
-            row['id'], row['codigo_programa'], row['nome_programa'],
+            _none(row['id']), row['codigo_programa'], row['nome_programa'],
             _none(row.get('gerente_programa')), _none(row.get('gerente_tecnico', '')),
             row['data_inicio'], _none(row['data_fim_prevista']), row['status']
         ))
@@ -70,8 +72,8 @@ def carregar_projeto(df, cursor):
                 data_fim_prevista = EXCLUDED.data_fim_prevista,
                 status = EXCLUDED.status
         """, (
-            row['id'], row['codigo_projeto'], row['nome_projeto'],
-            row['programa_id'], row['responsavel'], row['custo_hora'],
+            _none(row['id']), row['codigo_projeto'], row['nome_projeto'],
+            _none(row['programa_id']), row['responsavel'], _none(row['custo_hora']),
             row['data_inicio'], _none(row['data_fim_prevista']), row['status']
         ))
     print(f"   ✅ projeto: {len(df)} registros")
@@ -94,7 +96,7 @@ def carregar_tarefa(df, cursor):
                 data_fim_prevista = EXCLUDED.data_fim_prevista,
                 status = EXCLUDED.status
         """, (
-            row['id'], row['codigo_tarefa'], row['projeto_id'], row['titulo'],
+            _none(row['id']), row['codigo_tarefa'], _none(row['projeto_id']), row['titulo'],
             row['responsavel'], _none(row.get('estimativa_horas')),
             row['data_inicio'], _none(row['data_fim_prevista']), row['status']
         ))
@@ -131,7 +133,7 @@ def carregar_fornecedor(df, cursor):
                 categoria = EXCLUDED.categoria,
                 status = EXCLUDED.status
         """, (
-            row['id'], row['codigo_fornecedor'], row['razao_social'],
+            _none(row['id']), row['codigo_fornecedor'], row['razao_social'],
             row['cidade'], row['estado'], row['categoria'], row['status']
         ))
     print(f"   ✅ fornecedor: {len(df)} registros")
@@ -152,8 +154,8 @@ def carregar_material(df, cursor):
                 custo_estimado = EXCLUDED.custo_estimado,
                 status = EXCLUDED.status
         """, (
-            row['id'], row['codigo_material'], row['descricao'],
-            row['categoria'], row['fabricante'], row['custo_estimado'], row['status']
+            _none(row['id']), row['codigo_material'], row['descricao'],
+            row['categoria'], row['fabricante'], _none(row['custo_estimado']), row['status']
         ))
     print(f"   ✅ material: {len(df)} registros")
 
@@ -173,9 +175,9 @@ def carregar_pedido_compra(df, cursor):
                 valor_total = EXCLUDED.valor_total,
                 status = EXCLUDED.status
         """, (
-            row['id'], row['numero_pedido'], int(row['fornecedor_id']),
+            _none(row['id']), row['numero_pedido'], int(row['fornecedor_id']),
             row['data_pedido'], _none(row['data_previsao_entrega']),
-            row['valor_total'], row['status']
+            _none(row['valor_total']), row['status']
         ))
     print(f"   ✅ pedido_compra: {len(df)} registros")
 
@@ -191,8 +193,8 @@ def carregar_compras_projeto(df, cursor):
                 projeto_id = EXCLUDED.projeto_id,
                 valor_alocado = EXCLUDED.valor_alocado
         """, (
-            row['id'], int(row['pedido_compra_id']),
-            int(row['projeto_id']), row['valor_alocado']
+            int(row['id']), int(row['pedido_compra_id']),
+            int(row['projeto_id']), float(row['valor_alocado'])
         ))
     print(f"   ✅ compras_projeto: {len(df)} registros")
 
