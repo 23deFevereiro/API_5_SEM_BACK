@@ -61,8 +61,8 @@ def get_burnup_horas_projetos():
             ponto['horas_acumuladas'] = acumulado
 
         resultado.append({
-            "projeto_id": projeto.id,
-            "projeto": projeto.nome_projeto,
+            "projeto_id": projeto_id,
+            "projeto": projeto_nome,
             "serie": serie,
         })
 
