@@ -53,7 +53,7 @@ def get_burnup_horas_projetos():
 
     resultado = []
 
-    for (projeto_id, codigo_projeto, projeto_nome, status), serie in projetos_map.items():
+    for (projeto_id, projeto_nome), serie in projetos_map.items():
         acumulado = 0
 
         for ponto in serie:
@@ -62,9 +62,7 @@ def get_burnup_horas_projetos():
 
         resultado.append({
             "projeto_id": projeto.id,
-            "codigo_projeto": projeto.codigo_projeto,
             "projeto": projeto.nome_projeto,
-            "status": projeto.status,
             "serie": serie,
         })
 
