@@ -56,13 +56,17 @@ def get_overview_data_all(programa_id=None):
     return cost_list
 
 
-def get_resumo_projeto(projeto_id):
+def get_resumo_projeto(projeto_id, data_inicio=None, data_fim=None):
     projeto = get_object_or_404(Projeto, id=projeto_id)
     custo_hora = projeto.custo_hora or Decimal('0')
 
-    tempo_agg = TempoTarefa.objects.filter(
-        tarefa__projeto_id=projeto_id
-    ).aggregate(
+    tempo_qs = TempoTarefa.objects.filter(tarefa__projeto_id=projeto_id)
+    if data_inicio:
+        tempo_qs = tempo_qs.filter(data__gte=data_inicio)
+    if data_fim:
+        tempo_qs = tempo_qs.filter(data__lte=data_fim)
+
+    tempo_agg = tempo_qs.aggregate(
         horas=Sum('horas_trabalhadas'),
         custo=Sum(
             ExpressionWrapper(
@@ -75,18 +79,20 @@ def get_resumo_projeto(projeto_id):
     tempo_total = tempo_agg['horas'] or Decimal('0')
     custo_mao_de_obra = tempo_agg['custo'] or Decimal('0')
 
-    custo_materiais = (
-        EmpenhoMaterial.objects
-        .filter(projeto_id=projeto_id)
-        .aggregate(
-            total=Sum(
-                ExpressionWrapper(
-                    F('quantidade_empenhada') * F('material__custo_estimado'),
-                    output_field=DecimalField(max_digits=14, decimal_places=2)
-                )
+    materiais_qs = EmpenhoMaterial.objects.filter(projeto_id=projeto_id)
+    if data_inicio:
+        materiais_qs = materiais_qs.filter(data_empenho__gte=data_inicio)
+    if data_fim:
+        materiais_qs = materiais_qs.filter(data_empenho__lte=data_fim)
+
+    custo_materiais = materiais_qs.aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F('quantidade_empenhada') * F('material__custo_estimado'),
+                output_field=DecimalField(max_digits=14, decimal_places=2)
             )
-        )['total'] or Decimal('0')
-    )
+        )
+    )['total'] or Decimal('0')
 
     return {
         'custo_total': custo_mao_de_obra + custo_materiais,
@@ -102,12 +108,19 @@ def formatar_material(item):
     }
 
 
-def get_materiais_projeto(projeto_id, page=1, page_size=10):
+def get_materiais_projeto(projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, material=None):
     page = normalizar_pagina(page)
 
+    base_qs = EmpenhoMaterial.objects.filter(projeto_id=projeto_id)
+    if data_inicio:
+        base_qs = base_qs.filter(data_empenho__gte=data_inicio)
+    if data_fim:
+        base_qs = base_qs.filter(data_empenho__lte=data_fim)
+    if material:
+        base_qs = base_qs.filter(material__descricao__icontains=material)
+
     materiais_qs = (
-        EmpenhoMaterial.objects
-        .filter(projeto_id=projeto_id)
+        base_qs
         .values('material_id', 'material__descricao', 'material__custo_estimado')
         .annotate(quantidade=Sum('quantidade_empenhada'))
         .annotate(
@@ -131,3 +144,14 @@ def get_materiais_projeto(projeto_id, page=1, page_size=10):
         'total_pages': total_pages,
         'results': resultados,
     }
+
+
+def get_materiais_disponiveis(projeto_id):
+    from ..models import Material
+    return list(
+        Material.objects
+        .filter(empenhomaterial__projeto_id=projeto_id)
+        .distinct()
+        .order_by('descricao')
+        .values('id', 'descricao')
+    )

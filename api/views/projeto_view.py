@@ -1,6 +1,19 @@
 from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_GET
-from ..services.projeto_svc import listar_projetos, get_resumo_projeto, get_materiais_projeto, get_overview_data_all
+from ..services.projeto_svc import (
+    listar_projetos,
+    get_resumo_projeto,
+    get_materiais_projeto,
+    get_overview_data_all,
+    get_materiais_disponiveis,
+)
+
+
+def _extrair_periodo(request):
+    """Retorna (data_inicio, data_fim) das query params, ou None se ausentes/vazias."""
+    data_inicio = request.GET.get('data_inicio') or None
+    data_fim = request.GET.get('data_fim') or None
+    return data_inicio, data_fim
 
 @require_GET
 def get_overview_projetos(request):
@@ -28,7 +41,8 @@ def listar_projetos_view(request):
 @require_GET
 def get_resumo_projeto_view(request, projeto_id):
     try:
-        resumo = get_resumo_projeto(projeto_id)
+        data_inicio, data_fim = _extrair_periodo(request)
+        resumo = get_resumo_projeto(projeto_id, data_inicio=data_inicio, data_fim=data_fim)
         return JsonResponse(resumo)
     except Http404:
         return JsonResponse({'error': 'Projeto não encontrado'}, status=404)
@@ -39,9 +53,26 @@ def get_resumo_projeto_view(request, projeto_id):
 def get_materiais_projeto_view(request, projeto_id):
     try:
         page = request.GET.get('page', 1)
-        materiais = get_materiais_projeto(projeto_id, page=page, page_size=10)
+        data_inicio, data_fim = _extrair_periodo(request)
+        material = request.GET.get('material') or None
+        materiais = get_materiais_projeto(
+            projeto_id,
+            page=page,
+            page_size=10,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            material=material,
+        )
         return JsonResponse(materiais)
     except Http404:
         return JsonResponse({'error': 'Projeto não encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_materiais_disponiveis_view(request, projeto_id):
+    try:
+        return JsonResponse(get_materiais_disponiveis(projeto_id), safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

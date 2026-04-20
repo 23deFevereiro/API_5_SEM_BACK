@@ -3,16 +3,23 @@ from django.db.models import Sum
 from ..models import Tarefa, TempoTarefa, Projeto
 
 
-def get_funcionarios_projeto(projeto_id, page=1, page_size=10):
+def get_funcionarios_projeto(projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, funcionario=None):
     page = max(int(page), 1)
 
     tarefas_ids = Tarefa.objects.filter(
         projeto_id=projeto_id
     ).values_list('id', flat=True)
 
+    base_qs = TempoTarefa.objects.filter(tarefa_id__in=tarefas_ids)
+    if data_inicio:
+        base_qs = base_qs.filter(data__gte=data_inicio)
+    if data_fim:
+        base_qs = base_qs.filter(data__lte=data_fim)
+    if funcionario:
+        base_qs = base_qs.filter(usuario__icontains=funcionario)
+
     funcionarios_qs = (
-        TempoTarefa.objects
-        .filter(tarefa_id__in=tarefas_ids)
+        base_qs
         .values('usuario')
         .annotate(total_horas=Sum('horas_trabalhadas'))
         .order_by('usuario')

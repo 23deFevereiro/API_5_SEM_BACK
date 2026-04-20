@@ -1,9 +1,22 @@
 import pytest
+from datetime import date
 from pytest import approx
 from model_bakery import baker
 from django.test import RequestFactory
-from api.views.projeto_view import listar_projetos_view, get_resumo_projeto_view, get_materiais_projeto_view, get_overview_projetos
-from api.services.projeto_svc import listar_projetos, get_resumo_projeto, get_materiais_projeto, get_overview_data_all
+from api.views.projeto_view import (
+    listar_projetos_view,
+    get_resumo_projeto_view,
+    get_materiais_projeto_view,
+    get_overview_projetos,
+    get_materiais_disponiveis_view,
+)
+from api.services.projeto_svc import (
+    listar_projetos,
+    get_resumo_projeto,
+    get_materiais_projeto,
+    get_overview_data_all,
+    get_materiais_disponiveis,
+)
 
 
 @pytest.mark.django_db
@@ -108,6 +121,26 @@ class TestGetResumoProjeto:
         baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=4.5)
         resultado = get_resumo_projeto(projeto.id)
         assert resultado['tempo_total'] == approx(12.5)
+
+    def test_resumo_filtra_tempo_por_periodo(self):
+        projeto = baker.make('api.Projeto', custo_hora=0)
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa, data=date(2025, 1, 10), horas_trabalhadas=8.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa, data=date(2025, 6, 10), horas_trabalhadas=4.0)
+        resultado = get_resumo_projeto(projeto.id,
+                                       data_inicio='2025-06-01', data_fim='2025-06-30')
+        assert resultado['tempo_total'] == approx(4.0)
+
+    def test_resumo_filtra_materiais_por_data_empenho(self):
+        projeto = baker.make('api.Projeto', custo_hora=0)
+        material = baker.make('api.Material', custo_estimado=100.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material,
+                   quantidade_empenhada=5, data_empenho=date(2025, 1, 15))
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material,
+                   quantidade_empenhada=2, data_empenho=date(2025, 6, 15))
+        resultado = get_resumo_projeto(projeto.id,
+                                       data_inicio='2025-06-01', data_fim='2025-06-30')
+        assert resultado['custo_total'] == approx(200.0)
 
 
 @pytest.mark.django_db
@@ -244,6 +277,71 @@ class TestGetMateriaisProjeto:
         baker.make('api.EmpenhoMaterial', projeto=projeto2, material=material, quantidade_empenhada=5)
         resultado = get_materiais_projeto(projeto1.id)
         assert resultado['count'] == 0
+
+    def test_filtra_materiais_por_periodo(self):
+        projeto = baker.make('api.Projeto')
+        material = baker.make('api.Material', descricao='Capacitor', custo_estimado=5.0)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material,
+                   quantidade_empenhada=5, data_empenho=date(2025, 1, 1))
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material,
+                   quantidade_empenhada=10, data_empenho=date(2025, 6, 1))
+        resultado = get_materiais_projeto(projeto.id,
+                                          data_inicio='2025-06-01', data_fim='2025-06-30')
+        assert resultado['count'] == 1
+        assert resultado['results'][0]['quantidade'] == 10
+
+    def test_filtra_materiais_por_nome(self):
+        projeto = baker.make('api.Projeto')
+        capacitor = baker.make('api.Material', descricao='Capacitor', custo_estimado=5.0)
+        resistor = baker.make('api.Material', descricao='Resistor', custo_estimado=3.0)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=capacitor, quantidade_empenhada=1)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=resistor, quantidade_empenhada=1)
+        resultado = get_materiais_projeto(projeto.id, material='cap')
+        assert resultado['count'] == 1
+        assert resultado['results'][0]['nome_material'] == 'Capacitor'
+
+
+@pytest.mark.django_db
+class TestGetMateriaisDisponiveis:
+
+    def test_retorna_vazio_sem_empenhos(self):
+        projeto = baker.make('api.Projeto')
+        assert get_materiais_disponiveis(projeto.id) == []
+
+    def test_retorna_materiais_empenhados_distintos(self):
+        projeto = baker.make('api.Projeto')
+        capacitor = baker.make('api.Material', descricao='Capacitor', custo_estimado=1.0)
+        resistor = baker.make('api.Material', descricao='Resistor', custo_estimado=1.0)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=capacitor, quantidade_empenhada=1)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=capacitor, quantidade_empenhada=2)
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=resistor, quantidade_empenhada=1)
+        resultado = get_materiais_disponiveis(projeto.id)
+        descricoes = [m['descricao'] for m in resultado]
+        assert descricoes == ['Capacitor', 'Resistor']
+
+    def test_ignora_materiais_de_outro_projeto(self):
+        projeto = baker.make('api.Projeto')
+        outro = baker.make('api.Projeto')
+        material = baker.make('api.Material', descricao='Diodo', custo_estimado=1.0)
+        baker.make('api.EmpenhoMaterial', projeto=outro, material=material, quantidade_empenhada=1)
+        assert get_materiais_disponiveis(projeto.id) == []
+
+
+@pytest.mark.django_db
+class TestGetMateriaisDisponiveisView:
+
+    def test_retorna_200(self):
+        projeto = baker.make('api.Projeto')
+        factory = RequestFactory()
+        request = factory.get(f'/projetos/{projeto.id}/materiais-disponiveis/')
+        response = get_materiais_disponiveis_view(request, projeto.id)
+        assert response.status_code == 200
+
+    def test_retorna_405_para_post(self):
+        factory = RequestFactory()
+        request = factory.post('/projetos/1/materiais-disponiveis/')
+        response = get_materiais_disponiveis_view(request, 1)
+        assert response.status_code == 405
 
 
 @pytest.mark.django_db
