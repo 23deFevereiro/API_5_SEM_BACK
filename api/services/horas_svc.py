@@ -1,5 +1,4 @@
 from django.db.models import Sum
-
 from ..models import Tarefa, TempoTarefa
 from collections import defaultdict
 
@@ -45,9 +44,7 @@ def get_burnup_horas_projetos():
 
     for registro in registros:
         projeto_id = registro['tarefa__projeto__id']
-        codigo_projeto = registro['tarefa__projeto__codigo_projeto']
         projeto_nome = registro['tarefa__projeto__nome_projeto']
-        status = registro['tarefa__projeto__status']
 
         projetos_map[(projeto_id, projeto_nome)].append({
             'data': registro['data'].isoformat(),
