@@ -1,6 +1,5 @@
 from django.db.models import Sum
 
-from API_5_SEM_BACK.api.models import projeto
 from ..models import Tarefa, TempoTarefa
 from collections import defaultdict
 
