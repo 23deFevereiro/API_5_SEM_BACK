@@ -1,4 +1,6 @@
 from django.db.models import Sum
+
+from API_5_SEM_BACK.api.models import projeto
 from ..models import Tarefa, TempoTarefa
 from collections import defaultdict
 
@@ -31,7 +33,9 @@ def get_burnup_horas_projetos():
         .select_related('tarefa__projeto')
         .values(
             'tarefa__projeto__id',
+            'tarefa__projeto__codigo_projeto',
             'tarefa__projeto__nome_projeto',
+            'tarefa__projeto__status',
             'data'
         )
         .annotate(total_horas=Sum('horas_trabalhadas'))
@@ -42,7 +46,9 @@ def get_burnup_horas_projetos():
 
     for registro in registros:
         projeto_id = registro['tarefa__projeto__id']
+        codigo_projeto = registro['tarefa__projeto__codigo_projeto']
         projeto_nome = registro['tarefa__projeto__nome_projeto']
+        status = registro['tarefa__projeto__status']
 
         projetos_map[(projeto_id, projeto_nome)].append({
             'data': registro['data'].isoformat(),
@@ -51,7 +57,7 @@ def get_burnup_horas_projetos():
 
     resultado = []
 
-    for (projeto_id, projeto_nome), serie in projetos_map.items():
+    for (projeto_id, codigo_projeto, projeto_nome, status), serie in projetos_map.items():
         acumulado = 0
 
         for ponto in serie:
@@ -59,9 +65,11 @@ def get_burnup_horas_projetos():
             ponto['horas_acumuladas'] = acumulado
 
         resultado.append({
-            'projeto_id': projeto_id,
-            'projeto': projeto_nome,
-            'serie': serie
+            "projeto_id": projeto.id,
+            "codigo_projeto": projeto.codigo_projeto,
+            "projeto": projeto.nome_projeto,
+            "status": projeto.status,
+            "serie": serie,
         })
 
     return resultado
