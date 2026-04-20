@@ -56,17 +56,13 @@ def get_overview_data_all(programa_id=None):
     return cost_list
 
 
-def get_resumo_projeto(projeto_id, data_inicio=None, data_fim=None):
+def get_resumo_projeto(projeto_id):
     projeto = get_object_or_404(Projeto, id=projeto_id)
     custo_hora = projeto.custo_hora or Decimal('0')
 
-    tempo_qs = TempoTarefa.objects.filter(tarefa__projeto_id=projeto_id)
-    if data_inicio:
-        tempo_qs = tempo_qs.filter(data__gte=data_inicio)
-    if data_fim:
-        tempo_qs = tempo_qs.filter(data__lte=data_fim)
-
-    tempo_agg = tempo_qs.aggregate(
+    tempo_agg = TempoTarefa.objects.filter(
+        tarefa__projeto_id=projeto_id
+    ).aggregate(
         horas=Sum('horas_trabalhadas'),
         custo=Sum(
             ExpressionWrapper(
@@ -79,20 +75,18 @@ def get_resumo_projeto(projeto_id, data_inicio=None, data_fim=None):
     tempo_total = tempo_agg['horas'] or Decimal('0')
     custo_mao_de_obra = tempo_agg['custo'] or Decimal('0')
 
-    materiais_qs = EmpenhoMaterial.objects.filter(projeto_id=projeto_id)
-    if data_inicio:
-        materiais_qs = materiais_qs.filter(data_empenho__gte=data_inicio)
-    if data_fim:
-        materiais_qs = materiais_qs.filter(data_empenho__lte=data_fim)
-
-    custo_materiais = materiais_qs.aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F('quantidade_empenhada') * F('material__custo_estimado'),
-                output_field=DecimalField(max_digits=14, decimal_places=2)
+    custo_materiais = (
+        EmpenhoMaterial.objects
+        .filter(projeto_id=projeto_id)
+        .aggregate(
+            total=Sum(
+                ExpressionWrapper(
+                    F('quantidade_empenhada') * F('material__custo_estimado'),
+                    output_field=DecimalField(max_digits=14, decimal_places=2)
+                )
             )
-        )
-    )['total'] or Decimal('0')
+        )['total'] or Decimal('0')
+    )
 
     return {
         'custo_total': custo_mao_de_obra + custo_materiais,

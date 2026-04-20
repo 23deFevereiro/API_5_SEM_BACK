@@ -41,8 +41,7 @@ def listar_projetos_view(request):
 @require_GET
 def get_resumo_projeto_view(request, projeto_id):
     try:
-        data_inicio, data_fim = _extrair_periodo(request)
-        resumo = get_resumo_projeto(projeto_id, data_inicio=data_inicio, data_fim=data_fim)
+        resumo = get_resumo_projeto(projeto_id)
         return JsonResponse(resumo)
     except Http404:
         return JsonResponse({'error': 'Projeto não encontrado'}, status=404)

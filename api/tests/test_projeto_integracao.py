@@ -122,26 +122,6 @@ class TestGetResumoProjeto:
         resultado = get_resumo_projeto(projeto.id)
         assert resultado['tempo_total'] == approx(12.5)
 
-    def test_resumo_filtra_tempo_por_periodo(self):
-        projeto = baker.make('api.Projeto', custo_hora=0)
-        tarefa = baker.make('api.Tarefa', projeto=projeto)
-        baker.make('api.TempoTarefa', tarefa=tarefa, data=date(2025, 1, 10), horas_trabalhadas=8.0)
-        baker.make('api.TempoTarefa', tarefa=tarefa, data=date(2025, 6, 10), horas_trabalhadas=4.0)
-        resultado = get_resumo_projeto(projeto.id,
-                                       data_inicio='2025-06-01', data_fim='2025-06-30')
-        assert resultado['tempo_total'] == approx(4.0)
-
-    def test_resumo_filtra_materiais_por_data_empenho(self):
-        projeto = baker.make('api.Projeto', custo_hora=0)
-        material = baker.make('api.Material', custo_estimado=100.00)
-        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material,
-                   quantidade_empenhada=5, data_empenho=date(2025, 1, 15))
-        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material,
-                   quantidade_empenhada=2, data_empenho=date(2025, 6, 15))
-        resultado = get_resumo_projeto(projeto.id,
-                                       data_inicio='2025-06-01', data_fim='2025-06-30')
-        assert resultado['custo_total'] == approx(200.0)
-
 
 @pytest.mark.django_db
 class TestGetOverviewDataAll:
