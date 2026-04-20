@@ -1,0 +1,101 @@
+id,codigo_material,descricao,categoria,fabricante,custo_estimado,status
+1,MAT001,Capacitor Cerâmico 10uF 0603,Capacitor,TDK Corporation,96.68,Ativo
+2,MAT002,Diodo Retificador 1N4007,Diodo,Analog Devices,63.98,Ativo
+3,MAT003,Capacitor Cerâmico 1nF 0402,Capacitor,Analog Devices,1.62,Ativo
+4,MAT004,Regulador Linear LM7805,Regulador de Tensão,ON Semiconductor,115.3,Ativo
+5,MAT005,LED Infravermelho 940nm,LED,NXP Semiconductors,52.31,Ativo
+6,MAT006,Indutor Toroidal 47uH 3A,Indutor,TDK Corporation,97.0,Ativo
+7,MAT007,Regulador Boost MT3608,Regulador de Tensão,ON Semiconductor,99.11,Ativo
+8,MAT008,Conector JST-XH 6 vias,Conector,STMicroelectronics,33.54,Ativo
+9,MAT009,Relé Reed 5V,Relé,TDK Corporation,73.28,Ativo
+10,MAT010,Resistor SMD 100R 0402,Resistor,Analog Devices,21.9,Ativo
+11,MAT011,Relé Estado Sólido 25A,Relé,Analog Devices,33.63,Ativo
+12,MAT012,Display TFT 2.4 SPI,Display,Murata,1.32,Obsoleto
+13,MAT013,Capacitor Eletrolítico 100uF 25V,Capacitor,ON Semiconductor,58.68,Ativo
+14,MAT014,Transformador Toroidal 15V 3A,Transformador,Vishay,53.84,Ativo
+15,MAT015,Sensor Temperatura NTC 10k,Sensor,ON Semiconductor,83.05,Ativo
+16,MAT016,Diodo Zener 5V1,Diodo,Vishay,66.46,Ativo
+17,MAT017,Transformador ETD34 Ferrite,Transformador,Analog Devices,42.28,Ativo
+18,MAT018,Sensor Corrente ACS712,Sensor,Infineon Technologies,14.57,Ativo
+19,MAT019,Capacitor Cerâmico 1nF 0402,Capacitor,NXP Semiconductors,23.07,Ativo
+20,MAT020,Sensor Umidade DHT22,Sensor,Murata,71.66,Obsoleto
+21,MAT021,LED SMD Branco 0805,LED,Microchip Technology,27.38,Ativo
+22,MAT022,Resistor Array 10k 4x,Resistor,NXP Semiconductors,32.99,Obsoleto
+23,MAT023,Transistor NPN 2N2222,Transistor,NXP Semiconductors,76.58,Ativo
+24,MAT024,Capacitor Cerâmico 100nF 0805,Capacitor,TDK Corporation,34.19,Ativo
+25,MAT025,Conector JST-XH 6 vias,Conector,Texas Instruments,30.37,Inativo
+26,MAT026,Capacitor Cerâmico 100nF 0805,Capacitor,ON Semiconductor,59.06,Ativo
+27,MAT027,Indutor SMD 10uH 0805,Indutor,NXP Semiconductors,17.99,Ativo
+28,MAT028,Acelerômetro MPU6050,Sensor,Infineon Technologies,14.3,Ativo
+29,MAT029,Diodo Retificador UF4007,Diodo,TDK Corporation,27.16,Ativo
+30,MAT030,Regulador Boost MT3608,Regulador de Tensão,Microchip Technology,103.23,Obsoleto
+31,MAT031,Sensor Umidade DHT22,Sensor,TDK Corporation,7.32,Obsoleto
+32,MAT032,Capacitor Eletrolítico 100uF 25V,Capacitor,Infineon Technologies,31.83,Ativo
+33,MAT033,FPGA Spartan-7 XC7S25,CI Digital,Murata,9.1,Ativo
+34,MAT034,Regulador Linear LM317,Regulador de Tensão,Vishay,35.02,Ativo
+35,MAT035,Transformador Pulso EE16,Transformador,Vishay,8.63,Ativo
+36,MAT036,Sensor Umidade DHT22,Sensor,Infineon Technologies,51.07,Ativo
+37,MAT037,Indutor PTH 100uH,Indutor,Microchip Technology,99.21,Ativo
+38,MAT038,DAC 16bit MCP4725,CI Analógico,TDK Corporation,89.9,Ativo
+39,MAT039,Sensor Pressão BMP280,Sensor,STMicroelectronics,56.3,Ativo
+40,MAT040,MOSFET N-CH AO3400,MOSFET,Murata,64.84,Ativo
+41,MAT041,Diodo Retificador 1N4007,Diodo,ON Semiconductor,88.17,Ativo
+42,MAT042,Resistor SMD 10k 0805,Resistor,Infineon Technologies,115.43,Inativo
+43,MAT043,Diodo Retificador UF4007,Diodo,Texas Instruments,119.95,Ativo
+44,MAT044,Sensor Umidade DHT22,Sensor,Texas Instruments,91.6,Ativo
+45,MAT045,Transistor Darlington TIP122,Transistor,Microchip Technology,21.86,Ativo
+46,MAT046,Indutor SMD 4.7uH 1210,Indutor,STMicroelectronics,56.45,Ativo
+47,MAT047,Conector Molex 4 vias,Conector,NXP Semiconductors,39.64,Ativo
+48,MAT048,Sensor Pressão BMP280,Sensor,Murata,4.5,Ativo
+49,MAT049,Sensor Corrente ACS712,Sensor,STMicroelectronics,116.43,Ativo
+50,MAT050,Transistor NPN BC547,Transistor,Murata,55.49,Ativo
+51,MAT051,Transistor NPN 2N2222,Transistor,TDK Corporation,90.8,Ativo
+52,MAT052,Relé 5V 10A SPDT,Relé,Infineon Technologies,32.12,Ativo
+53,MAT053,Sensor Pressão BMP280,Sensor,Vishay,14.66,Obsoleto
+54,MAT054,Diodo Schottky 1N5819,Diodo,NXP Semiconductors,37.36,Ativo
+55,MAT055,MOSFET N-CH IRFZ44N,MOSFET,Infineon Technologies,119.07,Obsoleto
+56,MAT056,Regulador Linear LM7805,Regulador de Tensão,NXP Semiconductors,59.86,Ativo
+57,MAT057,Transistor NPN 2N2222,Transistor,ON Semiconductor,100.18,Obsoleto
+58,MAT058,Buffer 74HC245,CI Digital,Murata,17.44,Ativo
+59,MAT059,Diodo Retificador UF4007,Diodo,NXP Semiconductors,103.7,Ativo
+60,MAT060,Relé Reed 5V,Relé,Analog Devices,112.12,Ativo
+61,MAT061,LED Vermelho 5mm,LED,Microchip Technology,87.15,Inativo
+62,MAT062,Diodo TVS SMBJ24A,Diodo,NXP Semiconductors,53.64,Ativo
+63,MAT063,Conector DB9 Macho,Conector,Murata,45.33,Obsoleto
+64,MAT064,LED SMD Branco 0805,LED,Infineon Technologies,68.66,Ativo
+65,MAT065,Relé Reed 5V,Relé,Texas Instruments,38.25,Ativo
+66,MAT066,Display 7 Segmentos Anodo,Display,ON Semiconductor,118.61,Ativo
+67,MAT067,Indutor PTH 100uH,Indutor,Vishay,115.78,Ativo
+68,MAT068,Diodo Zener 5V1,Diodo,STMicroelectronics,104.92,Ativo
+69,MAT069,Transistor Darlington TIP122,Transistor,Texas Instruments,86.72,Ativo
+70,MAT070,Indutor PTH 100uH,Indutor,STMicroelectronics,56.39,Obsoleto
+71,MAT071,Conector DB9 Macho,Conector,ON Semiconductor,78.02,Inativo
+72,MAT072,LED Alta Potência 3W Branco,LED,ON Semiconductor,114.5,Ativo
+73,MAT073,Display 7 Segmentos Anodo,Display,Murata,4.4,Ativo
+74,MAT074,Indutor Toroidal 47uH 3A,Indutor,Infineon Technologies,89.64,Ativo
+75,MAT075,Capacitor Cerâmico 100nF 0805,Capacitor,Vishay,20.05,Ativo
+76,MAT076,Resistor SMD 10k 0805,Resistor,Analog Devices,95.56,Ativo
+77,MAT077,Conector USB-C Fêmea,Conector,NXP Semiconductors,29.38,Ativo
+78,MAT078,Indutor PTH 100uH,Indutor,NXP Semiconductors,21.09,Ativo
+79,MAT079,MOSFET N-CH BSS138,MOSFET,Infineon Technologies,59.77,Ativo
+80,MAT080,Buffer 74HC245,CI Digital,Microchip Technology,55.2,Ativo
+81,MAT081,Display 7 Segmentos Anodo,Display,Microchip Technology,81.35,Ativo
+82,MAT082,Regulador Buck LM2596,Regulador de Tensão,TDK Corporation,35.97,Obsoleto
+83,MAT083,Transformador Pulso EE16,Transformador,Vishay,101.45,Ativo
+84,MAT084,MOSFET P-CH SI2301,MOSFET,STMicroelectronics,28.54,Ativo
+85,MAT085,Diodo Zener 5V1,Diodo,Microchip Technology,2.73,Inativo
+86,MAT086,MOSFET N-CH AO3400,MOSFET,Texas Instruments,67.95,Ativo
+87,MAT087,Transformador 220V/12V 1A,Transformador,TDK Corporation,89.45,Inativo
+88,MAT088,Display TFT 2.4 SPI,Display,Infineon Technologies,72.89,Ativo
+89,MAT089,Indutor PTH 100uH,Indutor,TDK Corporation,30.15,Ativo
+90,MAT090,Relé 12V 5A DPDT,Relé,STMicroelectronics,108.42,Ativo
+91,MAT091,Sensor Pressão BMP280,Sensor,Texas Instruments,69.59,Ativo
+92,MAT092,Capacitor Cerâmico 10uF 0603,Capacitor,Analog Devices,89.72,Ativo
+93,MAT093,Comparador LM393,CI Analógico,Analog Devices,63.75,Obsoleto
+94,MAT094,LED SMD Branco 0805,LED,Microchip Technology,109.69,Obsoleto
+95,MAT095,Relé Estado Sólido 25A,Relé,Analog Devices,96.53,Ativo
+96,MAT096,Capacitor Eletrolítico 100uF 25V,Capacitor,Infineon Technologies,103.23,Ativo
+97,MAT097,MOSFET N-CH BSS138,MOSFET,Analog Devices,10.93,Ativo
+98,MAT098,Sensor Umidade DHT22,Sensor,STMicroelectronics,54.63,Ativo
+99,MAT099,Indutor Toroidal 47uH 3A,Indutor,TDK Corporation,45.78,Ativo
+100,MAT100,Conector Molex 4 vias,Conector,Infineon Technologies,56.63,Ativo

@@ -1,12 +1,12 @@
 import pytest
 import pandas as pd
 import numpy as np
-from datetime import datetime, date, timedelta
-from unittest.mock import patch, MagicMock, mock_open
+from datetime import datetime, date
+from unittest.mock import patch
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'management', 'commands'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'management', 'commands'))
 
 from fix_csv import (
     criar_pasta_saida,
@@ -44,7 +44,6 @@ class TestSalvarCsv:
     @patch('builtins.print')
     def test_salvar_csv_com_sucesso(self, mock_print, tmp_path):
         df = pd.DataFrame({'col1': [1, 2], 'col2': [3, 4]})
-        arquivo = tmp_path / 'test.csv'
         
         with patch('fix_csv.OUTPUT_FOLDER', str(tmp_path)):
             resultado = salvar_csv(df, 'test.csv')
@@ -418,6 +417,7 @@ class TestCorrigirProgramasConcluidos:
 
 class TestMain:
     @patch('builtins.print')
+    @patch('fix_csv.shutil.copy2')
     @patch('fix_csv.salvar_csv')
     @patch('fix_csv.corrigir_programas_concluidos')
     @patch('fix_csv.corrigir_inconsistencia_4')
@@ -436,6 +436,7 @@ class TestMain:
         mock_corr4,
         mock_corr_cascata,
         mock_salvar,
+        mock_copy2,
         mock_print,
     ):
         df_tempo = pd.DataFrame({'tarefa_id': [1], 'usuario': ['João']})
@@ -467,6 +468,7 @@ class TestMain:
         assert exc_info.value.code == 1
 
     @patch('builtins.print')
+    @patch('fix_csv.shutil.copy2')
     @patch('fix_csv.salvar_csv')
     @patch('fix_csv.corrigir_programas_concluidos')
     @patch('fix_csv.corrigir_inconsistencia_4')
@@ -485,6 +487,7 @@ class TestMain:
         mock_corr4,
         mock_corr_cascata,
         mock_salvar,
+        mock_copy2,
         mock_print,
     ):
         df_tempo = pd.DataFrame({
