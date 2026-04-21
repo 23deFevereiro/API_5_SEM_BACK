@@ -1,7 +1,7 @@
 from datetime import date
 
 ERRO_INTERNO = 'Erro interno do servidor'
-
+ERRO_INTERNO_VIEW_PROJETO = 'Erro interno na view de resumo do projeto'
 
 def _parse_data(valor, nome_param):
     """Valida e converte uma string YYYY-MM-DD em date, ou None se ausente."""

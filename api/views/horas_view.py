@@ -32,6 +32,6 @@ def get_horas_por_funcionario_view(request, projeto_id):
 def get_nomes_funcionarios_view(request, projeto_id):
     try:
         return JsonResponse(get_nomes_funcionarios_projeto(projeto_id), safe=False)
-    except Exception as e:
+    except Exception as _:
         logger.exception('Erro interno na view de horas')
         return JsonResponse({'error': ERRO_INTERNO}, status=500)
