@@ -47,7 +47,7 @@ def get_burnup_horas_projetos():
         projeto_nome = registro['tarefa__projeto__nome_projeto']
 
         projetos_map[(projeto_id, projeto_nome)].append({
-            'data': registro['data'].isoformat(),
+            'data': registro['data'],
             'horas': float(registro['total_horas'] or 0),
         })
 
