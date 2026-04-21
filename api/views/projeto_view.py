@@ -3,7 +3,7 @@ import logging
 from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_GET
 
-from .view_utils import extrair_periodo
+from .view_utils import ERRO_INTERNO, extrair_periodo
 
 logger = logging.getLogger(__name__)
 from ..services.projeto_svc import (
@@ -46,7 +46,7 @@ def get_resumo_projeto_view(request, projeto_id):
         return JsonResponse({'error': 'Projeto não encontrado'}, status=404)
     except Exception as e:
         logger.exception('Erro interno na view de projeto')
-        return JsonResponse({'error': 'Erro interno do servidor'}, status=500)
+        return JsonResponse({'error': ERRO_INTERNO}, status=500)
 
 @require_GET
 def get_materiais_projeto_view(request, projeto_id):
@@ -69,7 +69,7 @@ def get_materiais_projeto_view(request, projeto_id):
         return JsonResponse({'error': 'Projeto não encontrado'}, status=404)
     except Exception as e:
         logger.exception('Erro interno na view de projeto')
-        return JsonResponse({'error': 'Erro interno do servidor'}, status=500)
+        return JsonResponse({'error': ERRO_INTERNO}, status=500)
 
 
 @require_GET
@@ -78,4 +78,4 @@ def get_materiais_disponiveis_view(request, projeto_id):
         return JsonResponse(get_materiais_disponiveis(projeto_id), safe=False)
     except Exception as e:
         logger.exception('Erro interno na view de projeto')
-        return JsonResponse({'error': 'Erro interno do servidor'}, status=500)
+        return JsonResponse({'error': ERRO_INTERNO}, status=500)

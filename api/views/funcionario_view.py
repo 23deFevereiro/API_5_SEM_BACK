@@ -3,7 +3,7 @@ import logging
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
-from .view_utils import extrair_periodo
+from .view_utils import ERRO_INTERNO, extrair_periodo
 from ..services.funcionario_svc import get_funcionarios_projeto
 
 logger = logging.getLogger(__name__)
@@ -28,4 +28,4 @@ def get_funcionarios_projeto_view(request, projeto_id):
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
         logger.exception('Erro interno na view de funcionário')
-        return JsonResponse({'error': 'Erro interno do servidor'}, status=500)
+        return JsonResponse({'error': ERRO_INTERNO}, status=500)
