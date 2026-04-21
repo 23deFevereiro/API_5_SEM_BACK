@@ -1,14 +1,19 @@
+import logging
+
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+
+from .view_utils import extrair_periodo
 from ..services.funcionario_svc import get_funcionarios_projeto
+
+logger = logging.getLogger(__name__)
 
 
 @require_GET
 def get_funcionarios_projeto_view(request, projeto_id):
     try:
         page = request.GET.get('page', 1)
-        data_inicio = request.GET.get('data_inicio') or None
-        data_fim = request.GET.get('data_fim') or None
+        data_inicio, data_fim = extrair_periodo(request)
         funcionario = request.GET.get('funcionario') or None
         funcionarios = get_funcionarios_projeto(
             projeto_id,
@@ -19,5 +24,8 @@ def get_funcionarios_projeto_view(request, projeto_id):
             funcionario=funcionario,
         )
         return JsonResponse(funcionarios)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.exception('Erro interno na view de funcionário')
+        return JsonResponse({'error': 'Erro interno do servidor'}, status=500)

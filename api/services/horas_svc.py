@@ -41,5 +41,6 @@ def get_nomes_funcionarios_projeto(projeto_id):
         TempoTarefa.objects
         .filter(tarefa_id__in=tarefas_ids)
         .values_list('usuario', flat=True)
+        .order_by('usuario')
         .distinct()
     )

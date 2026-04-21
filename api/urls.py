@@ -31,5 +31,5 @@ urlpatterns = [
     path('api/projetos/<int:projeto_id>/funcionarios/', funcionario_view.get_funcionarios_projeto_view, name='funcionarios_projeto'),
     path('api/projetos/<int:projeto_id>/nomes-funcionarios/', horas_view.get_nomes_funcionarios_view, name='nomes_funcionarios_projeto'),
     path('api/projetos/<int:projeto_id>/materiais-disponiveis/', projeto_view.get_materiais_disponiveis_view, name='materiais_disponiveis_projeto'),
-    path('api/programas', programa_view.listar_programas_view, name='listar_programas'),
+    path('api/programas/', programa_view.listar_programas_view, name='listar_programas'),
 ]

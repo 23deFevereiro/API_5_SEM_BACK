@@ -10,18 +10,17 @@ def listar_projetos(search='', programa_id=None):
     projetos = Projeto.objects.all()
     if search:
         projetos = projetos.filter(nome_projeto__icontains=search)
-    if programa_id:
+    if programa_id is not None:
         projetos = projetos.filter(programa=programa_id)
     return list(projetos.values('id', 'codigo_projeto', 'nome_projeto'))
 
 
 def get_overview_data_all(programa_id=None):
     projetos = Projeto.objects.all()
-    if programa_id:
+    if programa_id is not None:
         projetos = projetos.filter(programa=programa_id)
     
-    cost_material = projetos.select_related('empenho_material', 'empenho_material__material'
-    ).filter(status='Em andamento', empenhomaterial__isnull=False
+    cost_material = projetos.filter(status='Em andamento', empenhomaterial__isnull=False
     ).annotate(
         month=ExtractMonth('empenhomaterial__data_empenho'),
         year=ExtractYear('empenhomaterial__data_empenho')
