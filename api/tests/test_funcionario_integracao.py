@@ -1,5 +1,6 @@
 import json
 import pytest
+from datetime import date
 from model_bakery import baker
 from django.test import RequestFactory
 from api.views.funcionario_view import get_funcionarios_projeto_view
@@ -108,6 +109,29 @@ class TestGetFuncionariosProjeto:
         projeto = baker.make('api.Projeto')
         resultado = get_funcionarios_projeto(projeto.id, page=0)
         assert resultado['page'] == 1
+
+    def test_filtra_por_periodo(self):
+        projeto = baker.make('api.Projeto')
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa, usuario='Ana',
+                   data=date(2025, 1, 10), horas_trabalhadas=4.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa, usuario='Bruno',
+                   data=date(2025, 6, 10), horas_trabalhadas=3.0)
+        resultado = get_funcionarios_projeto(projeto.id,
+                                             data_inicio='2025-06-01',
+                                             data_fim='2025-06-30')
+        usuarios = [r['usuario'] for r in resultado['results']]
+        assert 'Bruno' in usuarios
+        assert 'Ana' not in usuarios
+
+    def test_filtra_por_nome_funcionario(self):
+        projeto = baker.make('api.Projeto')
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa, usuario='Ana', horas_trabalhadas=4.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa, usuario='Bruno', horas_trabalhadas=3.0)
+        resultado = get_funcionarios_projeto(projeto.id, funcionario='Ana')
+        usuarios = [r['usuario'] for r in resultado['results']]
+        assert usuarios == ['Ana']
 
 
 @pytest.mark.django_db

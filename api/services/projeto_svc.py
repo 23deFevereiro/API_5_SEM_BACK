@@ -6,16 +6,21 @@ from ..models import Projeto, Tarefa, TempoTarefa, EstoqueMaterialProjeto, Compr
 from ..utils.pagination import normalizar_pagina, calcular_paginacao
 
 
-def listar_projetos(search=''):
+def listar_projetos(search='', programa_id=None):
     projetos = Projeto.objects.all()
     if search:
         projetos = projetos.filter(nome_projeto__icontains=search)
+    if programa_id is not None:
+        projetos = projetos.filter(programa=programa_id)
     return list(projetos.values('id', 'codigo_projeto', 'nome_projeto'))
 
 
-def get_overview_data_all():
-    cost_material = Projeto.objects.select_related('empenho_material', 'empenho_material__material'
-    ).filter(status='Em andamento', empenhomaterial__isnull=False
+def get_overview_data_all(programa_id=None):
+    projetos = Projeto.objects.all()
+    if programa_id is not None:
+        projetos = projetos.filter(programa=programa_id)
+    
+    cost_material = projetos.filter(status='Em andamento', empenhomaterial__isnull=False
     ).annotate(
         month=ExtractMonth('empenhomaterial__data_empenho'),
         year=ExtractYear('empenhomaterial__data_empenho')
@@ -96,12 +101,19 @@ def formatar_material(item):
     }
 
 
-def get_materiais_projeto(projeto_id, page=1, page_size=10):
+def get_materiais_projeto(projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, material=None):
     page = normalizar_pagina(page)
 
+    base_qs = EmpenhoMaterial.objects.filter(projeto_id=projeto_id)
+    if data_inicio:
+        base_qs = base_qs.filter(data_empenho__gte=data_inicio)
+    if data_fim:
+        base_qs = base_qs.filter(data_empenho__lte=data_fim)
+    if material:
+        base_qs = base_qs.filter(material__descricao__icontains=material)
+
     materiais_qs = (
-        EmpenhoMaterial.objects
-        .filter(projeto_id=projeto_id)
+        base_qs
         .values('material_id', 'material__descricao', 'material__custo_estimado')
         .annotate(quantidade=Sum('quantidade_empenhada'))
         .annotate(
@@ -125,3 +137,14 @@ def get_materiais_projeto(projeto_id, page=1, page_size=10):
         'total_pages': total_pages,
         'results': resultados,
     }
+
+
+def get_materiais_disponiveis(projeto_id):
+    from ..models import Material
+    return list(
+        Material.objects
+        .filter(empenhomaterial__projeto_id=projeto_id)
+        .distinct()
+        .order_by('descricao')
+        .values('id', 'descricao')
+    )

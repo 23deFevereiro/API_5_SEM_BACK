@@ -9,3 +9,4 @@ dist/
 build/
 .coverage
 coverage.xml
+api/management/commands/corrected_documents/
