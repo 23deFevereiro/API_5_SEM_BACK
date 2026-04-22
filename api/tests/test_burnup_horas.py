@@ -29,8 +29,8 @@ def test_burnup_basico(mock_tempo):
     assert len(resultado) == 1
     assert resultado[0]["projeto"] == "Projeto A"
     assert resultado[0]["serie"][0]["semana"] == "Semana 1"
-    assert resultado[0]["serie"][0]["horas"] == 5.0
-    assert resultado[0]["serie"][0]["horas_acumuladas"] == 5.0
+    assert resultado[0]["serie"][0]["horas"] == pytest.approx(5.0)
+    assert resultado[0]["serie"][0]["horas_acumuladas"] == pytest.approx(5.0)
 
 
 @patch("api.services.horas_svc.TempoTarefa")
@@ -53,8 +53,8 @@ def test_burnup_semana_4_mais(mock_tempo):
     resultado = get_burnup_horas_projetos()
 
     assert resultado[0]["serie"][-1]["semana"] == "Semana 4+"
-    assert resultado[0]["serie"][-1]["horas"] == 5.0
-    assert resultado[0]["serie"][-1]["horas_acumuladas"] == 6.0
+    assert resultado[0]["serie"][-1]["horas"] == pytest.approx(5.0)
+    assert resultado[0]["serie"][-1]["horas_acumuladas"] == pytest.approx(6.0)
 
 
 @patch("api.services.horas_svc.TempoTarefa")
