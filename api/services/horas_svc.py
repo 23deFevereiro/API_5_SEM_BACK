@@ -66,20 +66,36 @@ def get_burnup_horas_projetos():
 
         data_inicial = serie[0]['data']
 
-        for ponto in serie:
-            acumulado += ponto['horas']
+        semanas_map = defaultdict(float)
 
+        for ponto in serie:
             diferenca_dias = (ponto['data'] - data_inicial).days
             numero_semana = (diferenca_dias // 7) + 1
 
-            ponto['semana'] = f"Semana {numero_semana}"
-            ponto['horas_acumuladas'] = acumulado
-            ponto['data'] = ponto['data'].isoformat()
+            if numero_semana >= 5:
+                numero_semana = 5
+
+            semanas_map[numero_semana] += ponto['horas']
+
+        serie_final = []
+        acumulado = 0
+
+        for numero_semana in range(1, 6):
+            horas_semana = semanas_map[numero_semana]
+            acumulado += horas_semana
+
+            nome_semana = f"Semana {numero_semana}" if numero_semana < 5 else "Semana 5+"
+
+            serie_final.append({
+                "semana": nome_semana,
+                "horas": horas_semana,
+                "horas_acumuladas": acumulado,
+            })
 
         resultado.append({
             "projeto_id": projeto_id,
             "projeto": projeto_nome,
-            "serie": serie,
+            "serie": serie_final,
         })
 
     return resultado
