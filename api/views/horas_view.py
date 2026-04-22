@@ -34,8 +34,7 @@ def get_burnup_horas_projetos_view(request):
         return JsonResponse(dados, safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-        logger.exception('Erro interno na view de horas')
-        return JsonResponse({'error': ERRO_INTERNO}, status=500)
+
 
 
 @require_GET
