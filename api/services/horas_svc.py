@@ -72,19 +72,21 @@ def get_burnup_horas_projetos():
             diferenca_dias = (ponto['data'] - data_inicial).days
             numero_semana = (diferenca_dias // 7) + 1
 
-            if numero_semana >= 5:
-                numero_semana = 5
+            if numero_semana >= 4:
+                numero_semana = 4
 
             semanas_map[numero_semana] += ponto['horas']
+        
+        ultima_semana = max(semanas_map.keys(), default=0)
 
         serie_final = []
         acumulado = 0
 
-        for numero_semana in range(1, 6):
+        for numero_semana in range(1, ultima_semana + 1):
             horas_semana = semanas_map[numero_semana]
             acumulado += horas_semana
 
-            nome_semana = f"Semana {numero_semana}" if numero_semana < 5 else "Semana 5+"
+            nome_semana = f"Semana {numero_semana}" if numero_semana < 4 else "Semana 4+"
 
             serie_final.append({
                 "semana": nome_semana,
