@@ -32,4 +32,5 @@ urlpatterns = [
     path('api/projetos/<int:projeto_id>/nomes-funcionarios/', horas_view.get_nomes_funcionarios_view, name='nomes_funcionarios_projeto'),
     path('api/projetos/<int:projeto_id>/materiais-disponiveis/', projeto_view.get_materiais_disponiveis_view, name='materiais_disponiveis_projeto'),
     path('api/programas/', programa_view.listar_programas_view, name='listar_programas'),
+    path('api/programas/<int:programa_id>/resumo/', programa_view.get_resumo_programa_view, name='resumo_programa'),
 ]
