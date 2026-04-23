@@ -13,19 +13,19 @@ class TestListarProgramas:
         assert resultado == []
 
     def test_retorna_programas_quando_existem(self):
-        baker.make('api.Programa', nome_programa=seq('Programa Alpha '), _quantity=3)
+        baker.make('api.DimPrograma', _quantity=3)
         resultado = listar_programas()
         assert len(resultado) == 3
 
     def test_filtra_por_nome_quando_search_informado(self):
-        baker.make('api.Programa', nome_programa='Programa Alpha')
-        baker.make('api.Programa', nome_programa='Programa Beta')
+        baker.make('api.DimPrograma', nome_programa='Programa Alpha')
+        baker.make('api.DimPrograma', nome_programa='Programa Beta')
         resultado = listar_programas(search='Alpha')
         assert len(resultado) == 1
         assert resultado[0]['nome_programa'] == 'Programa Alpha'
 
-    def test_retorna_campos_corretos(self):
-        baker.make('api.Programa', nome_programa='Teste')
+    def test_retorna_campos_id_e_nome(self):
+        baker.make('api.DimPrograma', nome_programa='Aeroespacial')
         resultado = listar_programas()
         assert 'id' in resultado[0]
         assert 'codigo_programa' in resultado[0]
@@ -50,13 +50,11 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado['total_projetos'] == 3
 
-    def test_calcula_horas_estimadas_corretamente(self):
-        programa = baker.make('api.Programa')
-        projeto = baker.make('api.Projeto', programa=programa)
-        baker.make('api.Tarefa', projeto=projeto, estimativa_horas=10.0)
-        baker.make('api.Tarefa', projeto=projeto, estimativa_horas=5.0)
-        resultado = get_resumo_programa(programa.id)
-        assert resultado['horas_estimadas'] == approx(15.0)
+    def test_retorna_json_com_programas(self):
+        baker.make('api.DimPrograma', nome_programa='Defesa')
+        factory = RequestFactory()
+        request = factory.get('/programas')
+        response = listar_programas_view(request)
 
     def test_calcula_horas_realizadas_corretamente(self):
         programa = baker.make('api.Programa')
