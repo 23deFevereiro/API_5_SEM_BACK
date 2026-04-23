@@ -1,28 +1,24 @@
 from math import ceil
 from django.db.models import Sum
-from ..models import Tarefa, TempoTarefa, Projeto
+from ..models import FatoHoras
 
 
 def get_funcionarios_projeto(projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, funcionario=None):
     page = max(int(page), 1)
 
-    tarefas_ids = Tarefa.objects.filter(
-        projeto_id=projeto_id
-    ).values_list('id', flat=True)
-
-    base_qs = TempoTarefa.objects.filter(tarefa_id__in=tarefas_ids)
+    base_qs = FatoHoras.objects.filter(projeto_id=projeto_id)
     if data_inicio:
-        base_qs = base_qs.filter(data__gte=data_inicio)
+        base_qs = base_qs.filter(tempo__data__gte=data_inicio)
     if data_fim:
-        base_qs = base_qs.filter(data__lte=data_fim)
+        base_qs = base_qs.filter(tempo__data__lte=data_fim)
     if funcionario:
-        base_qs = base_qs.filter(usuario__icontains=funcionario)
+        base_qs = base_qs.filter(funcionario__nome__icontains=funcionario)
 
     funcionarios_qs = (
         base_qs
-        .values('usuario')
+        .values('funcionario__nome')
         .annotate(total_horas=Sum('horas_trabalhadas'))
-        .order_by('usuario')
+        .order_by('funcionario__nome')
     )
 
     total_items = funcionarios_qs.count()
@@ -33,20 +29,15 @@ def get_funcionarios_projeto(projeto_id, page=1, page_size=10, data_inicio=None,
     resultados = list(funcionarios_qs[start:end])
 
     for item in resultados:
-        projetos_ids = (
-            TempoTarefa.objects
-            .filter(usuario=item['usuario'])
-            .values_list('tarefa__projeto_id', flat=True)
-            .distinct()
-        )
-
         codigos = list(
-            Projeto.objects
-            .filter(id__in=projetos_ids)
-            .values_list('codigo_projeto', flat=True)
-            .order_by('codigo_projeto')
+            FatoHoras.objects
+            .filter(funcionario__nome=item['funcionario__nome'])
+            .values_list('projeto__codigo_projeto', flat=True)
+            .distinct()
+            .order_by('projeto__codigo_projeto')
         )
 
+        item['funcionario'] = item.pop('funcionario__nome')
         item['total_horas'] = float(item['total_horas'] or 0)
         item['projetos'] = codigos
 

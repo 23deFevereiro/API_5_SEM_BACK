@@ -3,10 +3,10 @@ from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from django.shortcuts import get_object_or_404
 from ..models import Projeto, Tarefa, TempoTarefa, EmpenhoMaterial, ComprasProjeto
 
+from ..models import DimPrograma
 
 def listar_programas(search=''):
-    from ..models import Programa
-    programas = Programa.objects.all()
+    programas = DimPrograma.objects.all()
     if search:
         programas = programas.filter(nome_programa__icontains=search)
     return list(programas.values('id', 'codigo_programa', 'nome_programa'))
