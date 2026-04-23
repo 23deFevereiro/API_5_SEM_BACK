@@ -19,7 +19,7 @@ MIGRATION_WARNINGS = {
         '    fato_horas, fato_materiais, fato_compras, fato_estoque\n\n'
         '  ➡️  A aplicação atual (views, services, APIs) NÃO É COMPATÍVEL com\n'
         '      o banco gerado por esta seed. Use apenas para testes isolados\n'
-        '      do modelo relacional ou para fins de desenvolvimento da sprint 3.\n'
+        '      do modelo relacional.\n'
         + '!' * 70
     ),
 }
