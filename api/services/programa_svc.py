@@ -7,14 +7,14 @@ STATUS_PADRAO = [
     'Planejamento',
     'Em andamento',
     'Suspenso',
-    'Concluido',
+    'Concluído',
 ]
 
 STATUS_CORES = {
     'Planejamento': '#3B82F6',
     'Em andamento': '#EAB308',
     'Suspenso': '#F97316',
-    'Concluido': '#22C55E',
+    'Concluído': '#22C55E',
 }
 
 
