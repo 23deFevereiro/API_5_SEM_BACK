@@ -137,8 +137,8 @@ class TestGetDistribuicaoStatus:
         baker.make('api.Projeto', programa=programa, status='Concluído', _quantity=3)
         resultado = get_distribuicao_status(programa.id)
         status_dict = {s['status']: s for s in resultado['status']}
-        assert status_dict['Planejamento']['percentual'] == 25.0
-        assert status_dict['Concluído']['percentual'] == 75.0
+        assert status_dict['Planejamento']['percentual'] == approx (25.0)
+        assert status_dict['Concluído']['percentual'] == approx (75.0)
 
     def test_retorna_quantidade_absoluta_corretamente(self):
         programa = baker.make('api.Programa')
