@@ -2,7 +2,6 @@ import pytest
 from pytest import approx
 from model_bakery import baker
 from api.services.programa_svc import listar_programas, get_resumo_programa, get_distribuicao_status
-from model_bakery.recipe import seq
 
 
 @pytest.mark.django_db
@@ -35,8 +34,11 @@ class TestListarProgramas:
 @pytest.mark.django_db
 class TestGetResumoProjeto:
 
+    def _make_tempo(self):
+        return baker.make('api.DimTempo', id=20230101, data='2023-01-01', ano=2023, mes=1, trimestre=1, semestre=1, dia_semana=0)
+
     def test_retorna_zeros_quando_programa_sem_dados(self):
-        programa = baker.make('api.Programa')
+        programa = baker.make('api.DimPrograma')
         resultado = get_resumo_programa(programa.id)
         assert resultado['total_projetos'] == 0
         assert resultado['horas_estimadas'] == approx(0.0)
@@ -45,63 +47,68 @@ class TestGetResumoProjeto:
         assert resultado['custo_real'] == approx(0.0)
 
     def test_conta_total_projetos_corretamente(self):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, _quantity=3)
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa)
+        baker.make('api.DimProjeto', id=2, programa=programa)
+        baker.make('api.DimProjeto', id=3, programa=programa)
         resultado = get_resumo_programa(programa.id)
         assert resultado['total_projetos'] == 3
 
-    def test_retorna_json_com_programas(self):
+    def test_retorna_campos_corretos(self):
         baker.make('api.DimPrograma', nome_programa='Defesa')
-        factory = RequestFactory()
-        request = factory.get('/programas')
-        response = listar_programas_view(request)
+        resultado = listar_programas()
+        assert len(resultado) == 1
+        assert resultado[0]['nome_programa'] == 'Defesa'
 
     def test_calcula_horas_realizadas_corretamente(self):
-        programa = baker.make('api.Programa')
-        projeto = baker.make('api.Projeto', programa=programa)
-        tarefa = baker.make('api.Tarefa', projeto=projeto)
-        baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=8.0)
-        baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=4.0)
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=8.0, custo_horas=0)
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=4.0, custo_horas=0)
         resultado = get_resumo_programa(programa.id)
         assert resultado['horas_realizadas'] == approx(12.0)
 
     def test_calcula_custo_estimado_mao_de_obra(self):
-        programa = baker.make('api.Programa')
-        projeto = baker.make('api.Projeto', programa=programa, custo_hora=50.00)
-        baker.make('api.Tarefa', projeto=projeto, estimativa_horas=10.0)
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=10.0, custo_horas=500.0)
         resultado = get_resumo_programa(programa.id)
         assert resultado['custo_estimado'] == approx(500.0)
 
     def test_calcula_custo_estimado_materiais(self):
-        programa = baker.make('api.Programa')
-        projeto = baker.make('api.Projeto', programa=programa, custo_hora=0)
-        material = baker.make('api.Material', custo_estimado=100.00)
-        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=5)
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        baker.make('api.FatoMateriais', projeto=projeto, programa=programa, tempo=tempo, custo_materiais=500.0)
         resultado = get_resumo_programa(programa.id)
         assert resultado['custo_estimado'] == approx(500.0)
 
     def test_calcula_custo_real_mao_de_obra(self):
-        programa = baker.make('api.Programa')
-        projeto = baker.make('api.Projeto', programa=programa, custo_hora=50.00)
-        tarefa = baker.make('api.Tarefa', projeto=projeto)
-        baker.make('api.TempoTarefa', tarefa=tarefa, horas_trabalhadas=10.0)
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=10.0, custo_horas=500.0)
         resultado = get_resumo_programa(programa.id)
         assert resultado['custo_real'] == approx(500.0)
 
     def test_exclui_compras_canceladas_do_custo_real(self):
-        programa = baker.make('api.Programa')
-        projeto = baker.make('api.Projeto', programa=programa, custo_hora=0)
-        pedido_cancelado = baker.make('api.PedidoCompra', status='Cancelado')
-        pedido_ativo = baker.make('api.PedidoCompra', status='Entregue')
-        baker.make('api.ComprasProjeto', projeto=projeto, pedido_compra=pedido_cancelado, valor_alocado=1000.00)
-        baker.make('api.ComprasProjeto', projeto=projeto, pedido_compra=pedido_ativo, valor_alocado=500.00)
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        status_cancelado = baker.make('api.DimStatusPedido', nome_status='Cancelado')
+        status_entregue = baker.make('api.DimStatusPedido', nome_status='Entregue')
+        baker.make('api.FatoCompras', projeto=projeto, tempo=tempo, status=status_cancelado, valor_alocado=1000.00)
+        baker.make('api.FatoCompras', projeto=projeto, tempo=tempo, status=status_entregue, valor_alocado=500.00)
         resultado = get_resumo_programa(programa.id)
         assert resultado['custo_real'] == approx(500.0)
 
     def test_nao_inclui_dados_de_outro_programa(self):
-        programa1 = baker.make('api.Programa')
-        programa2 = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa2, _quantity=5)
+        programa1 = baker.make('api.DimPrograma')
+        programa2 = baker.make('api.DimPrograma')
+        for i in range(10, 15):
+            baker.make('api.DimProjeto', id=i, programa=programa2)
         resultado = get_resumo_programa(programa1.id)
         assert resultado['total_projetos'] == 0
 
@@ -110,46 +117,51 @@ class TestGetResumoProjeto:
 class TestGetDistribuicaoStatus:
 
     def test_retorna_total_zero_quando_programa_sem_projetos(self):
-        programa = baker.make('api.Programa')
+        programa = baker.make('api.DimPrograma')
         resultado = get_distribuicao_status(programa.id)
         assert resultado['total'] == 0
         assert resultado['status'] == []
 
     def test_retorna_apenas_status_com_projetos(self):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, status='Planejamento', _quantity=3)
+        programa = baker.make('api.DimPrograma')
+        for i in range(1, 4):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Planejamento')
         resultado = get_distribuicao_status(programa.id)
         assert len(resultado['status']) == 1
         assert resultado['status'][0]['status'] == 'Planejamento'
 
     def test_conta_total_corretamente(self):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, status='Planejamento', _quantity=4)
-        baker.make('api.Projeto', programa=programa, status='Concluído', _quantity=6)
+        programa = baker.make('api.DimPrograma')
+        for i in range(1, 5):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Planejamento')
+        for i in range(5, 11):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Concluído')
         resultado = get_distribuicao_status(programa.id)
         assert resultado['total'] == 10
 
     def test_calcula_percentual_corretamente(self):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, status='Planejamento', _quantity=1)
-        baker.make('api.Projeto', programa=programa, status='Concluído', _quantity=3)
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa, status='Planejamento')
+        for i in range(2, 5):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Concluído')
         resultado = get_distribuicao_status(programa.id)
         status_dict = {s['status']: s for s in resultado['status']}
-        assert status_dict['Planejamento']['percentual'] == approx (25.0)
-        assert status_dict['Concluído']['percentual'] == approx (75.0)
+        assert status_dict['Planejamento']['percentual'] == approx(25.0)
+        assert status_dict['Concluído']['percentual'] == approx(75.0)
 
     def test_retorna_quantidade_absoluta_corretamente(self):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, status='Em andamento', _quantity=5)
+        programa = baker.make('api.DimPrograma')
+        for i in range(1, 6):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Em andamento')
         resultado = get_distribuicao_status(programa.id)
         assert resultado['status'][0]['quantidade'] == 5
 
     def test_retorna_cor_correta_por_status(self):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, status='Planejamento')
-        baker.make('api.Projeto', programa=programa, status='Em andamento')
-        baker.make('api.Projeto', programa=programa, status='Suspenso')
-        baker.make('api.Projeto', programa=programa, status='Concluído')
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa, status='Planejamento')
+        baker.make('api.DimProjeto', id=2, programa=programa, status='Em andamento')
+        baker.make('api.DimProjeto', id=3, programa=programa, status='Suspenso')
+        baker.make('api.DimProjeto', id=4, programa=programa, status='Concluído')
         resultado = get_distribuicao_status(programa.id)
         status_dict = {s['status']: s for s in resultado['status']}
         assert status_dict['Planejamento']['cor'] == '#3B82F6'
@@ -158,19 +170,23 @@ class TestGetDistribuicaoStatus:
         assert status_dict['Concluído']['cor'] == '#22C55E'
 
     def test_nao_inclui_projetos_de_outro_programa(self):
-        programa1 = baker.make('api.Programa')
-        programa2 = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa2, status='Planejamento', _quantity=5)
+        programa1 = baker.make('api.DimPrograma')
+        programa2 = baker.make('api.DimPrograma')
+        for i in range(1, 6):
+            baker.make('api.DimProjeto', id=i, programa=programa2, status='Planejamento')
         resultado = get_distribuicao_status(programa1.id)
         assert resultado['total'] == 0
         assert resultado['status'] == []
 
     def test_retorna_todos_os_quatro_status_quando_presentes(self):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, status='Planejamento', _quantity=2)
-        baker.make('api.Projeto', programa=programa, status='Em andamento', _quantity=3)
-        baker.make('api.Projeto', programa=programa, status='Suspenso', _quantity=1)
-        baker.make('api.Projeto', programa=programa, status='Concluído', _quantity=4)
+        programa = baker.make('api.DimPrograma')
+        for i in range(1, 3):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Planejamento')
+        for i in range(3, 6):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Em andamento')
+        baker.make('api.DimProjeto', id=6, programa=programa, status='Suspenso')
+        for i in range(7, 11):
+            baker.make('api.DimProjeto', id=i, programa=programa, status='Concluído')
         resultado = get_distribuicao_status(programa.id)
         assert len(resultado['status']) == 4
         assert resultado['total'] == 10
