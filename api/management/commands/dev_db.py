@@ -3,6 +3,7 @@ from pathlib import Path
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 
 CORRECTED_DOCUMENTS_DIR = Path(__file__).parent / 'corrected_documents'
 
@@ -23,6 +24,12 @@ MIGRATION_WARNINGS = {
         + '!' * 70
     ),
 }
+
+
+def has_pending_migrations():
+    executor = MigrationExecutor(connection)
+    targets = executor.loader.graph.leaf_nodes()
+    return bool(executor.migration_plan(targets))
 
 
 def ensure_corrected_documents():
@@ -90,7 +97,17 @@ class Command(BaseCommand):
             warning = MIGRATION_WARNINGS.get(migration_number)
             if warning:
                 self.stdout.write(self.style.WARNING(warning))
+            self.stdout.write(f'\n⚙️  Aplicando migrate api {migration_number}...')
+            call_command('migrate', 'api', migration_number)
+            self.stdout.write(f'   ✅ migrate api {migration_number} concluído.')
         else:
+            self.stdout.write('\n⚙️  Verificando migrações pendentes...')
+            if has_pending_migrations():
+                self.stdout.write('   ⚠️  Migrações pendentes encontradas. Aplicando...')
+                call_command('migrate')
+                self.stdout.write('   ✅ migrate concluído.')
+            else:
+                self.stdout.write('   ✅ Banco já está atualizado.')
             self.stdout.write('\n🔍 Detectando última migration aplicada...')
             migration_number = get_latest_applied_migration()
             self.stdout.write(f'   ✅ Migration detectada: {migration_number}')

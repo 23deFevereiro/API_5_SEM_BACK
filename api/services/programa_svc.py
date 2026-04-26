@@ -1,7 +1,7 @@
 from decimal import Decimal
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
+from django.db.models import Sum, Count
 from django.shortcuts import get_object_or_404
-from ..models import Projeto, Tarefa, TempoTarefa, EmpenhoMaterial, ComprasProjeto
+from ..models import DimPrograma, DimProjeto, DimTarefa, FatoHoras, FatoMateriais, FatoCompras
 
 STATUS_PADRAO = [
     'Planejamento',
@@ -26,66 +26,50 @@ def listar_programas(search=''):
 
 
 def get_resumo_programa(programa_id):
-    from ..models import Programa
-    get_object_or_404(Programa, id=programa_id)
+    get_object_or_404(DimPrograma, id=programa_id)
 
-    projetos_ids = Projeto.objects.filter(
+    projetos_ids = DimProjeto.objects.filter(
         programa_id=programa_id
     ).values_list('id', flat=True)
 
     total_projetos = len(projetos_ids)
 
-    horas_estimadas = Tarefa.objects.filter(
+    horas_estimadas = DimTarefa.objects.filter(
         projeto_id__in=projetos_ids
     ).aggregate(
-        total=Sum('estimativa_horas')
+        total=Sum('horas_estimadas')
     )['total'] or Decimal('0')
 
-    horas_realizadas = TempoTarefa.objects.filter(
-        tarefa__projeto_id__in=projetos_ids
+    horas_realizadas = FatoHoras.objects.filter(
+        projeto_id__in=projetos_ids
     ).aggregate(
         total=Sum('horas_trabalhadas')
     )['total'] or Decimal('0')
 
-    custo_estimado_mao_de_obra = Tarefa.objects.filter(
+    custo_estimado_mao_de_obra = FatoHoras.objects.filter(
         projeto_id__in=projetos_ids
     ).aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F('estimativa_horas') * F('projeto__custo_hora'),
-                output_field=DecimalField(max_digits=14, decimal_places=2)
-            )
-        )
+        total=Sum('custo_horas')
     )['total'] or Decimal('0')
 
-    custo_estimado_materiais = EmpenhoMaterial.objects.filter(
+    custo_estimado_materiais = FatoMateriais.objects.filter(
         projeto_id__in=projetos_ids
     ).aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F('quantidade_empenhada') * F('material__custo_estimado'),
-                output_field=DecimalField(max_digits=14, decimal_places=2)
-            )
-        )
+        total=Sum('custo_materiais')
     )['total'] or Decimal('0')
 
     custo_estimado = custo_estimado_mao_de_obra + custo_estimado_materiais
 
-    custo_real_mao_de_obra = TempoTarefa.objects.filter(
-        tarefa__projeto_id__in=projetos_ids
+    custo_real_mao_de_obra = FatoHoras.objects.filter(
+        projeto_id__in=projetos_ids
     ).aggregate(
-        total=Sum(
-            ExpressionWrapper(
-                F('horas_trabalhadas') * F('tarefa__projeto__custo_hora'),
-                output_field=DecimalField(max_digits=14, decimal_places=2)
-            )
-        )
+        total=Sum('custo_horas')
     )['total'] or Decimal('0')
 
-    custo_real_materiais = ComprasProjeto.objects.filter(
+    custo_real_materiais = FatoCompras.objects.filter(
         projeto_id__in=projetos_ids
     ).exclude(
-        pedido_compra__status='Cancelado'
+        status__nome_status='Cancelado'
     ).aggregate(
         total=Sum('valor_alocado')
     )['total'] or Decimal('0')
@@ -103,7 +87,7 @@ def get_resumo_programa(programa_id):
 
 def get_distribuicao_status(programa_id):
     status_counts = list(
-        Projeto.objects
+        DimProjeto.objects
         .filter(programa_id=programa_id)
         .values('status')
         .annotate(total=Count('id'))
