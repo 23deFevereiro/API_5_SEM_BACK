@@ -1,146 +1,100 @@
 import pytest
 from model_bakery import baker
-from django.test import RequestFactory
-from api.views.programa_view import listar_programas_view, get_resumo_programa_view
+from django.urls import reverse
+
+
+@pytest.fixture
+def programa():
+    return baker.make('api.Programa')
 
 
 @pytest.mark.django_db
-class TestListarProgramasView:
+class TestListarProgramasSistema:
 
-    def test_retorna_200_para_get(self):
-        factory = RequestFactory()
-        request = factory.get('/programas/')
-        response = listar_programas_view(request)
+    def test_retorna_200_para_get(self, api_client, programa):
+        url = reverse('listar_programas')
+        response = api_client.get(url)
         assert response.status_code == 200
 
-    def test_retorna_405_para_post(self):
-        factory = RequestFactory()
-        request = factory.post('/programas/')
-        response = listar_programas_view(request)
+    def test_retorna_405_para_post(self, api_client, programa):
+        url = reverse('listar_programas')
+        response = api_client.post(url)
         assert response.status_code == 405
 
-    def test_retorna_lista_vazia_sem_programas(self):
-        import json
-        factory = RequestFactory()
-        request = factory.get('/programas/')
-        response = listar_programas_view(request)
-        data = json.loads(response.content)
-        assert data == []
-
-    def test_retorna_programas_cadastrados(self, api_client):
-        baker.make('api.DimPrograma', nome_programa='Naval')
-        baker.make('api.DimPrograma', nome_programa='Aeroespacial')
-
+    def test_retorna_lista_vazia_sem_programas(self, api_client):
         url = reverse('listar_programas')
-
         response = api_client.get(url)
-        data = response.json()
-
-        nomes = [p['nome'] for p in data]
-        assert len(data) == 2
-        assert 'Naval' in nomes
-        assert 'Aeroespacial' in nomes
+        assert response.json() == []
 
     def test_filtra_por_search(self, api_client):
-        baker.make('api.DimPrograma', nome_programa='Naval')
-        baker.make('api.DimPrograma', nome_programa='Aeroespacial')
-
+        baker.make('api.Programa', nome_programa='Programa Alpha')
+        baker.make('api.Programa', nome_programa='Programa Beta')
         url = reverse('listar_programas')
-
-        response = api_client.get(url, {'search': 'Nav'})
-        data = response.json()
-
-        assert len(data) == 1
+        response = api_client.get(url, {'search': 'Alpha'})
+        assert len(response.json()) == 1
 
 
 @pytest.mark.django_db
-class TestGetResumoProgramaView:
+class TestResumoProgramaSistema:
 
-    def test_endpoint_filtra_projetos_por_programa_id(self, api_client):
-        programa = baker.make('api.DimPrograma')
-        baker.make('api.DimProjeto', nome_projeto='Do programa', programa=programa)
-        baker.make('api.DimProjeto', nome_projeto='De outro programa')
-
-        url = reverse('listar_projetos')
-
-        response = api_client.get(url, {'programa_id': programa.id})
-        data = response.json()
-
+    def test_retorna_200_para_programa_existente(self, api_client, programa):
+        url = reverse('resumo_programa', args=[programa.id])
+        response = api_client.get(url)
         assert response.status_code == 200
 
-    def test_endpoint_sem_programa_id_retorna_todos(self, api_client):
-        baker.make('api.DimProjeto', _quantity=3)
+    def test_retorna_404_para_programa_inexistente(self, api_client):
+        url = reverse('resumo_programa', args=[99999])
+        response = api_client.get(url)
+        assert response.status_code == 404
 
-    def test_retorna_405_para_post(self):
-        factory = RequestFactory()
-        request = factory.post('/programas/1/resumo/')
-        response = get_resumo_programa_view(request, 1)
+    def test_retorna_405_para_post(self, api_client, programa):
+        url = reverse('resumo_programa', args=[programa.id])
+        response = api_client.post(url)
         assert response.status_code == 405
 
+    def test_retorna_estrutura_correta(self, api_client, programa):
+        url = reverse('resumo_programa', args=[programa.id])
         response = api_client.get(url)
         data = response.json()
-
-        assert response.status_code == 200
-        assert len(data) == 3
-
-    def test_endpoint_aceita_programa_id_junto_com_search(self, api_client):
-        programa = baker.make('api.DimPrograma')
-        baker.make('api.DimProjeto', nome_projeto='Conversor DC-DC', programa=programa)
-        baker.make('api.DimProjeto', nome_projeto='Driver LED', programa=programa)
-        baker.make('api.DimProjeto', nome_projeto='Conversor AC')
-
-        url = reverse('listar_projetos')
-
-        response = api_client.get(url, {'programa_id': programa.id, 'search': 'Conversor'})
-        data = response.json()
-
-        assert len(data) == 1
-        assert data[0]['nome_projeto'] == 'Conversor DC-DC'
+        assert 'total_projetos' in data
+        assert 'horas_estimadas' in data
+        assert 'horas_realizadas' in data
+        assert 'custo_estimado' in data
+        assert 'custo_real' in data
 
 
 @pytest.mark.django_db
-class TestOverviewProjetosFiltroProgramaSistema:
+class TestDistribuicaoStatusSistema:
 
-    def test_overview_filtra_por_programa_id(self, api_client):
-        programa = baker.make('api.DimPrograma')
-        outro_programa = baker.make('api.DimPrograma')
-        projeto_do_programa = baker.make('api.DimProjeto', nome_projeto='Do programa', status='Em andamento', programa=programa)
-        projeto_de_outro = baker.make('api.DimProjeto', nome_projeto='De outro', status='Em andamento', programa=outro_programa)
-        material = baker.make('api.DimMaterial', custo_estimado=10.00)
-        fornecedor = baker.make('api.DimFornecedor')
-        tempo = baker.make('api.DimTempo')
-        baker.make('api.FatoMateriais', projeto=projeto_do_programa, programa=programa,
-                   material=material, fornecedor=fornecedor, tempo=tempo, custo_materiais=10.00)
-        baker.make('api.FatoMateriais', projeto=projeto_de_outro, programa=outro_programa,
-                   material=material, fornecedor=fornecedor, tempo=tempo, custo_materiais=10.00)
-
-        url = reverse('projetos_overview')
-
-        response = api_client.get(url, {'programa_id': programa.id})
-        data = response.json()
-
+    def test_retorna_200_para_programa_existente(self, api_client, programa):
+        url = reverse('distribuicao_status', args=[programa.id])
+        response = api_client.get(url)
         assert response.status_code == 200
-        nomes = [v['nome_projeto'] for grupo in data for v in grupo['values']]
-        assert 'Do programa' in nomes
-        assert 'De outro' not in nomes
 
-    def test_overview_sem_programa_id_retorna_todos(self, api_client):
-        programa = baker.make('api.DimPrograma')
-        projeto1 = baker.make('api.DimProjeto', status='Em andamento', programa=programa)
-        projeto2 = baker.make('api.DimProjeto', status='Em andamento', programa=programa)
-        material = baker.make('api.DimMaterial', custo_estimado=10.00)
-        fornecedor = baker.make('api.DimFornecedor')
-        tempo = baker.make('api.DimTempo')
-        baker.make('api.FatoMateriais', projeto=projeto1, programa=programa,
-                   material=material, fornecedor=fornecedor, tempo=tempo, custo_materiais=10.00)
-        baker.make('api.FatoMateriais', projeto=projeto2, programa=programa,
-                   material=material, fornecedor=fornecedor, tempo=tempo, custo_materiais=10.00)
+    def test_retorna_405_para_post(self, api_client, programa):
+        url = reverse('distribuicao_status', args=[programa.id])
+        response = api_client.post(url)
+        assert response.status_code == 405
 
-        url = reverse('projetos_overview')
-
+    def test_retorna_estrutura_correta(self, api_client, programa):
+        url = reverse('distribuicao_status', args=[programa.id])
         response = api_client.get(url)
         data = response.json()
+        assert 'total' in data
+        assert 'status' in data
 
-        codigos = {v['codigo_projeto'] for grupo in data for v in grupo['values']}
-        assert projeto1.codigo_projeto in codigos
-        assert projeto2.codigo_projeto in codigos
+    def test_retorna_vazio_sem_projetos(self, api_client, programa):
+        url = reverse('distribuicao_status', args=[programa.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert data['total'] == 0
+        assert data['status'] == []
+
+    def test_retorna_dados_corretos_com_projetos(self, api_client, programa):
+        baker.make('api.Projeto', programa=programa, status='Planejamento', _quantity=3)
+        baker.make('api.Projeto', programa=programa, status='Concluído', _quantity=2)
+        url = reverse('distribuicao_status', args=[programa.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert data['total'] == 5
+        assert len(data['status']) == 2
