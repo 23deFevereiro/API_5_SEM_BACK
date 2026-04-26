@@ -1,7 +1,21 @@
 from decimal import Decimal
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
 from django.shortcuts import get_object_or_404
 from ..models import Projeto, Tarefa, TempoTarefa, EmpenhoMaterial, ComprasProjeto
+
+STATUS_PADRAO = [
+    'Planejamento',
+    'Em andamento',
+    'Suspenso',
+    'Concluído',
+]
+
+STATUS_CORES = {
+    'Planejamento': '#3B82F6',
+    'Em andamento': '#EAB308',
+    'Suspenso': '#F97316',
+    'Concluído': '#22C55E',
+}
 
 
 def listar_programas(search=''):
@@ -85,4 +99,34 @@ def get_resumo_programa(programa_id):
         'horas_realizadas': horas_realizadas,
         'custo_estimado': custo_estimado,
         'custo_real': custo_real,
+    }
+
+
+def get_distribuicao_status(programa_id):
+    status_counts = list(
+        Projeto.objects
+        .filter(programa_id=programa_id)
+        .values('status')
+        .annotate(total=Count('id'))
+    )
+
+    status_dict = {item['status']: item['total'] for item in status_counts}
+    total_geral = sum(item['total'] for item in status_counts)
+
+    resultado = []
+    for status in STATUS_PADRAO:
+        quantidade = status_dict.get(status, 0)
+        percentual = round((quantidade / total_geral) * 100, 1) if total_geral > 0 else 0
+        resultado.append({
+            'status': status,
+            'quantidade': quantidade,
+            'percentual': percentual,
+            'cor': STATUS_CORES[status],
+        })
+
+    resultado = [r for r in resultado if r['quantidade'] > 0]
+
+    return {
+        'total': total_geral,
+        'status': resultado,
     }

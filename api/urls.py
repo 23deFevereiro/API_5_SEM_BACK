@@ -1,4 +1,3 @@
-
 """
 URL configuration for api project.
 
@@ -33,4 +32,5 @@ urlpatterns = [
     path('api/projetos/<int:projeto_id>/materiais-disponiveis/', projeto_view.get_materiais_disponiveis_view, name='materiais_disponiveis_projeto'),
     path('api/programas/', programa_view.listar_programas_view, name='listar_programas'),
     path('api/programas/<int:programa_id>/resumo/', programa_view.get_resumo_programa_view, name='resumo_programa'),
+    path('api/programas/<int:programa_id>/distribuicao-status/', programa_view.get_distribuicao_status_view, name='distribuicao_status'),
 ]

@@ -1,105 +1,170 @@
-from api.utils.pagination import normalizar_pagina, calcular_paginacao
-from api.services.projeto_svc import formatar_material
-from pytest import approx
+import pytest
+from model_bakery import baker
+from django.urls import reverse
 
 
-class TestNormalizarPagina:
-
-    def test_valor_zero_retorna_1(self):
-        assert normalizar_pagina(0) == 1
-
-    def test_valor_negativo_retorna_1(self):
-        assert normalizar_pagina(-5) == 1
-
-    def test_valor_um_retorna_1(self):
-        assert normalizar_pagina(1) == 1
-
-    def test_valor_valido_retorna_o_proprio(self):
-        assert normalizar_pagina(3) == 3
+@pytest.fixture
+def projeto():
+    return baker.make('api.Projeto')
 
 
-class TestCalcularPaginacao:
+@pytest.mark.django_db
+class TestListarProjetosSistema:
 
-    def test_primeira_pagina_com_15_itens(self):
-        total_pages, start, end = calcular_paginacao(15, 1, 10)
-        assert total_pages == 2
-        assert start == 0
-        assert end == 10
+    def test_retorna_200_para_get(self, api_client, projeto):
+        url = reverse('listar_projetos')
+        response = api_client.get(url)
+        assert response.status_code == 200
 
-    def test_segunda_pagina_com_15_itens(self):
-        total_pages, start, end = calcular_paginacao(15, 2, 10)
-        assert total_pages == 2
-        assert start == 10
-        assert end == 20
+    def test_retorna_405_para_post(self, api_client):
+        url = reverse('listar_projetos')
+        response = api_client.post(url)
+        assert response.status_code == 405
 
-    def test_zero_itens_retorna_uma_pagina(self):
-        total_pages, _, _ = calcular_paginacao(0, 1, 10)
-        assert total_pages == 1
+    def test_retorna_lista_vazia_sem_projetos(self, api_client):
+        url = reverse('listar_projetos')
+        response = api_client.get(url)
+        assert response.json() == []
 
-    def test_itens_exatos_sem_resto(self):
-        total_pages, _, _ = calcular_paginacao(20, 1, 10)
-        assert total_pages == 2
+    def test_filtra_por_search(self, api_client):
+        baker.make('api.Projeto', nome_projeto='Conversor DC-DC')
+        baker.make('api.Projeto', nome_projeto='Driver LED')
+        url = reverse('listar_projetos')
+        response = api_client.get(url, {'search': 'Conversor'})
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]['nome_projeto'] == 'Conversor DC-DC'
 
-    def test_itens_com_resto_arredonda_para_cima(self):
-        total_pages, _, _ = calcular_paginacao(21, 1, 10)
-        assert total_pages == 3
+    def test_filtra_por_programa_id(self, api_client):
+        programa = baker.make('api.Programa')
+        baker.make('api.Projeto', programa=programa, _quantity=2)
+        baker.make('api.Projeto', _quantity=1)
+        url = reverse('listar_projetos')
+        response = api_client.get(url, {'programa_id': programa.id})
+        assert len(response.json()) == 2
+
+    def test_ignora_programa_id_invalido_e_retorna_todos(self, api_client):
+        baker.make('api.Projeto', _quantity=2)
+        url = reverse('listar_projetos')
+        response = api_client.get(url, {'programa_id': 'abc'})
+        assert response.status_code == 200
+        assert len(response.json()) == 2
 
 
-class TestFormatarMaterial:
+@pytest.mark.django_db
+class TestOverviewProjetosSistema:
 
-    def test_renomeia_descricao_para_nome_material(self):
-        item = {
-            'material_id': 1,
-            'material__descricao': 'Capacitor',
-            'material__custo_estimado': 15.0,
-            'quantidade': 5,
-            'custo_total_estimado': 75.0,
-        }
-        resultado = formatar_material(item)
-        assert resultado['nome_material'] == 'Capacitor'
+    def test_retorna_200_para_get(self, api_client):
+        url = reverse('projetos_overview')
+        response = api_client.get(url)
+        assert response.status_code == 200
 
-    def test_custo_total_nulo_vira_zero(self):
-        item = {
-            'material_id': 1,
-            'material__descricao': 'Resistor',
-            'material__custo_estimado': 10.0,
-            'quantidade': 3,
-            'custo_total_estimado': None,
-        }
-        resultado = formatar_material(item)
-        assert resultado['custo_total_estimado'] == approx(0.0)
+    def test_retorna_405_para_post(self, api_client):
+        url = reverse('projetos_overview')
+        response = api_client.post(url)
+        assert response.status_code == 405
 
-    def test_remove_campos_internos_do_orm(self):
-        item = {
-            'material_id': 1,
-            'material__descricao': 'Diodo',
-            'material__custo_estimado': 5.0,
-            'quantidade': 2,
-            'custo_total_estimado': 10.0,
-        }
-        resultado = formatar_material(item)
-        assert 'material_id' not in resultado
-        assert 'material__custo_estimado' not in resultado
-        assert 'material__descricao' not in resultado
+    def test_retorna_lista_vazia_sem_projetos_em_andamento(self, api_client):
+        baker.make('api.Projeto', status='Concluido')
+        url = reverse('projetos_overview')
+        response = api_client.get(url)
+        assert response.json() == []
 
-    def test_retorna_quantidade_correta(self):
-        item = {
-            'material_id': 1,
-            'material__descricao': 'Transistor',
-            'material__custo_estimado': 8.0,
-            'quantidade': 10,
-            'custo_total_estimado': 80.0,
-        }
-        resultado = formatar_material(item)
-        assert resultado['quantidade'] == 10
+    def test_filtra_por_programa_id(self, api_client):
+        programa = baker.make('api.Programa')
+        projeto_do_programa = baker.make('api.Projeto', status='Em andamento', programa=programa)
+        projeto_outro = baker.make('api.Projeto', status='Em andamento')
+        material = baker.make('api.Material', custo_estimado=10.00)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_do_programa, material=material, quantidade_empenhada=1)
+        baker.make('api.EmpenhoMaterial', projeto=projeto_outro, material=material, quantidade_empenhada=1)
+        url = reverse('projetos_overview')
+        response = api_client.get(url, {'programa_id': programa.id})
+        data = response.json()
+        assert response.status_code == 200
+        nomes = [v['nome_projeto'] for grupo in data for v in grupo['values']]
+        assert projeto_do_programa.nome_projeto in nomes
+        assert projeto_outro.nome_projeto not in nomes
 
-    def test_custo_total_retornado_como_float(self):
-        item = {
-            'material_id': 1,
-            'material__descricao': 'LED',
-            'material__custo_estimado': 2.5,
-            'quantidade': 4,
-            'custo_total_estimado': 10,
-        }
-        resultado = formatar_material(item)
-        assert isinstance(resultado['custo_total_estimado'], float)
+
+@pytest.mark.django_db
+class TestResumoProjetoSistema:
+
+    def test_retorna_200_para_projeto_existente(self, api_client, projeto):
+        url = reverse('resumo_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        assert response.status_code == 200
+
+    def test_retorna_404_para_projeto_inexistente(self, api_client):
+        url = reverse('resumo_projeto', args=[99999])
+        response = api_client.get(url)
+        assert response.status_code == 404
+
+    def test_retorna_405_para_post(self, api_client, projeto):
+        url = reverse('resumo_projeto', args=[projeto.id])
+        response = api_client.post(url)
+        assert response.status_code == 405
+
+    def test_retorna_estrutura_correta(self, api_client, projeto):
+        url = reverse('resumo_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert 'custo_total' in data
+        assert 'tempo_total' in data
+
+
+@pytest.mark.django_db
+class TestMateriaisProjetoSistema:
+
+    def test_retorna_200_para_projeto_existente(self, api_client, projeto):
+        url = reverse('materiais_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        assert response.status_code == 200
+
+    def test_retorna_405_para_post(self, api_client, projeto):
+        url = reverse('materiais_projeto', args=[projeto.id])
+        response = api_client.post(url)
+        assert response.status_code == 405
+
+    def test_retorna_estrutura_correta(self, api_client, projeto):
+        url = reverse('materiais_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert 'count' in data
+        assert 'page' in data
+        assert 'total_pages' in data
+        assert 'results' in data
+
+    def test_retorna_lista_vazia_sem_empenhos(self, api_client, projeto):
+        url = reverse('materiais_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert data['count'] == 0
+        assert data['results'] == []
+
+
+@pytest.mark.django_db
+class TestMateriaisDisponiveisSistema:
+
+    def test_retorna_200_para_projeto_existente(self, api_client, projeto):
+        url = reverse('materiais_disponiveis_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        assert response.status_code == 200
+
+    def test_retorna_405_para_post(self, api_client, projeto):
+        url = reverse('materiais_disponiveis_projeto', args=[projeto.id])
+        response = api_client.post(url)
+        assert response.status_code == 405
+
+    def test_retorna_lista_vazia_sem_empenhos(self, api_client, projeto):
+        url = reverse('materiais_disponiveis_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        assert response.json() == []
+
+    def test_retorna_materiais_do_projeto(self, api_client, projeto):
+        material = baker.make('api.Material', descricao='Capacitor')
+        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=1)
+        url = reverse('materiais_disponiveis_projeto', args=[projeto.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]['descricao'] == 'Capacitor'
