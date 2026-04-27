@@ -101,3 +101,45 @@ class TestDistribuicaoStatusSistema:
         data = response.json()
         assert data['total'] == 5
         assert len(data['status']) == 2
+
+@pytest.mark.django_db
+class TestBurnupHorasProgramasSistema:
+
+    def test_retorna_200_para_get(self, api_client):
+        url = reverse('programas_burnup_horas')
+        response = api_client.get(url)
+        assert response.status_code == 200
+
+    def test_retorna_405_para_post(self, api_client):
+        url = reverse('programas_burnup_horas')
+        response = api_client.post(url)
+        assert response.status_code == 405
+
+    def test_retorna_lista_vazia_sem_dados(self, api_client):
+        url = reverse('programas_burnup_horas')
+        response = api_client.get(url)
+        assert response.json() == []
+
+    def test_resposta_e_lista_json(self, api_client):
+        url = reverse('programas_burnup_horas')
+        response = api_client.get(url)
+        assert isinstance(response.json(), list)
+
+    def test_estrutura_dos_grupos_e_valores(self, api_client):
+        from datetime import date
+        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.Projeto', programa=programa)
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 1, 10), horas_trabalhadas=4.0)
+        url = reverse('programas_burnup_horas')
+        response = api_client.get(url)
+        data = response.json()
+        assert len(data) == 1
+        grupo = data[0]
+        assert 'date_str' in grupo
+        assert 'values' in grupo
+        ponto = grupo['values'][0]
+        assert 'codigo_programa' in ponto
+        assert 'nome_programa' in ponto
+        assert 'horas' in ponto

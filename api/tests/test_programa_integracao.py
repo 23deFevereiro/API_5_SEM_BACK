@@ -1,7 +1,14 @@
 import pytest
+from datetime import date
 from pytest import approx
 from model_bakery import baker
-from api.services.programa_svc import listar_programas, get_resumo_programa, get_distribuicao_status
+from api.services.programa_svc import (
+    listar_programas,
+    get_resumo_programa,
+    get_distribuicao_status,
+    get_burnup_horas_programas,
+)
+from model_bakery.recipe import seq
 
 
 @pytest.mark.django_db
@@ -190,3 +197,132 @@ class TestGetDistribuicaoStatus:
         resultado = get_distribuicao_status(programa.id)
         assert len(resultado['status']) == 4
         assert resultado['total'] == 10
+
+
+@pytest.mark.django_db
+class TestGetBurnupHorasProgramas:
+
+    def test_retorna_lista_vazia_sem_registros_de_horas(self):
+        resultado = get_burnup_horas_programas()
+        assert resultado == []
+
+    def test_retorna_lista_vazia_quando_so_existem_programas_sem_horas(self):
+        programa = baker.make('api.Programa')
+        baker.make('api.Projeto', programa=programa)
+        resultado = get_burnup_horas_programas()
+        assert resultado == []
+
+    def test_agrupa_horas_por_mes_e_ano(self):
+        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.Projeto', programa=programa)
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 1, 5), horas_trabalhadas=4.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 1, 20), horas_trabalhadas=6.0)
+        resultado = get_burnup_horas_programas()
+        assert len(resultado) == 1
+        assert resultado[0]['date_str'] == '01/2025'
+        assert resultado[0]['values'][0]['horas'] == approx(10.0)
+
+    def test_acumula_horas_ao_longo_dos_meses(self):
+        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.Projeto', programa=programa)
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 1, 10), horas_trabalhadas=10.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 2, 10), horas_trabalhadas=5.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 3, 10), horas_trabalhadas=3.0)
+        resultado = get_burnup_horas_programas()
+        horas_por_mes = {g['date_str']: g['values'][0]['horas'] for g in resultado}
+        assert horas_por_mes['01/2025'] == approx(10.0)
+        assert horas_por_mes['02/2025'] == approx(15.0)
+        assert horas_por_mes['03/2025'] == approx(18.0)
+
+    def test_separa_series_por_programa(self):
+        programa1 = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        programa2 = baker.make('api.Programa', codigo_programa='PROG-2', nome_programa='Beta')
+        projeto1 = baker.make('api.Projeto', programa=programa1)
+        projeto2 = baker.make('api.Projeto', programa=programa2)
+        tarefa1 = baker.make('api.Tarefa', projeto=projeto1)
+        tarefa2 = baker.make('api.Tarefa', projeto=projeto2)
+        baker.make('api.TempoTarefa', tarefa=tarefa1,
+                   data=date(2025, 1, 10), horas_trabalhadas=8.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa2,
+                   data=date(2025, 1, 10), horas_trabalhadas=12.0)
+        resultado = get_burnup_horas_programas()
+        assert len(resultado) == 1
+        valores = {v['codigo_programa']: v['horas'] for v in resultado[0]['values']}
+        assert valores['PROG-1'] == approx(8.0)
+        assert valores['PROG-2'] == approx(12.0)
+
+    def test_inclui_programas_independente_do_status_do_projeto(self):
+        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.Projeto', programa=programa, status='Concluído')
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 1, 10), horas_trabalhadas=4.0)
+        resultado = get_burnup_horas_programas()
+        assert len(resultado) == 1
+        assert resultado[0]['values'][0]['codigo_programa'] == 'PROG-1'
+
+    def test_ordena_grupos_por_ano_e_mes_ascendente(self):
+        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.Projeto', programa=programa)
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 3, 10), horas_trabalhadas=3.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2024, 12, 10), horas_trabalhadas=2.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 1, 10), horas_trabalhadas=1.0)
+        resultado = get_burnup_horas_programas()
+        datas = [g['date_str'] for g in resultado]
+        assert datas == ['12/2024', '01/2025', '03/2025']
+
+    def test_retorna_estrutura_correta_dos_valores(self):
+        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.Projeto', programa=programa)
+        tarefa = baker.make('api.Tarefa', projeto=projeto)
+        baker.make('api.TempoTarefa', tarefa=tarefa,
+                   data=date(2025, 1, 10), horas_trabalhadas=2.0)
+        resultado = get_burnup_horas_programas()
+        ponto = resultado[0]['values'][0]
+        assert 'codigo_programa' in ponto
+        assert 'nome_programa' in ponto
+        assert 'horas' in ponto
+        assert isinstance(ponto['horas'], float)
+
+    def test_acumula_independente_para_cada_programa(self):
+        programa1 = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        programa2 = baker.make('api.Programa', codigo_programa='PROG-2', nome_programa='Beta')
+        projeto1 = baker.make('api.Projeto', programa=programa1)
+        projeto2 = baker.make('api.Projeto', programa=programa2)
+        tarefa1 = baker.make('api.Tarefa', projeto=projeto1)
+        tarefa2 = baker.make('api.Tarefa', projeto=projeto2)
+        baker.make('api.TempoTarefa', tarefa=tarefa1,
+                   data=date(2025, 1, 10), horas_trabalhadas=10.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa2,
+                   data=date(2025, 2, 10), horas_trabalhadas=20.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa1,
+                   data=date(2025, 3, 10), horas_trabalhadas=5.0)
+        resultado = get_burnup_horas_programas()
+        grupos = {g['date_str']: g for g in resultado}
+        valores_marco = {v['codigo_programa']: v['horas'] for v in grupos['03/2025']['values']}
+        assert valores_marco['PROG-1'] == approx(15.0)
+        assert 'PROG-2' not in valores_marco
+
+    def test_soma_horas_de_multiplos_projetos_do_mesmo_programa(self):
+        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto1 = baker.make('api.Projeto', programa=programa)
+        projeto2 = baker.make('api.Projeto', programa=programa)
+        tarefa1 = baker.make('api.Tarefa', projeto=projeto1)
+        tarefa2 = baker.make('api.Tarefa', projeto=projeto2)
+        baker.make('api.TempoTarefa', tarefa=tarefa1,
+                   data=date(2025, 1, 10), horas_trabalhadas=4.0)
+        baker.make('api.TempoTarefa', tarefa=tarefa2,
+                   data=date(2025, 1, 15), horas_trabalhadas=6.0)
+        resultado = get_burnup_horas_programas()
+        assert resultado[0]['values'][0]['horas'] == approx(10.0)
