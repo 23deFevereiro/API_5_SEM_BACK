@@ -49,6 +49,7 @@ def get_burnup_horas_projetos():
     registros = (
         TempoTarefa.objects
         .select_related('tarefa__projeto')
+        .filter(tarefa__projeto__status='Em andamento')
         .values(
             'tarefa__projeto__id',
             'tarefa__projeto__codigo_projeto',
@@ -64,7 +65,7 @@ def get_burnup_horas_projetos():
 
     for registro in registros:
         projeto_id = registro['tarefa__projeto__id']
-        projeto_nome = registro['tarefa__projeto__nome_projeto']
+        projeto_nome = registro['tarefa__projeto__codigo_projeto']
 
         projetos_map[(projeto_id, projeto_nome)].append({
             'data': registro['data'],
