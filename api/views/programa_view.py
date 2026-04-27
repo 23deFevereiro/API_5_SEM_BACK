@@ -1,6 +1,11 @@
 from django.http import JsonResponse, Http404
 from django.views.decorators.http import require_GET
-from ..services.programa_svc import listar_programas, get_resumo_programa, get_distribuicao_status
+from ..services.programa_svc import (
+    listar_programas,
+    get_resumo_programa,
+    get_distribuicao_status,
+    get_burnup_horas_programas,
+)
 
 
 @require_GET
@@ -25,6 +30,15 @@ def get_resumo_programa_view(request, programa_id):
 def get_distribuicao_status_view(request, programa_id):
     try:
         dados = get_distribuicao_status(programa_id)
+        return JsonResponse(dados, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_burnup_horas_programas_view(request):
+    try:
+        dados = get_burnup_horas_programas()
         return JsonResponse(dados, safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

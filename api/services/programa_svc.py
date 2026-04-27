@@ -1,5 +1,6 @@
 from decimal import Decimal
-from django.db.models import Sum, Count
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
+from django.db.models.functions import ExtractMonth, ExtractYear
 from django.shortcuts import get_object_or_404
 from ..models import DimPrograma, DimProjeto, DimTarefa, FatoHoras, FatoMateriais, FatoCompras
 
@@ -113,3 +114,44 @@ def get_distribuicao_status(programa_id):
         'total': total_geral,
         'status': resultado,
     }
+
+
+def get_burnup_horas_programas():
+    horas_qs = (
+        TempoTarefa.objects
+        .annotate(
+            month=ExtractMonth('data'),
+            year=ExtractYear('data'),
+        )
+        .values(
+            'tarefa__projeto__programa__codigo_programa',
+            'tarefa__projeto__programa__nome_programa',
+            'year',
+            'month',
+        )
+        .annotate(horas_periodo=Sum('horas_trabalhadas'))
+        .order_by('year', 'month')
+    )
+
+    burnup_list = []
+    horas_acumuladas = {}
+    for row in horas_qs:
+        codigo = row['tarefa__projeto__programa__codigo_programa']
+        nome = row['tarefa__projeto__programa__nome_programa']
+        date_str = f'{row["month"]:02d}/{row["year"]}'
+
+        date_group = next((g for g in burnup_list if g['date_str'] == date_str), None)
+        if date_group is None:
+            date_group = {'date_str': date_str, 'values': []}
+            burnup_list.append(date_group)
+
+        horas = horas_acumuladas.get(codigo, 0.0) + float(row['horas_periodo'] or 0)
+        horas_acumuladas[codigo] = horas
+
+        date_group['values'].append({
+            'codigo_programa': codigo,
+            'nome_programa': nome,
+            'horas': horas,
+        })
+
+    return burnup_list
