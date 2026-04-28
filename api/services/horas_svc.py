@@ -1,4 +1,7 @@
+from collections import defaultdict
+
 from django.db.models import Sum
+
 from ..models import FatoHoras
 
 
@@ -37,28 +40,27 @@ def get_nomes_funcionarios_projeto(projeto_id):
 
 def get_burnup_horas_projetos():
     registros = (
-        TempoTarefa.objects
-        .select_related('tarefa__projeto')
-        .filter(tarefa__projeto__status='Em andamento')
+        FatoHoras.objects
+        .filter(projeto__status='Em andamento')
         .values(
-            'tarefa__projeto__id',
-            'tarefa__projeto__codigo_projeto',
-            'tarefa__projeto__nome_projeto',
-            'tarefa__projeto__status',
-            'data'
+            'projeto__id',
+            'projeto__codigo_projeto',
+            'tempo__ano',
+            'tempo__mes',
         )
         .annotate(total_horas=Sum('horas_trabalhadas'))
-        .order_by('tarefa__projeto__id', 'data')
+        .order_by('projeto__id', 'tempo__ano', 'tempo__mes')
     )
 
     projetos_map = defaultdict(list)
 
     for registro in registros:
-        projeto_id = registro['tarefa__projeto__id']
-        projeto_nome = registro['tarefa__projeto__codigo_projeto']
+        projeto_id = registro['projeto__id']
+        projeto_nome = registro['projeto__codigo_projeto']
+        mes_str = f"{registro['tempo__mes']:02d}/{registro['tempo__ano']}"
 
         projetos_map[(projeto_id, projeto_nome)].append({
-            'data': registro['data'],
+            'mes': mes_str,
             'horas': float(registro['total_horas'] or 0),
         })
 
@@ -66,42 +68,13 @@ def get_burnup_horas_projetos():
 
     for (projeto_id, projeto_nome), serie in projetos_map.items():
         acumulado = 0
-
-        if not serie:
-            resultado.append({
-                "projeto_id": projeto_id,
-                "projeto": projeto_nome,
-                "serie": [],
-            })
-            continue
-
-        data_inicial = serie[0]['data']
-
-        semanas_map = defaultdict(float)
+        serie_final = []
 
         for ponto in serie:
-            diferenca_dias = (ponto['data'] - data_inicial).days
-            numero_semana = (diferenca_dias // 7) + 1
-
-            if numero_semana >= 4:
-                numero_semana = 4
-
-            semanas_map[numero_semana] += ponto['horas']
-        
-        ultima_semana = max(semanas_map.keys(), default=0)
-
-        serie_final = []
-        acumulado = 0
-
-        for numero_semana in range(1, ultima_semana + 1):
-            horas_semana = semanas_map[numero_semana]
-            acumulado += horas_semana
-
-            nome_semana = f"Semana {numero_semana}" if numero_semana < 4 else "Semana 4+"
-
+            acumulado += ponto['horas']
             serie_final.append({
-                "semana": nome_semana,
-                "horas": horas_semana,
+                "mes": ponto['mes'],
+                "horas": ponto['horas'],
                 "horas_acumuladas": acumulado,
             })
 
@@ -112,5 +85,3 @@ def get_burnup_horas_projetos():
         })
 
     return resultado
-
-
