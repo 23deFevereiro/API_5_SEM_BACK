@@ -127,11 +127,20 @@ class TestBurnupHorasProgramasSistema:
 
     def test_estrutura_dos_grupos_e_valores(self, api_client):
         from datetime import date
-        programa = baker.make('api.Programa', codigo_programa='PROG-1', nome_programa='Alpha')
-        projeto = baker.make('api.Projeto', programa=programa)
-        tarefa = baker.make('api.Tarefa', projeto=projeto)
-        baker.make('api.TempoTarefa', tarefa=tarefa,
-                   data=date(2025, 1, 10), horas_trabalhadas=4.0)
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = baker.make(
+            'api.DimTempo',
+            id=20250110,
+            data=date(2025, 1, 10),
+            ano=2025,
+            mes=1,
+            trimestre=1,
+            semestre=1,
+            dia_semana=date(2025, 1, 10).weekday(),
+        )
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo, horas_trabalhadas=4.0, custo_horas=0)
         url = reverse('programas_burnup_horas')
         response = api_client.get(url)
         data = response.json()
