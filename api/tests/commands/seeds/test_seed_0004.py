@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'management', 'commands', 'seeds'))
 
-from seed_0004 import (
+from seed_0005 import (
     get_connection,
     _none,
     carregar_dim_programa,
@@ -23,10 +23,12 @@ from seed_0004 import (
     carregar_fato_materiais,
     carregar_fato_compras,
     carregar_fato_estoque,
+    DB_CONFIG,
+)
+from seed_0004 import (
     run,
     Command,
     MIGRATION_REF,
-    DB_CONFIG,
 )
 
 def make_cursor():
@@ -62,7 +64,7 @@ class TestNone:
         assert _none(val) == val
 
 class TestGetConnection:
-    @patch('seed_0004.psycopg2.connect')
+    @patch('seed_0005.psycopg2.connect')
     def test_calls_connect_with_db_config(self, mock_connect):
         get_connection()
         mock_connect.assert_called_once_with(**DB_CONFIG)
@@ -528,106 +530,20 @@ class TestCarregarFatoEstoque:
         assert insert_args[0] == expected_tempo_id
 
 class TestRun:
-    def _make_conn_mock(self, cursor_mock):
-        conn = MagicMock()
-        conn.cursor.return_value = cursor_mock
-        return conn
-
-    def _default_cursor(self):
-        cursor = MagicMock()
-        cursor.fetchall.side_effect = [
-            [(1, 'Alice')],
-            [(1, 'Entregue')],
-        ]
-        return cursor
-
-    def _patch_read_csv(self):
-        df_programas = pd.DataFrame({
-            'id': [1], 'codigo_programa': ['P001'], 'nome_programa': ['Prog'],
-            'gerente_programa': ['G'], 'data_inicio': ['2022-01-01'],
-            'data_fim_prevista': ['2023-12-31'], 'status': ['Ativo'],
-        })
-        df_projetos = pd.DataFrame({
-            'id': [1], 'codigo_projeto': ['PR001'], 'nome_projeto': ['Proj'],
-            'programa_id': [1], 'responsavel': ['R'], 'custo_hora': [50.0], 'status': ['Ativo'],
-        })
-        df_tarefas = pd.DataFrame({
-            'id': [1], 'codigo_tarefa': ['T001'], 'projeto_id': [1],
-            'titulo': ['Tar'], 'responsavel': ['R'], 'estimativa_horas': [8.0], 'status': ['Aberta'],
-        })
-        df_materiais = pd.DataFrame({
-            'id': [1], 'codigo_material': ['M001'], 'descricao': ['Mat'],
-            'categoria': ['C'], 'fabricante': ['F'], 'custo_estimado': [10.0], 'status': ['Ativo'],
-        })
-        df_fornecedores = pd.DataFrame({
-            'id': [1], 'codigo_fornecedor': ['F001'], 'razao_social': ['Emp'],
-            'cidade': ['SP'], 'estado': ['SP'], 'categoria': ['C'], 'status': ['Ativo'],
-        })
-        df_tempo_tarefas = pd.DataFrame({
-            'tarefa_id': [1], 'usuario': ['Alice'],
-            'horas_trabalhadas': [4.0], 'data': ['2023-06-01'],
-        })
-        df_empenho = pd.DataFrame({
-            'projeto_id': [1], 'material_id': [1],
-            'quantidade_empenhada': [2], 'data_empenho': ['2023-06-01'],
-        })
-        df_solicitacoes = pd.DataFrame({
-            'id': [1], 'projeto_id': [1], 'material_id': [1],
-            'data_solicitacao': ['2023-06-01'], 'quantidade': [2],
-            'status': ['Aberto'],
-        })
-        df_pedidos = pd.DataFrame({
-            'solicitacao_id': [1], 'id': [1],
-            'fornecedor_id': [1],
-            'data_pedido': ['2023-06-01'], 'data_previsao_entrega': ['2023-06-10'],
-            'status': ['Entregue'], 'valor_total': [100.0],
-        })
-        df_compras_projeto = pd.DataFrame({
-            'pedido_compra_id': [1], 'valor_alocado': [100.0],
-        })
-        df_estoque = pd.DataFrame({'material_id': [1], 'projeto_id': [1], 'quantidade': [5]})
-
-        return [
-            df_programas, df_projetos, df_tarefas, df_materiais, df_fornecedores,
-            df_tempo_tarefas, df_empenho, df_solicitacoes, df_pedidos,
-            df_compras_projeto, df_estoque,
-        ]
-
-    @patch('builtins.print')
-    def test_run_success(self, mock_print):
-        cursor = self._default_cursor()
-        conn = self._make_conn_mock(cursor)
-        csv_data = self._patch_read_csv()
-
-        with patch('seed_0004.get_connection', return_value=conn), \
-             patch('seed_0004.pd.read_csv', side_effect=csv_data):
-            run()
-
-        conn.commit.assert_called_once()
-        conn.rollback.assert_not_called()
-        cursor.close.assert_called_once()
-        conn.close.assert_called_once()
-
-    @patch('builtins.print')
-    def test_run_rollback_on_exception(self, mock_print):
-        cursor = MagicMock()
-        cursor.execute.side_effect = Exception('DB error')
-        conn = self._make_conn_mock(cursor)
-        csv_data = self._patch_read_csv()
-
-        with patch('seed_0004.get_connection', return_value=conn), \
-             patch('seed_0004.pd.read_csv', side_effect=csv_data):
-            with pytest.raises(Exception, match='DB error'):
-                run()
-
-        conn.rollback.assert_called_once()
-        cursor.close.assert_called_once()
-        conn.close.assert_called_once()
+    def test_delega_para_seed_0003_e_seed_0005(self):
+        with patch('api.management.commands.seeds.seed_0003.run') as mock_s3_run, \
+             patch('api.management.commands.seeds.seed_0005.run') as mock_s5_run, \
+             patch('builtins.print'):
+            from api.management.commands.seeds.seed_0004 import run as run_0004
+            run_0004()
+        mock_s3_run.assert_called_once()
+        mock_s5_run.assert_called_once()
 
 class TestCommand:
-    @patch('seed_0004.run')
+    @patch('api.management.commands.seeds.seed_0004.run')
     def test_handle_calls_run(self, mock_run):
-        cmd = Command()
+        from api.management.commands.seeds.seed_0004 import Command as Cmd0004
+        cmd = Cmd0004()
         cmd.handle()
         mock_run.assert_called_once()
 
