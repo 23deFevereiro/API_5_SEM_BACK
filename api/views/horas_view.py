@@ -30,7 +30,9 @@ def get_horas_por_funcionario_view(request, projeto_id):
 @require_GET
 def get_burnup_horas_projetos_view(request):
     try:
-        dados = get_burnup_horas_projetos()
+        programa_id = request.GET.get('programa_id')
+        programa_id = int(programa_id) if programa_id else None
+        dados = get_burnup_horas_projetos(programa_id=programa_id)
         return JsonResponse(dados, safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
