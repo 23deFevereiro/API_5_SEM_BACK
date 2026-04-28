@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 from django.db.models import Sum
-
 from ..models import FatoHoras
 
 
