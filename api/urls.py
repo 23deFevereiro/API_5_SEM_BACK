@@ -17,11 +17,10 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from .views import demo_view, projeto_view, horas_view, funcionario_view, programa_view
+from .views import projeto_view, horas_view, funcionario_view, programa_view
 
 urlpatterns = [
     path('api/admin/', admin.site.urls),
-    path('api/demo/', demo_view.get_demo_view, name='demo'),
     path('api/projetos-overview', projeto_view.get_overview_projetos, name='projetos_overview'),
     path('api/projetos/', projeto_view.listar_projetos_view, name='listar_projetos'),
     path('api/projetos/<int:projeto_id>/resumo/', projeto_view.get_resumo_projeto_view, name='resumo_projeto'),

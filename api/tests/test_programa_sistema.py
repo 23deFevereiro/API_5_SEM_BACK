@@ -5,7 +5,7 @@ from django.urls import reverse
 
 @pytest.fixture
 def programa():
-    return baker.make('api.Programa')
+    return baker.make('api.DimPrograma', id=1)
 
 
 @pytest.mark.django_db
@@ -27,8 +27,8 @@ class TestListarProgramasSistema:
         assert response.json() == []
 
     def test_filtra_por_search(self, api_client):
-        baker.make('api.Programa', nome_programa='Programa Alpha')
-        baker.make('api.Programa', nome_programa='Programa Beta')
+        baker.make('api.DimPrograma', nome_programa='Programa Alpha')
+        baker.make('api.DimPrograma', nome_programa='Programa Beta')
         url = reverse('listar_programas')
         response = api_client.get(url, {'search': 'Alpha'})
         assert len(response.json()) == 1
@@ -91,8 +91,11 @@ class TestDistribuicaoStatusSistema:
         assert data['status'] == []
 
     def test_retorna_dados_corretos_com_projetos(self, api_client, programa):
-        baker.make('api.Projeto', programa=programa, status='Planejamento', _quantity=3)
-        baker.make('api.Projeto', programa=programa, status='Concluído', _quantity=2)
+        baker.make('api.DimProjeto', id=10, programa=programa, status='Planejamento')
+        baker.make('api.DimProjeto', id=11, programa=programa, status='Planejamento')
+        baker.make('api.DimProjeto', id=12, programa=programa, status='Planejamento')
+        baker.make('api.DimProjeto', id=13, programa=programa, status='Concluído')
+        baker.make('api.DimProjeto', id=14, programa=programa, status='Concluído')
         url = reverse('distribuicao_status', args=[programa.id])
         response = api_client.get(url)
         data = response.json()

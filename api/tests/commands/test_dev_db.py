@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from api.management.commands.seeds.seed_0004 import (
+from api.management.commands.seeds.seed_0005 import (
     carregar_dim_programa,
     carregar_dim_projeto,
     carregar_dim_tarefa,
@@ -24,6 +24,7 @@ from api.management.commands.seeds.seed_0004 import (
     get_connection,
     run,
 )
+from api.management.commands.seeds.seed_0004 import run as run_0004
 
 
 def make_cursor():
@@ -44,7 +45,7 @@ class TestGetConnection:
         'POSTGRES_USER': 'test_user',
         'POSTGRES_PASSWORD': 'test_pass',  # NOSONAR
     })
-    @patch('api.management.commands.seeds.seed_0004.psycopg2.connect')
+    @patch('api.management.commands.seeds.seed_0005.psycopg2.connect')
     def test_chama_psycopg2_connect(self, mock_connect):
         get_connection()
         mock_connect.assert_called_once()
@@ -447,8 +448,8 @@ class TestRun:
             'estoque': pd.DataFrame({'material_id': [], 'projeto_id': [], 'quantidade': []}),
         }
 
-    @patch('api.management.commands.seeds.seed_0004.get_connection')
-    @patch('api.management.commands.seeds.seed_0004.pd.read_csv')
+    @patch('api.management.commands.seeds.seed_0005.get_connection')
+    @patch('api.management.commands.seeds.seed_0005.pd.read_csv')
     def test_commit_chamado_no_sucesso(self, mock_csv, mock_conn):
         dfs = self._dfs_vazios()
         mock_csv.side_effect = list(dfs.values())
@@ -465,8 +466,8 @@ class TestRun:
         cursor.close.assert_called_once()
         conn.close.assert_called_once()
 
-    @patch('api.management.commands.seeds.seed_0004.get_connection')
-    @patch('api.management.commands.seeds.seed_0004.pd.read_csv')
+    @patch('api.management.commands.seeds.seed_0005.get_connection')
+    @patch('api.management.commands.seeds.seed_0005.pd.read_csv')
     def test_rollback_e_close_em_excecao(self, mock_csv, mock_conn):
         dfs = self._dfs_vazios()
         mock_csv.side_effect = list(dfs.values())
@@ -484,12 +485,22 @@ class TestRun:
         cursor.close.assert_called_once()
         conn.close.assert_called_once()
 
-    @patch('api.management.commands.seeds.seed_0004.pd.read_csv')
+    @patch('api.management.commands.seeds.seed_0005.pd.read_csv')
     def test_erro_ao_ler_csv(self, mock_csv):
         mock_csv.side_effect = FileNotFoundError("arquivo.csv não encontrado")
         with patch('builtins.print'):
             with pytest.raises(FileNotFoundError):
                 run()
+
+
+class TestRun0004:
+    def test_delega_para_seed_0003_e_seed_0005(self):
+        with patch('api.management.commands.seeds.seed_0003.run') as mock_s3_run, \
+             patch('api.management.commands.seeds.seed_0005.run') as mock_s5_run, \
+             patch('builtins.print'):
+            run_0004()
+        mock_s3_run.assert_called_once()
+        mock_s5_run.assert_called_once()
 
 
 class TestDevDbOrquestrador:
@@ -528,7 +539,6 @@ class TestDevDbOrquestrador:
         assert hasattr(modulo, 'run')
 
     def test_handle_chama_run_do_seed_correto(self):
-        from django.core.management.base import CommandError
         dev_db = self._import_dev_db()
 
         cmd = dev_db.Command()
@@ -536,6 +546,7 @@ class TestDevDbOrquestrador:
         cmd.style = MagicMock()
 
         with patch.object(dev_db, 'ensure_corrected_documents'), \
+             patch.object(dev_db, 'has_pending_migrations', return_value=False), \
              patch.object(dev_db, 'get_latest_applied_migration', return_value='0004'), \
              patch.object(dev_db, 'load_seed') as mock_load:
             mock_seed = MagicMock()
@@ -553,7 +564,8 @@ class TestDevDbOrquestrador:
 
         with patch.object(dev_db, 'ensure_corrected_documents'), \
              patch.object(dev_db, 'get_latest_applied_migration') as mock_detect, \
-             patch.object(dev_db, 'load_seed') as mock_load:
+             patch.object(dev_db, 'load_seed') as mock_load, \
+             patch('api.management.commands.dev_db.call_command'):
             mock_seed = MagicMock()
             mock_load.return_value = mock_seed
             cmd.handle(migration='0004')

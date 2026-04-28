@@ -1,15 +1,3 @@
-from .demo import Demo
-from .programa import Programa
-from .fornecedor import Fornecedor
-from .material import Material
-from .projeto import Projeto
-from .tarefa import Tarefa
-from .tempo_tarefa import TempoTarefa
-from .estoque_material_projeto import EstoqueMaterialProjeto
-from .empenho_material import EmpenhoMaterial
-from .pedido_compra import PedidoCompra
-from .solicitacao_compra import SolicitacaoCompra
-
 from .dim_programa import DimPrograma
 from .dim_projeto import DimProjeto
 from .dim_tarefa import DimTarefa
@@ -23,4 +11,3 @@ from .fato_horas import FatoHoras
 from .fato_materiais import FatoMateriais
 from .fato_compras import FatoCompras
 from .fato_estoque import FatoEstoque
-from .compras_projeto import ComprasProjeto

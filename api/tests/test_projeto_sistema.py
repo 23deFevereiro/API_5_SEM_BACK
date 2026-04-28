@@ -5,7 +5,7 @@ from django.urls import reverse
 
 @pytest.fixture
 def projeto():
-    return baker.make('api.Projeto')
+    return baker.make('api.DimProjeto', id=1)
 
 
 @pytest.mark.django_db
@@ -27,8 +27,8 @@ class TestListarProjetosSistema:
         assert response.json() == []
 
     def test_filtra_por_search(self, api_client):
-        baker.make('api.Projeto', nome_projeto='Conversor DC-DC')
-        baker.make('api.Projeto', nome_projeto='Driver LED')
+        baker.make('api.DimProjeto', nome_projeto='Conversor DC-DC')
+        baker.make('api.DimProjeto', nome_projeto='Driver LED')
         url = reverse('listar_projetos')
         response = api_client.get(url, {'search': 'Conversor'})
         data = response.json()
@@ -36,15 +36,15 @@ class TestListarProjetosSistema:
         assert data[0]['nome_projeto'] == 'Conversor DC-DC'
 
     def test_filtra_por_programa_id(self, api_client):
-        programa = baker.make('api.Programa')
-        baker.make('api.Projeto', programa=programa, _quantity=2)
-        baker.make('api.Projeto', _quantity=1)
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', programa=programa, _quantity=2)
+        baker.make('api.DimProjeto', _quantity=1)
         url = reverse('listar_projetos')
         response = api_client.get(url, {'programa_id': programa.id})
         assert len(response.json()) == 2
 
     def test_ignora_programa_id_invalido_e_retorna_todos(self, api_client):
-        baker.make('api.Projeto', _quantity=2)
+        baker.make('api.DimProjeto', _quantity=2)
         url = reverse('listar_projetos')
         response = api_client.get(url, {'programa_id': 'abc'})
         assert response.status_code == 200
@@ -65,18 +65,19 @@ class TestOverviewProjetosSistema:
         assert response.status_code == 405
 
     def test_retorna_lista_vazia_sem_projetos_em_andamento(self, api_client):
-        baker.make('api.Projeto', status='Concluido')
+        baker.make('api.DimProjeto', status='Concluido')
         url = reverse('projetos_overview')
         response = api_client.get(url)
         assert response.json() == []
 
     def test_filtra_por_programa_id(self, api_client):
-        programa = baker.make('api.Programa')
-        projeto_do_programa = baker.make('api.Projeto', status='Em andamento', programa=programa)
-        projeto_outro = baker.make('api.Projeto', status='Em andamento')
-        material = baker.make('api.Material', custo_estimado=10.00)
-        baker.make('api.EmpenhoMaterial', projeto=projeto_do_programa, material=material, quantidade_empenhada=1)
-        baker.make('api.EmpenhoMaterial', projeto=projeto_outro, material=material, quantidade_empenhada=1)
+        programa = baker.make('api.DimPrograma')
+        projeto_do_programa = baker.make('api.DimProjeto', status='Em andamento', programa=programa)
+        projeto_outro = baker.make('api.DimProjeto', status='Em andamento')
+        material = baker.make('api.DimMaterial', custo_estimado=10.00)
+        tempo = baker.make('api.DimTempo', id=20230101, data='2023-01-01', ano=2023, mes=1, trimestre=1, semestre=1, dia_semana=0)
+        baker.make('api.FatoMateriais', projeto=projeto_do_programa, programa=programa, material=material, tempo=tempo, quantidade_empenhada=1)
+        baker.make('api.FatoMateriais', projeto=projeto_outro, material=material, tempo=tempo, quantidade_empenhada=1)
         url = reverse('projetos_overview')
         response = api_client.get(url, {'programa_id': programa.id})
         data = response.json()
@@ -161,8 +162,8 @@ class TestMateriaisDisponiveisSistema:
         assert response.json() == []
 
     def test_retorna_materiais_do_projeto(self, api_client, projeto):
-        material = baker.make('api.Material', descricao='Capacitor')
-        baker.make('api.EmpenhoMaterial', projeto=projeto, material=material, quantidade_empenhada=1)
+        material = baker.make('api.DimMaterial', descricao='Capacitor')
+        baker.make('api.FatoMateriais', projeto=projeto, material=material, quantidade_empenhada=1)
         url = reverse('materiais_disponiveis_projeto', args=[projeto.id])
         response = api_client.get(url)
         data = response.json()
