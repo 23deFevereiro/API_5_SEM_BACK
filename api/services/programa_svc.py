@@ -127,18 +127,18 @@ def get_burnup_horas_programas():
         .annotate(horas_periodo=Sum('horas_trabalhadas'))
         .order_by('tempo__ano', 'tempo__mes')
     )
-
-    burnup_list = []
+    
+    grupos_por_data = {}
     horas_acumuladas = {}
     for row in horas_qs:
         codigo = row['programa__codigo_programa']
         nome = row['programa__nome_programa']
         date_str = f'{row["tempo__mes"]:02d}/{row["tempo__ano"]}'
 
-        date_group = next((g for g in burnup_list if g['date_str'] == date_str), None)
+        date_group = grupos_por_data.get(date_str)
         if date_group is None:
             date_group = {'date_str': date_str, 'values': []}
-            burnup_list.append(date_group)
+            grupos_por_data[date_str] = date_group
 
         horas = horas_acumuladas.get(codigo, 0.0) + float(row['horas_periodo'] or 0)
         horas_acumuladas[codigo] = horas
@@ -149,4 +149,4 @@ def get_burnup_horas_programas():
             'horas': horas,
         })
 
-    return burnup_list
+    return list(grupos_por_data.values())
