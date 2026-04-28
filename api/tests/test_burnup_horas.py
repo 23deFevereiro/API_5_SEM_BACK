@@ -9,16 +9,16 @@ from api.services.horas_svc import get_burnup_horas_projetos
 
 @patch("api.services.horas_svc.TempoTarefa")
 def test_burnup_basico(mock_tempo):
-    mock_tempo.objects.select_related.return_value.values.return_value.annotate.return_value.order_by.return_value = [
+    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
         {
             "tarefa__projeto__id": 1,
-            "tarefa__projeto__nome_projeto": "Projeto A",
+            "tarefa__projeto__codigo_projeto": "PROJ-A",
             "data": date(2026, 4, 1),
             "total_horas": 2,
         },
         {
             "tarefa__projeto__id": 1,
-            "tarefa__projeto__nome_projeto": "Projeto A",
+            "tarefa__projeto__codigo_projeto": "PROJ-A",
             "data": date(2026, 4, 2),
             "total_horas": 3,
         },
@@ -27,7 +27,7 @@ def test_burnup_basico(mock_tempo):
     resultado = get_burnup_horas_projetos()
 
     assert len(resultado) == 1
-    assert resultado[0]["projeto"] == "Projeto A"
+    assert resultado[0]["projeto"] == "PROJ-A"
     assert resultado[0]["serie"][0]["semana"] == "Semana 1"
     assert resultado[0]["serie"][0]["horas"] == pytest.approx(5.0)
     assert resultado[0]["serie"][0]["horas_acumuladas"] == pytest.approx(5.0)
@@ -35,16 +35,16 @@ def test_burnup_basico(mock_tempo):
 
 @patch("api.services.horas_svc.TempoTarefa")
 def test_burnup_semana_4_mais(mock_tempo):
-    mock_tempo.objects.select_related.return_value.values.return_value.annotate.return_value.order_by.return_value = [
+    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
         {
             "tarefa__projeto__id": 1,
-            "tarefa__projeto__nome_projeto": "Projeto A",
+            "tarefa__projeto__codigo_projeto": "PROJ-A",
             "data": date(2026, 4, 1),
             "total_horas": 1,
         },
         {
             "tarefa__projeto__id": 1,
-            "tarefa__projeto__nome_projeto": "Projeto A",
+            "tarefa__projeto__codigo_projeto": "PROJ-A",
             "data": date(2026, 5, 10),
             "total_horas": 5,
         },
@@ -59,7 +59,7 @@ def test_burnup_semana_4_mais(mock_tempo):
 
 @patch("api.services.horas_svc.TempoTarefa")
 def test_burnup_vazio(mock_tempo):
-    mock_tempo.objects.select_related.return_value.values.return_value.annotate.return_value.order_by.return_value = []
+    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = []
 
     resultado = get_burnup_horas_projetos()
 
@@ -68,16 +68,16 @@ def test_burnup_vazio(mock_tempo):
 
 @patch("api.services.horas_svc.TempoTarefa")
 def test_burnup_multiplos_projetos(mock_tempo):
-    mock_tempo.objects.select_related.return_value.values.return_value.annotate.return_value.order_by.return_value = [
+    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
         {
             "tarefa__projeto__id": 1,
-            "tarefa__projeto__nome_projeto": "Projeto A",
+            "tarefa__projeto__codigo_projeto": "PROJ-A",
             "data": date(2026, 4, 1),
             "total_horas": 2,
         },
         {
             "tarefa__projeto__id": 2,
-            "tarefa__projeto__nome_projeto": "Projeto B",
+            "tarefa__projeto__codigo_projeto": "PROJ-B",
             "data": date(2026, 4, 1),
             "total_horas": 4,
         },
@@ -87,8 +87,8 @@ def test_burnup_multiplos_projetos(mock_tempo):
 
     assert len(resultado) == 2
     nomes = [item["projeto"] for item in resultado]
-    assert "Projeto A" in nomes
-    assert "Projeto B" in nomes
+    assert "PROJ-A" in nomes
+    assert "PROJ-B" in nomes
 
 
 @pytest.mark.django_db
