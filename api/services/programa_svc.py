@@ -1,5 +1,5 @@
 from decimal import Decimal
-from django.db.models import Sum, Count
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
 from django.shortcuts import get_object_or_404
 from ..models import DimPrograma, DimProjeto, DimTarefa, FatoHoras, FatoMateriais, FatoCompras
 
@@ -113,3 +113,40 @@ def get_distribuicao_status(programa_id):
         'total': total_geral,
         'status': resultado,
     }
+
+
+def get_burnup_horas_programas():
+    horas_qs = (
+        FatoHoras.objects
+        .values(
+            'programa__codigo_programa',
+            'programa__nome_programa',
+            'tempo__ano',
+            'tempo__mes',
+        )
+        .annotate(horas_periodo=Sum('horas_trabalhadas'))
+        .order_by('tempo__ano', 'tempo__mes')
+    )
+    
+    grupos_por_data = {}
+    horas_acumuladas = {}
+    for row in horas_qs:
+        codigo = row['programa__codigo_programa']
+        nome = row['programa__nome_programa']
+        date_str = f'{row["tempo__mes"]:02d}/{row["tempo__ano"]}'
+
+        date_group = grupos_por_data.get(date_str)
+        if date_group is None:
+            date_group = {'date_str': date_str, 'values': []}
+            grupos_por_data[date_str] = date_group
+
+        horas = horas_acumuladas.get(codigo, 0.0) + float(row['horas_periodo'] or 0)
+        horas_acumuladas[codigo] = horas
+
+        date_group['values'].append({
+            'codigo_programa': codigo,
+            'nome_programa': nome,
+            'horas': horas,
+        })
+
+    return list(grupos_por_data.values())
