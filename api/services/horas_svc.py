@@ -37,10 +37,17 @@ def get_nomes_funcionarios_projeto(projeto_id):
         .distinct()
     )
 
-def get_burnup_horas_projetos():
+def get_burnup_horas_projetos(programa_id=None):
+    filtros = {
+        'projeto__status': 'Em andamento',
+    }
+
+    if programa_id:
+        filtros['projeto__programa_id'] = programa_id
+
     registros = (
         FatoHoras.objects
-        .filter(projeto__status='Em andamento')
+        .filter(**filtros)
         .values(
             'projeto__id',
             'projeto__codigo_projeto',
