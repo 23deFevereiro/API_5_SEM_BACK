@@ -127,7 +127,7 @@ def get_burnup_horas_programas():
         .annotate(horas_periodo=Sum('horas_trabalhadas'))
         .order_by('tempo__ano', 'tempo__mes')
     )
-    
+
     grupos_por_data = {}
     horas_acumuladas = {}
     for row in horas_qs:
@@ -147,6 +147,84 @@ def get_burnup_horas_programas():
             'codigo_programa': codigo,
             'nome_programa': nome,
             'horas': horas,
+        })
+
+    return list(grupos_por_data.values())
+
+
+def get_burnup_custo_programas():
+    # Custo de mão de obra por (programa, ano, mês)
+    horas_qs = (
+        FatoHoras.objects
+        .values(
+            'programa__codigo_programa',
+            'programa__nome_programa',
+            'tempo__ano',
+            'tempo__mes',
+        )
+        .annotate(custo_periodo=Sum('custo_horas'))
+    )
+
+    # Custo de materiais realizados (compras) por (programa, ano, mês), excluindo canceladas
+    compras_qs = (
+        FatoCompras.objects
+        .exclude(status__nome_status='Cancelado')
+        .filter(projeto__programa__isnull=False)
+        .values(
+            'projeto__programa__codigo_programa',
+            'projeto__programa__nome_programa',
+            'tempo__ano',
+            'tempo__mes',
+        )
+        .annotate(custo_periodo=Sum('valor_alocado'))
+    )
+
+    # Mescla as duas fontes em (codigo, ano, mes) -> {nome, custo_total_do_periodo}
+    custos_por_chave = {}
+
+    for row in horas_qs:
+        codigo = row['programa__codigo_programa']
+        if codigo is None:
+            continue
+        key = (codigo, row['tempo__ano'], row['tempo__mes'])
+        info = custos_por_chave.setdefault(
+            key,
+            {'nome': row['programa__nome_programa'], 'custo': 0.0},
+        )
+        info['custo'] += float(row['custo_periodo'] or 0)
+
+    for row in compras_qs:
+        codigo = row['projeto__programa__codigo_programa']
+        if codigo is None:
+            continue
+        key = (codigo, row['tempo__ano'], row['tempo__mes'])
+        info = custos_por_chave.setdefault(
+            key,
+            {'nome': row['projeto__programa__nome_programa'], 'custo': 0.0},
+        )
+        info['custo'] += float(row['custo_periodo'] or 0)
+
+    # Ordena cronologicamente para a acumulação ficar correta
+    chaves_ordenadas = sorted(custos_por_chave.keys(), key=lambda k: (k[1], k[2]))
+
+    grupos_por_data = {}
+    custo_acumulado = {}
+    for codigo, ano, mes in chaves_ordenadas:
+        info = custos_por_chave[(codigo, ano, mes)]
+        date_str = f'{mes:02d}/{ano}'
+
+        date_group = grupos_por_data.get(date_str)
+        if date_group is None:
+            date_group = {'date_str': date_str, 'values': []}
+            grupos_por_data[date_str] = date_group
+
+        custo = custo_acumulado.get(codigo, 0.0) + info['custo']
+        custo_acumulado[codigo] = custo
+
+        date_group['values'].append({
+            'codigo_programa': codigo,
+            'nome_programa': info['nome'],
+            'custo': custo,
         })
 
     return list(grupos_por_data.values())
