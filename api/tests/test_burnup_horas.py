@@ -7,19 +7,21 @@ from django.test import Client
 from api.services.horas_svc import get_burnup_horas_projetos
 
 
-@patch("api.services.horas_svc.TempoTarefa")
-def test_burnup_basico(mock_tempo):
-    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
+@patch("api.services.horas_svc.FatoHoras")
+def test_burnup_basico(mock_fato_horas):
+    mock_fato_horas.objects.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
         {
-            "tarefa__projeto__id": 1,
-            "tarefa__projeto__codigo_projeto": "PROJ-A",
-            "data": date(2026, 4, 1),
+            "projeto__id": 1,
+            "projeto__codigo_projeto": "PROJ-A",
+            "tempo__ano": 2026,
+            "tempo__mes": 4,
             "total_horas": 2,
         },
         {
-            "tarefa__projeto__id": 1,
-            "tarefa__projeto__codigo_projeto": "PROJ-A",
-            "data": date(2026, 4, 2),
+            "projeto__id": 1,
+            "projeto__codigo_projeto": "PROJ-A",
+            "tempo__ano": 2026,
+            "tempo__mes": 5,
             "total_horas": 3,
         },
     ]
@@ -28,57 +30,64 @@ def test_burnup_basico(mock_tempo):
 
     assert len(resultado) == 1
     assert resultado[0]["projeto"] == "PROJ-A"
-    assert resultado[0]["serie"][0]["semana"] == "Semana 1"
-    assert resultado[0]["serie"][0]["horas"] == pytest.approx(5.0)
-    assert resultado[0]["serie"][0]["horas_acumuladas"] == pytest.approx(5.0)
+    assert resultado[0]["serie"][0]["mes"] == "04/2026"
+    assert resultado[0]["serie"][0]["horas"] == pytest.approx(2.0)
+    assert resultado[0]["serie"][0]["horas_acumuladas"] == pytest.approx(2.0)
+    assert resultado[0]["serie"][1]["mes"] == "05/2026"
+    assert resultado[0]["serie"][1]["horas"] == pytest.approx(3.0)
+    assert resultado[0]["serie"][1]["horas_acumuladas"] == pytest.approx(5.0)
 
 
-@patch("api.services.horas_svc.TempoTarefa")
-def test_burnup_semana_4_mais(mock_tempo):
-    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
+@patch("api.services.horas_svc.FatoHoras")
+def test_burnup_acumula_horas_por_mes(mock_fato_horas):
+    mock_fato_horas.objects.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
         {
-            "tarefa__projeto__id": 1,
-            "tarefa__projeto__codigo_projeto": "PROJ-A",
-            "data": date(2026, 4, 1),
+            "projeto__id": 1,
+            "projeto__codigo_projeto": "PROJ-A",
+            "tempo__ano": 2026,
+            "tempo__mes": 4,
             "total_horas": 1,
         },
         {
-            "tarefa__projeto__id": 1,
-            "tarefa__projeto__codigo_projeto": "PROJ-A",
-            "data": date(2026, 5, 10),
+            "projeto__id": 1,
+            "projeto__codigo_projeto": "PROJ-A",
+            "tempo__ano": 2026,
+            "tempo__mes": 5,
             "total_horas": 5,
         },
     ]
 
     resultado = get_burnup_horas_projetos()
 
-    assert resultado[0]["serie"][-1]["semana"] == "Semana 4+"
+    assert resultado[0]["serie"][-1]["mes"] == "05/2026"
     assert resultado[0]["serie"][-1]["horas"] == pytest.approx(5.0)
     assert resultado[0]["serie"][-1]["horas_acumuladas"] == pytest.approx(6.0)
 
 
-@patch("api.services.horas_svc.TempoTarefa")
-def test_burnup_vazio(mock_tempo):
-    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = []
+@patch("api.services.horas_svc.FatoHoras")
+def test_burnup_vazio(mock_fato_horas):
+    mock_fato_horas.objects.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = []
 
     resultado = get_burnup_horas_projetos()
 
     assert resultado == []
 
 
-@patch("api.services.horas_svc.TempoTarefa")
-def test_burnup_multiplos_projetos(mock_tempo):
-    mock_tempo.objects.select_related.return_value.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
+@patch("api.services.horas_svc.FatoHoras")
+def test_burnup_multiplos_projetos(mock_fato_horas):
+    mock_fato_horas.objects.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
         {
-            "tarefa__projeto__id": 1,
-            "tarefa__projeto__codigo_projeto": "PROJ-A",
-            "data": date(2026, 4, 1),
+            "projeto__id": 1,
+            "projeto__codigo_projeto": "PROJ-A",
+            "tempo__ano": 2026,
+            "tempo__mes": 4,
             "total_horas": 2,
         },
         {
-            "tarefa__projeto__id": 2,
-            "tarefa__projeto__codigo_projeto": "PROJ-B",
-            "data": date(2026, 4, 1),
+            "projeto__id": 2,
+            "projeto__codigo_projeto": "PROJ-B",
+            "tempo__ano": 2026,
+            "tempo__mes": 4,
             "total_horas": 4,
         },
     ]
@@ -100,7 +109,7 @@ def test_view_burnup_status_200(mock_service):
             "projeto": "Projeto A",
             "serie": [
                 {
-                    "semana": "Semana 1",
+                    "mes": "04/2026",
                     "horas": 5.0,
                     "horas_acumuladas": 5.0,
                 }
@@ -123,7 +132,7 @@ def test_view_burnup_retorna_json(mock_service):
             "projeto": "Projeto A",
             "serie": [
                 {
-                    "semana": "Semana 1",
+                    "mes": "04/2026",
                     "horas": 5.0,
                     "horas_acumuladas": 5.0,
                 }
@@ -141,7 +150,7 @@ def test_view_burnup_retorna_json(mock_service):
             "projeto": "Projeto A",
             "serie": [
                 {
-                    "semana": "Semana 1",
+                    "mes": "04/2026",
                     "horas": 5.0,
                     "horas_acumuladas": 5.0,
                 }
