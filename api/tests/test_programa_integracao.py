@@ -7,6 +7,7 @@ from api.services.programa_svc import (
     get_resumo_programa,
     get_distribuicao_status,
     get_burnup_horas_programas,
+    get_burnup_custo_programas,
 )
 from model_bakery.recipe import seq
 
@@ -348,3 +349,172 @@ class TestGetBurnupHorasProgramas:
                    tempo=tempo2, horas_trabalhadas=6.0, custo_horas=0)
         resultado = get_burnup_horas_programas()
         assert resultado[0]['values'][0]['horas'] == approx(10.0)
+
+
+@pytest.mark.django_db
+class TestGetBurnupCustoProgramas:
+
+    def _make_tempo(self, ano, mes, dia=1):
+        from api.models import DimTempo
+        _id = ano * 10000 + mes * 100 + dia
+        existente = DimTempo.objects.filter(id=_id).first()
+        if existente:
+            return existente
+        return baker.make(
+            'api.DimTempo',
+            id=_id,
+            data=date(ano, mes, dia),
+            ano=ano,
+            mes=mes,
+            trimestre=(mes - 1) // 3 + 1,
+            semestre=1 if mes <= 6 else 2,
+            dia_semana=date(ano, mes, dia).weekday(),
+        )
+
+    def test_retorna_lista_vazia_sem_registros(self):
+        resultado = get_burnup_custo_programas()
+        assert resultado == []
+
+    def test_retorna_lista_vazia_quando_so_existem_programas_sem_lancamentos(self):
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa)
+        resultado = get_burnup_custo_programas()
+        assert resultado == []
+
+    def test_soma_apenas_custo_de_mao_de_obra(self):
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo(2025, 1, 10)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo, horas_trabalhadas=10.0, custo_horas=500.0)
+        resultado = get_burnup_custo_programas()
+        assert len(resultado) == 1
+        assert resultado[0]['values'][0]['custo'] == approx(500.0)
+
+    def test_soma_apenas_custo_de_compras(self):
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo(2025, 1, 10)
+        status = baker.make('api.DimStatusPedido', nome_status='Entregue')
+        baker.make('api.FatoCompras', projeto=projeto, tempo=tempo,
+                   status=status, valor_alocado=300.0)
+        resultado = get_burnup_custo_programas()
+        assert len(resultado) == 1
+        assert resultado[0]['values'][0]['custo'] == approx(300.0)
+
+    def test_soma_combinada_mao_de_obra_e_compras(self):
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo(2025, 1, 10)
+        status = baker.make('api.DimStatusPedido', nome_status='Entregue')
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo, horas_trabalhadas=8.0, custo_horas=400.0)
+        baker.make('api.FatoCompras', projeto=projeto, tempo=tempo,
+                   status=status, valor_alocado=600.0)
+        resultado = get_burnup_custo_programas()
+        assert resultado[0]['values'][0]['custo'] == approx(1000.0)
+
+    def test_exclui_compras_canceladas(self):
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo(2025, 1, 10)
+        cancelado = baker.make('api.DimStatusPedido', nome_status='Cancelado')
+        entregue = baker.make('api.DimStatusPedido', nome_status='Entregue')
+        baker.make('api.FatoCompras', projeto=projeto, tempo=tempo,
+                   status=cancelado, valor_alocado=1000.0)
+        baker.make('api.FatoCompras', projeto=projeto, tempo=tempo,
+                   status=entregue, valor_alocado=200.0)
+        resultado = get_burnup_custo_programas()
+        assert resultado[0]['values'][0]['custo'] == approx(200.0)
+
+    def test_acumula_custo_ao_longo_dos_meses(self):
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo_jan = self._make_tempo(2025, 1, 10)
+        tempo_fev = self._make_tempo(2025, 2, 10)
+        tempo_mar = self._make_tempo(2025, 3, 10)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo_jan, horas_trabalhadas=0, custo_horas=100.0)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo_fev, horas_trabalhadas=0, custo_horas=50.0)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo_mar, horas_trabalhadas=0, custo_horas=30.0)
+        resultado = get_burnup_custo_programas()
+        custo_por_mes = {g['date_str']: g['values'][0]['custo'] for g in resultado}
+        assert custo_por_mes['01/2025'] == approx(100.0)
+        assert custo_por_mes['02/2025'] == approx(150.0)
+        assert custo_por_mes['03/2025'] == approx(180.0)
+
+    def test_separa_series_por_programa(self):
+        programa1 = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        programa2 = baker.make('api.DimPrograma', codigo_programa='PROG-2', nome_programa='Beta')
+        projeto1 = baker.make('api.DimProjeto', id=1, programa=programa1)
+        projeto2 = baker.make('api.DimProjeto', id=2, programa=programa2)
+        tempo = self._make_tempo(2025, 1, 10)
+        baker.make('api.FatoHoras', programa=programa1, projeto=projeto1,
+                   tempo=tempo, horas_trabalhadas=0, custo_horas=400.0)
+        baker.make('api.FatoHoras', programa=programa2, projeto=projeto2,
+                   tempo=tempo, horas_trabalhadas=0, custo_horas=600.0)
+        resultado = get_burnup_custo_programas()
+        assert len(resultado) == 1
+        valores = {v['codigo_programa']: v['custo'] for v in resultado[0]['values']}
+        assert valores['PROG-1'] == approx(400.0)
+        assert valores['PROG-2'] == approx(600.0)
+
+    def test_ordena_grupos_cronologicamente(self):
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo_mar = self._make_tempo(2025, 3, 10)
+        tempo_dez = self._make_tempo(2024, 12, 10)
+        tempo_jan = self._make_tempo(2025, 1, 10)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo_mar, horas_trabalhadas=0, custo_horas=30.0)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo_dez, horas_trabalhadas=0, custo_horas=20.0)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo_jan, horas_trabalhadas=0, custo_horas=10.0)
+        resultado = get_burnup_custo_programas()
+        datas = [g['date_str'] for g in resultado]
+        assert datas == ['12/2024', '01/2025', '03/2025']
+
+    def test_retorna_estrutura_correta_dos_valores(self):
+        programa = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo(2025, 1, 10)
+        baker.make('api.FatoHoras', programa=programa, projeto=projeto,
+                   tempo=tempo, horas_trabalhadas=0, custo_horas=50.0)
+        resultado = get_burnup_custo_programas()
+        ponto = resultado[0]['values'][0]
+        assert 'codigo_programa' in ponto
+        assert 'nome_programa' in ponto
+        assert 'custo' in ponto
+        assert isinstance(ponto['custo'], float)
+
+    def test_acumula_independente_para_cada_programa(self):
+        programa1 = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
+        programa2 = baker.make('api.DimPrograma', codigo_programa='PROG-2', nome_programa='Beta')
+        projeto1 = baker.make('api.DimProjeto', id=1, programa=programa1)
+        projeto2 = baker.make('api.DimProjeto', id=2, programa=programa2)
+        tempo_jan = self._make_tempo(2025, 1, 10)
+        tempo_fev = self._make_tempo(2025, 2, 10)
+        tempo_mar = self._make_tempo(2025, 3, 10)
+        baker.make('api.FatoHoras', programa=programa1, projeto=projeto1,
+                   tempo=tempo_jan, horas_trabalhadas=0, custo_horas=100.0)
+        baker.make('api.FatoHoras', programa=programa2, projeto=projeto2,
+                   tempo=tempo_fev, horas_trabalhadas=0, custo_horas=200.0)
+        baker.make('api.FatoHoras', programa=programa1, projeto=projeto1,
+                   tempo=tempo_mar, horas_trabalhadas=0, custo_horas=50.0)
+        resultado = get_burnup_custo_programas()
+        grupos = {g['date_str']: g for g in resultado}
+        valores_marco = {v['codigo_programa']: v['custo'] for v in grupos['03/2025']['values']}
+        assert valores_marco['PROG-1'] == approx(150.0)
+        assert 'PROG-2' not in valores_marco
+
+    def test_ignora_compras_de_projeto_sem_programa(self):
+        projeto_orfao = baker.make('api.DimProjeto', id=99, programa=None)
+        tempo = self._make_tempo(2025, 1, 10)
+        status = baker.make('api.DimStatusPedido', nome_status='Entregue')
+        baker.make('api.FatoCompras', projeto=projeto_orfao, tempo=tempo,
+                   status=status, valor_alocado=500.0)
+        resultado = get_burnup_custo_programas()
+        assert resultado == []
