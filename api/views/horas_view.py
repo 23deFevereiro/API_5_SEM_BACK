@@ -2,6 +2,7 @@ import logging
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from ..services.horas_svc import (get_horas_por_funcionario, get_burnup_horas_projetos)
 
 from .view_utils import ERRO_INTERNO, extrair_periodo
 from ..services.horas_svc import get_horas_por_funcionario, get_nomes_funcionarios_projeto
@@ -24,8 +25,18 @@ def get_horas_por_funcionario_view(request, projeto_id):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        logger.exception('Erro interno na view de horas')
-        return JsonResponse({'error': ERRO_INTERNO}, status=500)
+        return JsonResponse({'error': str(e)}, status=500)
+    
+@require_GET
+def get_burnup_horas_projetos_view(request):
+    try:
+        programa_id = request.GET.get('programa_id')
+        programa_id = int(programa_id) if programa_id else None
+        dados = get_burnup_horas_projetos(programa_id=programa_id)
+        return JsonResponse(dados, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 
 
 @require_GET

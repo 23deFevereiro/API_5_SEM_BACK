@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/projetos/<int:projeto_id>/resumo/', projeto_view.get_resumo_projeto_view, name='resumo_projeto'),
     path('api/projetos/<int:projeto_id>/materiais/', projeto_view.get_materiais_projeto_view, name='materiais_projeto'),
     path('api/projetos/<int:projeto_id>/horas-por-funcionario/', horas_view.get_horas_por_funcionario_view, name='horas_por_funcionario'),
+    path('api/projetos/burnup-horas/', horas_view.get_burnup_horas_projetos_view, name='burnup_horas_projetos'),
     path('api/projetos/<int:projeto_id>/funcionarios/', funcionario_view.get_funcionarios_projeto_view, name='funcionarios_projeto'),
     path('api/projetos/<int:projeto_id>/nomes-funcionarios/', horas_view.get_nomes_funcionarios_view, name='nomes_funcionarios_projeto'),
     path('api/projetos/<int:projeto_id>/materiais-disponiveis/', projeto_view.get_materiais_disponiveis_view, name='materiais_disponiveis_projeto'),
