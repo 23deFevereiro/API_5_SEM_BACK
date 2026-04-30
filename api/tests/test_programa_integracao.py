@@ -10,7 +10,7 @@ from api.services.programa_svc import (
     get_burnup_custo_programas,
 )
 from model_bakery.recipe import seq
-
+from decimal import Decimal
 
 @pytest.mark.django_db
 class TestListarProgramas:
@@ -488,7 +488,7 @@ class TestGetBurnupCustoProgramas:
         assert 'codigo_programa' in ponto
         assert 'nome_programa' in ponto
         assert 'custo' in ponto
-        assert isinstance(ponto['custo'], float)
+        assert isinstance(ponto['custo'], Decimal)
 
     def test_acumula_independente_para_cada_programa(self):
         programa1 = baker.make('api.DimPrograma', codigo_programa='PROG-1', nome_programa='Alpha')
