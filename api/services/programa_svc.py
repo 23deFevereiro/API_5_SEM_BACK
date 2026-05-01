@@ -127,7 +127,7 @@ def get_burnup_horas_programas():
         .annotate(horas_periodo=Sum('horas_trabalhadas'))
         .order_by('tempo__ano', 'tempo__mes')
     )
-    
+
     grupos_por_data = {}
     horas_acumuladas = {}
     for row in horas_qs:
@@ -150,3 +150,59 @@ def get_burnup_horas_programas():
         })
 
     return list(grupos_por_data.values())
+
+
+def get_burnup_custo_programas():
+    horas_qs = (
+        FatoHoras.objects
+        .values(
+            'programa__codigo_programa',
+            'programa__nome_programa',
+            'tempo__ano',
+            'tempo__mes',
+        )
+        .annotate(custo_periodo=Sum('custo_horas'))
+    )
+
+    compras_qs = (
+        FatoCompras.objects
+        .exclude(status__nome_status='Cancelado')
+        .filter(projeto__programa__isnull=False)
+        .values(
+            'projeto__programa__codigo_programa',
+            'projeto__programa__nome_programa',
+            'tempo__ano',
+            'tempo__mes',
+        )
+        .annotate(custo_periodo=Sum('valor_alocado'))
+    )
+
+    custos_por_periodo = {}
+
+    def acumular(rows, campo_codigo, campo_nome):
+        for row in rows:
+            codigo = row[campo_codigo]
+            if codigo is None:
+                continue
+            periodo = (row['tempo__ano'], row['tempo__mes'])
+            programas = custos_por_periodo.setdefault(periodo, {})
+            info = programas.setdefault(codigo, {'nome': row[campo_nome], 'custo': Decimal(0.0)})
+            info['custo'] += Decimal(row['custo_periodo'] or 0)
+
+    acumular(horas_qs, 'programa__codigo_programa', 'programa__nome_programa')
+    acumular(compras_qs, 'projeto__programa__codigo_programa', 'projeto__programa__nome_programa')
+
+    custo_acumulado = {}
+    burnup_list = []
+    for ano, mes in sorted(custos_por_periodo.keys()):
+        grupo = {'date_str': f'{mes:02d}/{ano}', 'values': []}
+        for codigo, info in custos_por_periodo[(ano, mes)].items():
+            custo_acumulado[codigo] = Decimal(custo_acumulado.get(codigo, 0.0)) + info['custo']
+            grupo['values'].append({
+                'codigo_programa': codigo,
+                'nome_programa': info['nome'],
+                'custo': custo_acumulado[codigo],
+            })
+        burnup_list.append(grupo)
+
+    return burnup_list

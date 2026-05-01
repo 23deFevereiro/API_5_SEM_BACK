@@ -34,4 +34,5 @@ urlpatterns = [
     path('api/programas/<int:programa_id>/resumo/', programa_view.get_resumo_programa_view, name='resumo_programa'),
     path('api/programas/<int:programa_id>/distribuicao-status/', programa_view.get_distribuicao_status_view, name='distribuicao_status'),
     path('api/programas-burnup-horas/', programa_view.get_burnup_horas_programas_view, name='programas_burnup_horas'),
+    path('api/programas-burnup-custo/', programa_view.get_burnup_custo_programas_view, name='programas_burnup_custo'),
 ]

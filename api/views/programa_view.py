@@ -5,6 +5,7 @@ from ..services.programa_svc import (
     get_resumo_programa,
     get_distribuicao_status,
     get_burnup_horas_programas,
+    get_burnup_custo_programas,
 )
 
 
@@ -39,6 +40,15 @@ def get_distribuicao_status_view(request, programa_id):
 def get_burnup_horas_programas_view(request):
     try:
         dados = get_burnup_horas_programas()
+        return JsonResponse(dados, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_burnup_custo_programas_view(request):
+    try:
+        dados = get_burnup_custo_programas()
         return JsonResponse(dados, safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
