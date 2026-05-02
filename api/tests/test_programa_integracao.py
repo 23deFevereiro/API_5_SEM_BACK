@@ -1,6 +1,8 @@
 import pytest
 from datetime import date
 from pytest import approx
+from decimal import Decimal
+from django.http import Http404
 from model_bakery import baker
 from api.services.programa_svc import (
     listar_programas,
@@ -8,9 +10,9 @@ from api.services.programa_svc import (
     get_distribuicao_status,
     get_burnup_horas_programas,
     get_burnup_custo_programas,
+    get_tabela_projetos,
 )
 from model_bakery.recipe import seq
-from decimal import Decimal
 
 @pytest.mark.django_db
 class TestListarProgramas:
@@ -518,3 +520,127 @@ class TestGetBurnupCustoProgramas:
                    status=status, valor_alocado=500.0)
         resultado = get_burnup_custo_programas()
         assert resultado == []
+
+
+@pytest.mark.django_db
+class TestGetTabelaProjetos:
+
+    def _make_tempo(self):
+        return baker.make(
+            'api.DimTempo', id=20230101, data='2023-01-01',
+            ano=2023, mes=1, trimestre=1, semestre=1, dia_semana=0,
+        )
+
+    def test_levanta_404_para_programa_inexistente(self):
+        with pytest.raises(Http404):
+            get_tabela_projetos(99999)
+
+    def test_retorna_lista_vazia_quando_programa_sem_projetos(self):
+        programa = baker.make('api.DimPrograma')
+        resultado = get_tabela_projetos(programa.id)
+        assert resultado == []
+
+    def test_retorna_um_item_por_projeto(self):
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa)
+        baker.make('api.DimProjeto', id=2, programa=programa)
+        resultado = get_tabela_projetos(programa.id)
+        assert len(resultado) == 2
+
+    def test_retorna_campos_corretos(self):
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa)
+        resultado = get_tabela_projetos(programa.id)
+        item = resultado[0]
+        assert 'nome_projeto' in item
+        assert 'responsavel' in item
+        assert 'status' in item
+        assert 'horas_estimadas' in item
+        assert 'horas_realizadas' in item
+        assert 'percentual_tarefas_concluidas' in item
+        assert 'desvio_horas' in item
+        assert 'percentual_desvio' in item
+
+    def test_retorna_zeros_quando_sem_tarefas_e_horas(self):
+        programa = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa)
+        resultado = get_tabela_projetos(programa.id)
+        item = resultado[0]
+        assert item['horas_estimadas'] == approx(0.0)
+        assert item['horas_realizadas'] == approx(0.0)
+        assert item['desvio_horas'] == approx(0.0)
+        assert item['percentual_desvio'] == approx(0.0)
+        assert item['percentual_tarefas_concluidas'] == approx(0.0)
+
+    def test_calcula_horas_estimadas_a_partir_das_tarefas(self):
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=10.0, status='Em andamento')
+        baker.make('api.DimTarefa', id=2, projeto=projeto, horas_estimadas=5.0, status='Em andamento')
+        resultado = get_tabela_projetos(programa.id)
+        assert resultado[0]['horas_estimadas'] == approx(15.0)
+
+    def test_calcula_horas_realizadas_do_fato_horas(self):
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=6.0, custo_horas=0)
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=4.0, custo_horas=0)
+        resultado = get_tabela_projetos(programa.id)
+        assert resultado[0]['horas_realizadas'] == approx(10.0)
+
+    def test_calcula_desvio_horas_corretamente(self):
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=10.0, status='Em andamento')
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=13.0, custo_horas=0)
+        resultado = get_tabela_projetos(programa.id)
+        assert resultado[0]['desvio_horas'] == approx(3.0)
+
+    def test_calcula_percentual_desvio_corretamente(self):
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        tempo = self._make_tempo()
+        baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=10.0, status='Em andamento')
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=12.0, custo_horas=0)
+        resultado = get_tabela_projetos(programa.id)
+        assert resultado[0]['percentual_desvio'] == approx(20.0)
+
+    def test_calcula_percentual_tarefas_concluidas(self):
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=5.0, status='Concluída')
+        baker.make('api.DimTarefa', id=2, projeto=projeto, horas_estimadas=5.0, status='Concluída')
+        baker.make('api.DimTarefa', id=3, projeto=projeto, horas_estimadas=5.0, status='Em andamento')
+        baker.make('api.DimTarefa', id=4, projeto=projeto, horas_estimadas=5.0, status='Em andamento')
+        resultado = get_tabela_projetos(programa.id)
+        assert resultado[0]['percentual_tarefas_concluidas'] == approx(50.0)
+
+    def test_percentual_tarefas_cem_por_cento_quando_todas_concluidas(self):
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', id=1, programa=programa)
+        baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=5.0, status='Concluída')
+        baker.make('api.DimTarefa', id=2, projeto=projeto, horas_estimadas=5.0, status='Concluída')
+        resultado = get_tabela_projetos(programa.id)
+        assert resultado[0]['percentual_tarefas_concluidas'] == approx(100.0)
+
+    def test_nao_inclui_projetos_de_outro_programa(self):
+        programa1 = baker.make('api.DimPrograma')
+        programa2 = baker.make('api.DimPrograma')
+        baker.make('api.DimProjeto', id=1, programa=programa2)
+        baker.make('api.DimProjeto', id=2, programa=programa2)
+        resultado = get_tabela_projetos(programa1.id)
+        assert resultado == []
+
+    def test_retorna_nome_responsavel_e_status_do_projeto(self):
+        programa = baker.make('api.DimPrograma')
+        baker.make(
+            'api.DimProjeto', id=1, programa=programa,
+            nome_projeto='Projeto X', responsavel='João', status='Em andamento',
+        )
+        resultado = get_tabela_projetos(programa.id)
+        item = resultado[0]
+        assert item['nome_projeto'] == 'Projeto X'
+        assert item['responsavel'] == 'João'
+        assert item['status'] == 'Em andamento'

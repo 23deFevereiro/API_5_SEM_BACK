@@ -204,3 +204,60 @@ class TestBurnupCustoProgramasSistema:
         assert 'codigo_programa' in ponto
         assert 'nome_programa' in ponto
         assert 'custo' in ponto
+
+
+@pytest.mark.django_db
+class TestTabelaProjetosSistema:
+
+    def test_retorna_200_para_programa_existente(self, api_client, programa):
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.get(url)
+        assert response.status_code == 200
+
+    def test_retorna_404_para_programa_inexistente(self, api_client):
+        url = reverse('tabela_projetos', args=[99999])
+        response = api_client.get(url)
+        assert response.status_code == 404
+
+    def test_retorna_405_para_post(self, api_client, programa):
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.post(url)
+        assert response.status_code == 405
+
+    def test_retorna_lista_vazia_sem_projetos(self, api_client, programa):
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.get(url)
+        assert response.json() == []
+
+    def test_retorna_estrutura_correta(self, api_client, programa):
+        baker.make('api.DimProjeto', id=10, programa=programa)
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert len(data) == 1
+        item = data[0]
+        assert 'nome_projeto' in item
+        assert 'responsavel' in item
+        assert 'status' in item
+        assert 'horas_estimadas' in item
+        assert 'horas_realizadas' in item
+        assert 'percentual_tarefas_concluidas' in item
+        assert 'desvio_horas' in item
+        assert 'percentual_desvio' in item
+
+    def test_retorna_um_item_por_projeto(self, api_client, programa):
+        baker.make('api.DimProjeto', id=10, programa=programa)
+        baker.make('api.DimProjeto', id=11, programa=programa)
+        baker.make('api.DimProjeto', id=12, programa=programa)
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.get(url)
+        assert len(response.json()) == 3
+
+    def test_retorna_dados_corretos_com_tarefas_concluidas(self, api_client, programa):
+        projeto = baker.make('api.DimProjeto', id=10, programa=programa)
+        baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=10.0, status='Concluída')
+        baker.make('api.DimTarefa', id=2, projeto=projeto, horas_estimadas=10.0, status='Em andamento')
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert data[0]['percentual_tarefas_concluidas'] == 50.0
