@@ -58,8 +58,11 @@ def get_burnup_custo_programas_view(request):
 @require_GET
 def get_tabela_projetos_view(request, programa_id):
     try:
-        dados = get_tabela_projetos(programa_id)
-        return JsonResponse(dados, safe=False)
+        page = request.GET.get('page', 1)
+        dados = get_tabela_projetos(programa_id, page=page, page_size=10)
+        return JsonResponse(dados)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
     except Http404:
         return JsonResponse({'error': 'Programa não encontrado'}, status=404)
     except Exception as e:

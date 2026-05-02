@@ -227,15 +227,24 @@ class TestTabelaProjetosSistema:
     def test_retorna_lista_vazia_sem_projetos(self, api_client, programa):
         url = reverse('tabela_projetos', args=[programa.id])
         response = api_client.get(url)
-        assert response.json() == []
+        assert response.json() == {
+            'count': 0,
+            'page': 1,
+            'page_size': 10,
+            'total_pages': 1,
+            'results': [],
+        }
 
     def test_retorna_estrutura_correta(self, api_client, programa):
         baker.make('api.DimProjeto', id=10, programa=programa)
         url = reverse('tabela_projetos', args=[programa.id])
         response = api_client.get(url)
         data = response.json()
-        assert len(data) == 1
-        item = data[0]
+        assert data['count'] == 1
+        assert data['page'] == 1
+        assert data['page_size'] == 10
+        assert data['total_pages'] == 1
+        item = data['results'][0]
         assert 'nome_projeto' in item
         assert 'responsavel' in item
         assert 'status' in item
@@ -251,7 +260,9 @@ class TestTabelaProjetosSistema:
         baker.make('api.DimProjeto', id=12, programa=programa)
         url = reverse('tabela_projetos', args=[programa.id])
         response = api_client.get(url)
-        assert len(response.json()) == 3
+        data = response.json()
+        assert data['count'] == 3
+        assert len(data['results']) == 3
 
     def test_retorna_dados_corretos_com_tarefas_concluidas(self, api_client, programa):
         projeto = baker.make('api.DimProjeto', id=10, programa=programa)
@@ -260,4 +271,15 @@ class TestTabelaProjetosSistema:
         url = reverse('tabela_projetos', args=[programa.id])
         response = api_client.get(url)
         data = response.json()
-        assert data[0]['percentual_tarefas_concluidas'] == 50.0
+        assert data['results'][0]['percentual_tarefas_concluidas'] == 50.0
+
+    def test_retorna_pagina_solicitada(self, api_client, programa):
+        baker.make('api.DimProjeto', programa=programa, _quantity=12)
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.get(url, {'page': 2})
+        data = response.json()
+        assert data['count'] == 12
+        assert data['page'] == 2
+        assert data['page_size'] == 10
+        assert data['total_pages'] == 2
+        assert len(data['results']) == 2

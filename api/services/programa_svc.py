@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
 from django.shortcuts import get_object_or_404
 from ..models import DimPrograma, DimProjeto, DimTarefa, FatoHoras, FatoMateriais, FatoCompras
+from ..utils.pagination import normalizar_pagina, calcular_paginacao
 
 STATUS_PADRAO = [
     'Planejamento',
@@ -85,13 +86,16 @@ def get_resumo_programa(programa_id):
     }
 
 
-def get_tabela_projetos(programa_id):
+def get_tabela_projetos(programa_id, page=1, page_size=10):
     get_object_or_404(DimPrograma, id=programa_id)
+    page = normalizar_pagina(page)
 
-    projetos = DimProjeto.objects.filter(programa_id=programa_id)
+    projetos = DimProjeto.objects.filter(programa_id=programa_id).order_by('id')
+    total_items = projetos.count()
+    total_pages, start, end = calcular_paginacao(total_items, page, page_size)
 
     resultado = []
-    for projeto in projetos:
+    for projeto in projetos[start:end]:
         tarefas = DimTarefa.objects.filter(projeto=projeto)
         total_tarefas = tarefas.count()
         tarefas_concluidas = tarefas.filter(status='Concluída').count()
@@ -127,7 +131,13 @@ def get_tabela_projetos(programa_id):
             'percentual_desvio': round(percentual_desvio, 1),
         })
 
-    return resultado
+    return {
+        'count': total_items,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': total_pages,
+        'results': resultado,
+    }
 
 
 def get_distribuicao_status(programa_id):
