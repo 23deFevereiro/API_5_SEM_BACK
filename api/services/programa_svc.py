@@ -85,6 +85,52 @@ def get_resumo_programa(programa_id):
     }
 
 
+def get_tabela_projetos(programa_id):
+    get_object_or_404(DimPrograma, id=programa_id)
+
+    projetos = DimProjeto.objects.filter(programa_id=programa_id)
+
+    resultado = []
+    for projeto in projetos:
+        tarefas = DimTarefa.objects.filter(projeto=projeto)
+        total_tarefas = tarefas.count()
+        tarefas_concluidas = tarefas.filter(status='Concluída').count()
+
+        horas_estimadas = tarefas.aggregate(
+            total=Sum('horas_estimadas')
+        )['total'] or Decimal('0')
+
+        horas_realizadas = FatoHoras.objects.filter(
+            projeto=projeto
+        ).aggregate(
+            total=Sum('horas_trabalhadas')
+        )['total'] or Decimal('0')
+
+
+        desvio = horas_realizadas - horas_estimadas
+        percentual_desvio = (
+            abs(float(desvio) / float(horas_estimadas)) * 100
+            if horas_estimadas > 0 else 0
+        )
+        percentual_tarefas = (
+            round((tarefas_concluidas / total_tarefas) * 100, 1)
+            if total_tarefas > 0 else 0
+        )
+
+        resultado.append({
+            'nome_projeto': projeto.nome_projeto,
+            'responsavel': projeto.responsavel,
+            'status': projeto.status,
+            'horas_estimadas': float(horas_estimadas),
+            'horas_realizadas': float(horas_realizadas),
+            'percentual_tarefas_concluidas': percentual_tarefas,
+            'desvio_horas': float(desvio),
+            'percentual_desvio': round(percentual_desvio, 1),
+        })
+
+    return resultado
+
+
 def get_distribuicao_status(programa_id):
     status_counts = list(
         DimProjeto.objects
