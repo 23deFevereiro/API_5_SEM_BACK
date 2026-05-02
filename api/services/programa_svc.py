@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
 from django.shortcuts import get_object_or_404
 from ..models import DimPrograma, DimProjeto, DimTarefa, FatoHoras, FatoMateriais, FatoCompras
+from ..utils.pagination import normalizar_pagina, calcular_paginacao
 
 STATUS_PADRAO = [
     'Planejamento',
@@ -82,6 +83,60 @@ def get_resumo_programa(programa_id):
         'horas_realizadas': horas_realizadas,
         'custo_estimado': custo_estimado,
         'custo_real': custo_real,
+    }
+
+
+def get_tabela_projetos(programa_id, page=1, page_size=10):
+    get_object_or_404(DimPrograma, id=programa_id)
+    page = normalizar_pagina(page)
+
+    projetos = DimProjeto.objects.filter(programa_id=programa_id).order_by('id')
+    total_items = projetos.count()
+    total_pages, start, end = calcular_paginacao(total_items, page, page_size)
+
+    resultado = []
+    for projeto in projetos[start:end]:
+        tarefas = DimTarefa.objects.filter(projeto=projeto)
+        total_tarefas = tarefas.count()
+        tarefas_concluidas = tarefas.filter(status='Concluída').count()
+
+        horas_estimadas = tarefas.aggregate(
+            total=Sum('horas_estimadas')
+        )['total'] or Decimal('0')
+
+        horas_realizadas = FatoHoras.objects.filter(
+            projeto=projeto
+        ).aggregate(
+            total=Sum('horas_trabalhadas')
+        )['total'] or Decimal('0')
+
+        desvio = horas_realizadas - horas_estimadas
+        percentual_desvio = (
+            abs(float(desvio) / float(horas_estimadas)) * 100
+            if horas_estimadas > 0 else 0
+        )
+        percentual_tarefas = (
+            round((tarefas_concluidas / total_tarefas) * 100, 1)
+            if total_tarefas > 0 else 0
+        )
+
+        resultado.append({
+            'nome_projeto': projeto.nome_projeto,
+            'responsavel': projeto.responsavel,
+            'status': projeto.status,
+            'horas_estimadas': float(horas_estimadas),
+            'horas_realizadas': float(horas_realizadas),
+            'percentual_tarefas_concluidas': percentual_tarefas,
+            'desvio_horas': float(desvio),
+            'percentual_desvio': round(percentual_desvio, 1),
+        })
+
+    return {
+        'count': total_items,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': total_pages,
+        'results': resultado,
     }
 
 
