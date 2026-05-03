@@ -106,8 +106,6 @@ class TestFormatarMaterial:
 
 
 class TestParseData:
-    from datetime import date as _date
-
     def test_retorna_none_quando_valor_nulo(self):
         from api.views.view_utils import _parse_data
         assert _parse_data(None, 'data_inicio') is None

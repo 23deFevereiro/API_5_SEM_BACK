@@ -275,7 +275,7 @@ class TestTabelaProjetosSistema:
         url = reverse('tabela_projetos', args=[programa.id])
         response = api_client.get(url)
         data = response.json()
-        assert data['results'][0]['percentual_tarefas_concluidas'] == 50.0
+        assert data['results'][0]['percentual_tarefas_concluidas'] == pytest.approx(50.0)
 
     def test_retorna_pagina_solicitada(self, api_client, programa):
         baker.make('api.DimProjeto', programa=programa, _quantity=12)
