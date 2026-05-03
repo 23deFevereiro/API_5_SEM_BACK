@@ -13,6 +13,7 @@ Branches protegidas (não podem receber commits diretos):
   main, master  →  bloqueadas pelo hook no-commit-to-branch do pre-commit-hooks
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -29,13 +30,15 @@ ALLOWED_TYPES = [
     "perf",
 ]
 
-# tipo/descricao-com-hifen (opcionalmente com número de card: feat/42-descricao)
 BRANCH_PATTERN = re.compile(r"^(?P<type>[a-z]+)/(?P<desc>[a-z0-9][a-z0-9\-]*)$")
 
 PROTECTED_BRANCHES = {"main", "master"}
 
 
 def get_current_branch() -> str:
+    github_ref = os.environ.get("GITHUB_HEAD_REF")
+    if github_ref:
+        return github_ref
     result = subprocess.run(
         ["git", "rev-parse", "--abbrev-ref", "HEAD"],
         capture_output=True,
@@ -47,8 +50,6 @@ def get_current_branch() -> str:
 def validate() -> None:
     branch = get_current_branch()
 
-    # Branches protegidas são tratadas pelo no-commit-to-branch,
-    # mas adicionamos uma mensagem amigável aqui também
     if branch in PROTECTED_BRANCHES:
         _fail(
             f"Direct commits to '{branch}' are not allowed.\n"

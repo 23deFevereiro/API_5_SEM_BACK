@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from model_bakery import baker
@@ -274,7 +275,7 @@ class TestTabelaProjetosSistema:
         url = reverse('tabela_projetos', args=[programa.id])
         response = api_client.get(url)
         data = response.json()
-        assert data['results'][0]['percentual_tarefas_concluidas'] == 50.0
+        assert data['results'][0]['percentual_tarefas_concluidas'] == pytest.approx(50.0)
 
     def test_retorna_pagina_solicitada(self, api_client, programa):
         baker.make('api.DimProjeto', programa=programa, _quantity=12)
@@ -286,3 +287,42 @@ class TestTabelaProjetosSistema:
         assert data['page_size'] == 10
         assert data['total_pages'] == 2
         assert len(data['results']) == 2
+
+
+@pytest.mark.django_db
+class TestProgramaErrosSistema:
+
+    def test_resumo_retorna_500_quando_service_levanta_excecao(self, api_client, programa):
+        url = reverse('resumo_programa', args=[programa.id])
+        with patch('api.views.programa_view.get_resumo_programa', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+    def test_distribuicao_status_retorna_500_quando_service_levanta_excecao(self, api_client, programa):
+        url = reverse('distribuicao_status', args=[programa.id])
+        with patch('api.views.programa_view.get_distribuicao_status', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+    def test_burnup_horas_retorna_500_quando_service_levanta_excecao(self, api_client):
+        url = reverse('programas_burnup_horas')
+        with patch('api.views.programa_view.get_burnup_horas_programas', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+    def test_burnup_custo_retorna_500_quando_service_levanta_excecao(self, api_client):
+        url = reverse('programas_burnup_custo')
+        with patch('api.views.programa_view.get_burnup_custo_programas', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+    def test_tabela_projetos_retorna_400_para_pagina_invalida(self, api_client, programa):
+        url = reverse('tabela_projetos', args=[programa.id])
+        response = api_client.get(url, {'page': 'abc'})
+        assert response.status_code == 400
+
+    def test_tabela_projetos_retorna_500_quando_service_levanta_excecao(self, api_client, programa):
+        url = reverse('tabela_projetos', args=[programa.id])
+        with patch('api.views.programa_view.get_tabela_projetos', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500

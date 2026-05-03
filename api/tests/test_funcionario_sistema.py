@@ -1,5 +1,6 @@
 import pytest
 from datetime import date
+from unittest.mock import patch
 from django.urls import reverse
 from model_bakery import baker
 
@@ -91,3 +92,18 @@ class TestFuncionariosProjetoSistema:
         response = api_client.get(url)
         data = response.json()
         assert data['count'] == 1
+
+
+@pytest.mark.django_db
+class TestFuncionariosProjetoErrosSistema:
+
+    def test_retorna_400_para_data_invalida(self, api_client, projeto):
+        url = reverse('funcionarios_projeto', args=[projeto.id])
+        response = api_client.get(url, {'data_inicio': '31-13-9999'})
+        assert response.status_code == 400
+
+    def test_retorna_500_quando_service_levanta_excecao(self, api_client, projeto):
+        url = reverse('funcionarios_projeto', args=[projeto.id])
+        with patch('api.views.funcionario_view.get_funcionarios_projeto', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500

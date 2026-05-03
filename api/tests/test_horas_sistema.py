@@ -1,5 +1,6 @@
 import pytest
 from datetime import date
+from unittest.mock import patch
 from pytest import approx
 from model_bakery import baker
 from django.urls import reverse
@@ -88,3 +89,38 @@ class TestHorasPorFuncionarioSistema:
         usuarios = [r['funcionario'] for r in data]
         assert 'Ana' in usuarios
         assert 'Bruno' in usuarios
+
+
+@pytest.mark.django_db
+class TestHorasFuncionarioErrosSistema:
+
+    def test_retorna_400_para_data_invalida(self, api_client, projeto):
+        url = reverse('horas_por_funcionario', args=[projeto.id])
+        response = api_client.get(url, {'data_inicio': '31-13-9999'})
+        assert response.status_code == 400
+
+    def test_retorna_500_quando_service_levanta_excecao(self, api_client, projeto):
+        url = reverse('horas_por_funcionario', args=[projeto.id])
+        with patch('api.views.horas_view.get_horas_por_funcionario', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+
+@pytest.mark.django_db
+class TestBurnupHorasProjetosErrosSistema:
+
+    def test_retorna_500_quando_service_levanta_excecao(self, api_client):
+        url = reverse('burnup_horas_projetos')
+        with patch('api.views.horas_view.get_burnup_horas_projetos', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+
+@pytest.mark.django_db
+class TestNomesFuncionariosErrosSistema:
+
+    def test_retorna_500_quando_service_levanta_excecao(self, api_client, projeto):
+        url = reverse('nomes_funcionarios_projeto', args=[projeto.id])
+        with patch('api.views.horas_view.get_nomes_funcionarios_projeto', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
