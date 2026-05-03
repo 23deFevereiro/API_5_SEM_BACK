@@ -1,0 +1,47 @@
+name: Validate Commit Messages
+
+on:
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate-commits:
+    name: Check commit message format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pre-commit
+        run: pip install --only-binary :all: pre-commit==3.7.0
+
+      - name: Validate branch name
+        run: python scripts/validate_branch_name.py
+
+      - name: Validate all commit messages in this PR
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          echo "Checking commits from $BASE to $HEAD"
+
+          git log --format="%H %s" $BASE..$HEAD | while IFS=" " read -r sha subject; do
+            echo ""
+            echo "── Commit: $sha"
+            echo "   Message: $subject"
+
+            # Escreve a mensagem completa num arquivo temporário e valida
+            git log -1 --format="%B" $sha > /tmp/commit_msg.txt
+            python scripts/validate_commit_msg.py /tmp/commit_msg.txt || exit 1
+          done
+
+          echo ""
+          echo "✅ All commit messages are valid."

@@ -1,96 +1,105 @@
-from math import ceil
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
-from ..models import Projeto, Tarefa, TempoTarefa, EstoqueMaterialProjeto, ComprasProjeto, EmpenhoMaterial
+from decimal import Decimal
+from django.shortcuts import get_object_or_404
+from ..models import DimProjeto, DimMaterial, FatoHoras, FatoMateriais
+from ..utils.pagination import normalizar_pagina, calcular_paginacao
 
 
-from django.db.models.functions import ExtractMonth, ExtractYear
-
-def listar_projetos(search=''):
-    projetos = Projeto.objects.all()
+def listar_projetos(search='', programa_id=None):
+    projetos = DimProjeto.objects.all()
     if search:
         projetos = projetos.filter(nome_projeto__icontains=search)
+    if programa_id is not None:
+        projetos = projetos.filter(programa=programa_id)
     return list(projetos.values('id', 'codigo_projeto', 'nome_projeto'))
 
 
-def get_overview_data_all():
-    cost_material = Projeto.objects.select_related('empenho_material', 'empenho_material__material'
-    ).filter(status='Em andamento', empenhomaterial__isnull=False
-    ).annotate(
-        month=ExtractMonth('empenhomaterial__data_empenho'),
-        year=ExtractYear('empenhomaterial__data_empenho')
-    ).values('codigo_projeto', 'nome_projeto', 'year', 'month'
-    ).annotate(cost= Sum(F('empenhomaterial__quantidade_empenhada') * F('empenhomaterial__material__custo_estimado'))
-    ).order_by('empenhomaterial__data_empenho')
+def get_overview_data_all(programa_id=None):
+    fatos = FatoMateriais.objects.filter(projeto__status='Em andamento')
+    if programa_id is not None:
+        fatos = fatos.filter(programa_id=programa_id)
+
+    cost_material = (
+        fatos
+        .values('projeto__codigo_projeto', 'projeto__nome_projeto', 'tempo__ano', 'tempo__mes')
+        .annotate(cost=Sum('custo_materiais'))
+        .order_by('tempo__ano', 'tempo__mes')
+    )
 
     cost_list = []
     total_cost_dict = {}
-    for material_data in list(cost_material):
-        date_str = f'{material_data['month']:02d}/{material_data['year']}'
-        
+    for material_data in cost_material:
+        date_str = f'{material_data["tempo__mes"]:02d}/{material_data["tempo__ano"]}'
+
         date_group = [group for group in cost_list if group['date_str'] == date_str]
         if not date_group:
-            date_group = { 'date_str': date_str, 'values': [] }
+            date_group = {'date_str': date_str, 'values': []}
             cost_list.append(date_group)
-        else: date_group = date_group[0]
+        else:
+            date_group = date_group[0]
 
-        if material_data['codigo_projeto'] not in total_cost_dict:
-            total_cost_dict[material_data['codigo_projeto']] = 0
+        codigo_projeto = material_data['projeto__codigo_projeto']
+        if codigo_projeto not in total_cost_dict:
+            total_cost_dict[codigo_projeto] = 0
 
-        cost = total_cost_dict[material_data['codigo_projeto']] + float(material_data['cost'])
-        total_cost_dict[material_data['codigo_projeto']] = cost
+        cost = total_cost_dict[codigo_projeto] + float(material_data['cost'])
+        total_cost_dict[codigo_projeto] = cost
 
-        date_group['values'].append(
-            {
-                'codigo_projeto': material_data['codigo_projeto'],
-                'nome_projeto': material_data['nome_projeto'],
-                'cost': cost
-            }
-        )
+        date_group['values'].append({
+            'codigo_projeto': codigo_projeto,
+            'nome_projeto': material_data['projeto__nome_projeto'],
+            'cost': cost,
+        })
 
     return cost_list
 
 
 def get_resumo_projeto(projeto_id):
-    custo_materiais = EstoqueMaterialProjeto.objects.filter(
-        projeto_id=projeto_id
-    ).annotate(
-        custo_total=F('quantidade') * F('material__custo_estimado')
-    ).aggregate(total=Sum('custo_total'))
+    get_object_or_404(DimProjeto, id=projeto_id)
 
-    custo_compras = ComprasProjeto.objects.filter(
-        projeto_id=projeto_id
-    ).exclude(
-        pedido_compra__status='Cancelado'
-    ).aggregate(total=Sum('valor_alocado'))
+    horas_agg = FatoHoras.objects.filter(projeto_id=projeto_id).aggregate(
+        horas=Sum('horas_trabalhadas'),
+        custo=Sum('custo_horas'),
+    )
 
-    tarefas_ids = Tarefa.objects.filter(
-        projeto_id=projeto_id
-    ).values_list('id', flat=True)
+    tempo_total = horas_agg['horas'] or Decimal('0')
+    custo_mao_de_obra = horas_agg['custo'] or Decimal('0')
 
-    tempo_total = TempoTarefa.objects.filter(
-        tarefa_id__in=tarefas_ids
-    ).aggregate(total=Sum('horas_trabalhadas'))
+    custo_materiais = (
+        FatoMateriais.objects
+        .filter(projeto_id=projeto_id)
+        .aggregate(total=Sum('custo_materiais'))['total'] or Decimal('0')
+    )
 
     return {
-        'custo_materiais': float(custo_materiais['total'] or 0),
-        'custo_compras': float(custo_compras['total'] or 0),
-        'tempo_total': float(tempo_total['total'] or 0),
+        'custo_total': custo_mao_de_obra + custo_materiais,
+        'tempo_total': tempo_total,
     }
 
-def get_materiais_projeto(projeto_id, page=1, page_size=10):
-    page = max(int(page), 1)
+
+def formatar_material(item):
+    return {
+        'nome_material': item['material__descricao'],
+        'quantidade': item['quantidade'],
+        'custo_total_estimado': float(item['custo_total_estimado'] or 0),
+    }
+
+
+def get_materiais_projeto(projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, material=None):
+    page = normalizar_pagina(page)
+
+    base_qs = FatoMateriais.objects.filter(projeto_id=projeto_id)
+    if data_inicio:
+        base_qs = base_qs.filter(tempo__data__gte=data_inicio)
+    if data_fim:
+        base_qs = base_qs.filter(tempo__data__lte=data_fim)
+    if material:
+        base_qs = base_qs.filter(material__descricao__icontains=material)
 
     materiais_qs = (
-        EmpenhoMaterial.objects
-        .filter(projeto_id=projeto_id)
-        .values(
-            'material_id',
-            'material__descricao',
-            'material__custo_estimado',
-        )
-        .annotate(
-            quantidade=Sum('quantidade_empenhada')
-        )
+        base_qs
+        .values('material_id', 'material__descricao', 'material__custo_estimado')
+        .annotate(quantidade=Sum('quantidade_empenhada'))
         .annotate(
             custo_total_estimado=ExpressionWrapper(
                 F('quantidade') * F('material__custo_estimado'),
@@ -101,18 +110,9 @@ def get_materiais_projeto(projeto_id, page=1, page_size=10):
     )
 
     total_items = materiais_qs.count()
-    total_pages = ceil(total_items / page_size) if total_items > 0 else 1
+    total_pages, start, end = calcular_paginacao(total_items, page, page_size)
 
-    start = (page - 1) * page_size
-    end = start + page_size
-
-    resultados = list(materiais_qs[start:end])
-
-    for item in resultados:
-        item['nome_material'] = item.pop('material__descricao')
-        item['custo_total_estimado'] = float(item['custo_total_estimado'] or 0)
-        item.pop('material__custo_estimado', None)
-        item.pop('material_id', None)
+    resultados = [formatar_material(item) for item in materiais_qs[start:end]]
 
     return {
         'count': total_items,
@@ -121,3 +121,13 @@ def get_materiais_projeto(projeto_id, page=1, page_size=10):
         'total_pages': total_pages,
         'results': resultados,
     }
+
+
+def get_materiais_disponiveis(projeto_id):
+    return list(
+        DimMaterial.objects
+        .filter(fatomateriais__projeto_id=projeto_id)
+        .distinct()
+        .order_by('descricao')
+        .values('id', 'descricao')
+    )
