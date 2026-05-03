@@ -21,7 +21,8 @@ jobs:
           python-version: "3.11"
 
       - name: Install pre-commit
-        run: pip install --only-binary :all: pre-commit==3.7.0
+        run: | 
+          pip install --only-binary :all: pre-commit==3.7.0
 
       - name: Validate branch name
         run: python scripts/validate_branch_name.py
