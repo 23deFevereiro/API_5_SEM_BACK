@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 import pytest
 from model_bakery import baker
 from django.urls import reverse
@@ -152,6 +154,7 @@ class TestBurnupHorasProgramasSistema:
         assert 'codigo_programa' in ponto
         assert 'nome_programa' in ponto
         assert 'horas' in ponto
+        assert Decimal(str(ponto['horas'])) == Decimal('4.0')
 
 
 @pytest.mark.django_db

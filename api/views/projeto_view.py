@@ -44,7 +44,7 @@ def get_resumo_projeto_view(request, projeto_id):
         return JsonResponse(resumo)
     except Http404:
         return JsonResponse({'error': 'Projeto não encontrado'}, status=404)
-    except Exception as e:
+    except Exception:
         logger.exception(ERRO_INTERNO_VIEW_PROJETO)
         return JsonResponse({'error': ERRO_INTERNO}, status=500)
 
@@ -67,7 +67,7 @@ def get_materiais_projeto_view(request, projeto_id):
         return JsonResponse({'error': str(e)}, status=400)
     except Http404:
         return JsonResponse({'error': 'Projeto não encontrado'}, status=404)
-    except Exception as e:
+    except Exception:
         logger.exception(ERRO_INTERNO_VIEW_PROJETO)
         return JsonResponse({'error': ERRO_INTERNO}, status=500)
 
