@@ -28,7 +28,7 @@ def get_overview_data_all(programa_id=None):
 
     cost_list = []
     total_cost_dict = {}
-    for material_data in list(cost_material):
+    for material_data in cost_material:
         date_str = f'{material_data["tempo__mes"]:02d}/{material_data["tempo__ano"]}'
 
         date_group = [group for group in cost_list if group['date_str'] == date_str]
