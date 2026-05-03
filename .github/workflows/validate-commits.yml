@@ -2,7 +2,7 @@ name: Validate Commit Messages
 
 on:
   pull_request:
-    branches: [main, master]
+    branches: [main, master, develop]
 
 jobs:
   validate-commits:
@@ -32,9 +32,21 @@ jobs:
           BASE=${{ github.event.pull_request.base.sha }}
           HEAD=${{ github.event.pull_request.head.sha }}
 
+          # Commit a partir do qual o padrão passou a ser obrigatório
+          # (primeiro commit que adicionou o pre-commit no projeto)
+          ENFORCEMENT_SHA="dbd1c3e"
+ 
           echo "Checking commits from $BASE to $HEAD"
+          echo "Skipping commits before enforcement: $ENFORCEMENT_SHA"
 
-          git log --format="%H %s" $BASE..$HEAD | while IFS=" " read -r sha subject; do
+          git log --format="%H" $BASE..$HEAD | while read sha; do
+            # Ignora commits anteriores à adoção do padrão
+            if ! git merge-base --is-ancestor $ENFORCEMENT_SHA $sha 2>/dev/null; then
+              echo "-- Skipping legacy commit: $sha"
+              continue
+            fi
+ 
+            subject=$(git log -1 --format="%s" $sha)
             echo ""
             echo "── Commit: $sha"
             echo "   Message: $subject"
@@ -45,4 +57,4 @@ jobs:
           done
 
           echo ""
-          echo "✅ All commit messages are valid."
+          echo "[OK] All commit messages are valid."
