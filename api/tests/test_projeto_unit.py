@@ -103,3 +103,28 @@ class TestFormatarMaterial:
         }
         resultado = formatar_material(item)
         assert isinstance(resultado['custo_total_estimado'], float)
+
+
+class TestParseData:
+    from datetime import date as _date
+
+    def test_retorna_none_quando_valor_nulo(self):
+        from api.views.view_utils import _parse_data
+        assert _parse_data(None, 'data_inicio') is None
+
+    def test_retorna_none_quando_valor_vazio(self):
+        from api.views.view_utils import _parse_data
+        assert _parse_data('', 'data_inicio') is None
+
+    def test_retorna_date_quando_valor_valido(self):
+        import pytest
+        from datetime import date
+        from api.views.view_utils import _parse_data
+        resultado = _parse_data('2025-01-15', 'data_inicio')
+        assert resultado == date(2025, 1, 15)
+
+    def test_levanta_value_error_quando_formato_invalido(self):
+        import pytest
+        from api.views.view_utils import _parse_data
+        with pytest.raises(ValueError, match="data_inicio"):
+            _parse_data('15/01/2025', 'data_inicio')

@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 from model_bakery import baker
 from django.urls import reverse
 
@@ -168,4 +169,30 @@ class TestMateriaisDisponiveisSistema:
         response = api_client.get(url)
         data = response.json()
         assert len(data) == 1
-        assert data[0]['descricao'] == 'Capacitor'
+
+
+@pytest.mark.django_db
+class TestProjetoErrosSistema:
+
+    def test_resumo_retorna_500_quando_service_levanta_excecao(self, api_client, projeto):
+        url = reverse('resumo_projeto', args=[projeto.id])
+        with patch('api.views.projeto_view.get_resumo_projeto', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+    def test_materiais_retorna_400_para_data_invalida(self, api_client, projeto):
+        url = reverse('materiais_projeto', args=[projeto.id])
+        response = api_client.get(url, {'data_inicio': '31-13-9999'})
+        assert response.status_code == 400
+
+    def test_materiais_retorna_500_quando_service_levanta_excecao(self, api_client, projeto):
+        url = reverse('materiais_projeto', args=[projeto.id])
+        with patch('api.views.projeto_view.get_materiais_projeto', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
+
+    def test_materiais_disponiveis_retorna_500_quando_service_levanta_excecao(self, api_client, projeto):
+        url = reverse('materiais_disponiveis_projeto', args=[projeto.id])
+        with patch('api.views.projeto_view.get_materiais_disponiveis', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500

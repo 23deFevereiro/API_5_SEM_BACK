@@ -157,3 +157,24 @@ def test_view_burnup_retorna_json(mock_service):
             ],
         }
     ]
+
+
+@patch("api.services.horas_svc.FatoHoras")
+def test_burnup_com_programa_id(mock_fato_horas):
+    mock_fato_horas.objects.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = [
+        {
+            "projeto__id": 1,
+            "projeto__codigo_projeto": "PROJ-A",
+            "tempo__ano": 2026,
+            "tempo__mes": 4,
+            "total_horas": 3,
+        }
+    ]
+
+    resultado = get_burnup_horas_projetos(programa_id=1)
+
+    assert len(resultado) == 1
+    mock_fato_horas.objects.filter.assert_called_once_with(
+        projeto__status='Em andamento',
+        projeto__programa_id=1,
+    )
