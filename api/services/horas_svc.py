@@ -39,7 +39,7 @@ def get_nomes_funcionarios_projeto(projeto_id):
 
 def get_burnup_horas_projetos(programa_id=None):
     filtros = {
-        'projeto__status': 'Em andamento',
+        'projeto__status__in': ['Em andamento', 'Concluído'],
     }
 
     if programa_id:
