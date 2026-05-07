@@ -1,5 +1,6 @@
 from decimal import Decimal
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
+from datetime import date
+from django.db.models import Sum, Count, Max
 from django.shortcuts import get_object_or_404
 from ..models import DimPrograma, DimProjeto, DimTarefa, FatoHoras, FatoMateriais, FatoCompras
 from ..utils.pagination import normalizar_pagina, calcular_paginacao
@@ -120,15 +121,38 @@ def get_tabela_projetos(programa_id, page=1, page_size=10):
             if total_tarefas > 0 else 0
         )
 
+        data_ultima_atividade = (
+            FatoHoras.objects.filter(projeto=projeto)
+            .aggregate(ultima=Max('tempo__data'))['ultima']
+        )
+
+        status_original = projeto.status
+        nao_ativo = status_original in ('Concluído', 'Suspenso')
+
+        dias_desde_ultima_atividade = None
+        if not nao_ativo and data_ultima_atividade is not None:
+            dias_desde_ultima_atividade = (date.today() - data_ultima_atividade).days
+
+        if status_original == 'Concluído':
+            status_display = 'Concluído no prazo'
+        elif status_original == 'Suspenso':
+            status_display = 'Suspenso'
+        elif float(desvio) > 0:
+            status_display = 'Atrasado'
+        else:
+            status_display = 'Em andamento'
+
         resultado.append({
             'nome_projeto': projeto.nome_projeto,
             'responsavel': projeto.responsavel,
-            'status': projeto.status,
+            'status': status_display,
             'horas_estimadas': float(horas_estimadas),
             'horas_realizadas': float(horas_realizadas),
             'percentual_tarefas_concluidas': percentual_tarefas,
             'desvio_horas': float(desvio),
             'percentual_desvio': round(percentual_desvio, 1),
+            'data_ultima_atividade': data_ultima_atividade.isoformat() if data_ultima_atividade else None,
+            'dias_desde_ultima_atividade': dias_desde_ultima_atividade,
         })
 
     return {
