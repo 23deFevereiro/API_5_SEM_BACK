@@ -150,10 +150,22 @@ class TestGetOverviewDataAll:
         resultado = get_overview_data_all()
         assert resultado == []
 
-    def test_nao_retorna_projetos_fora_de_andamento(self):
-        baker.make('api.DimProjeto', status='Concluido')
+    def test_nao_retorna_projetos_cancelados(self):
+        baker.make('api.DimProjeto', status='Cancelado')
         resultado = get_overview_data_all()
         assert resultado == []
+
+    def test_retorna_projetos_concluidos(self):
+        programa = baker.make('api.DimPrograma')
+        projeto = baker.make('api.DimProjeto', status='Concluído', programa=programa)
+        material = baker.make('api.DimMaterial')
+        fornecedor = baker.make('api.DimFornecedor')
+        tempo = baker.make('api.DimTempo')
+        baker.make('api.FatoMateriais', projeto=projeto, programa=programa,
+                   material=material, fornecedor=fornecedor, tempo=tempo,
+                   custo_materiais=200.00)
+        resultado = get_overview_data_all()
+        assert len(resultado) > 0
 
     def test_retorna_dados_de_projeto_em_andamento(self):
         programa = baker.make('api.DimPrograma')

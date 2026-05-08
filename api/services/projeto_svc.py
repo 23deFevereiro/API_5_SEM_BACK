@@ -15,7 +15,7 @@ def listar_projetos(search='', programa_id=None):
 
 
 def get_overview_data_all(programa_id=None):
-    fatos = FatoMateriais.objects.filter(projeto__status='Em andamento')
+    fatos = FatoMateriais.objects.filter(projeto__status__in=['Em andamento', 'Concluído'])
     if programa_id is not None:
         fatos = fatos.filter(programa_id=programa_id)
 

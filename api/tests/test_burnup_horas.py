@@ -175,6 +175,17 @@ def test_burnup_com_programa_id(mock_fato_horas):
 
     assert len(resultado) == 1
     mock_fato_horas.objects.filter.assert_called_once_with(
-        projeto__status='Em andamento',
+        projeto__status__in=['Em andamento', 'Concluído'],
         projeto__programa_id=1,
+    )
+
+
+@patch("api.services.horas_svc.FatoHoras")
+def test_burnup_sem_programa_id_verifica_filtro_status(mock_fato_horas):
+    mock_fato_horas.objects.filter.return_value.values.return_value.annotate.return_value.order_by.return_value = []
+
+    get_burnup_horas_projetos()
+
+    mock_fato_horas.objects.filter.assert_called_once_with(
+        projeto__status__in=['Em andamento', 'Concluído'],
     )

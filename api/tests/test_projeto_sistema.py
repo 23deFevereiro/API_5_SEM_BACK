@@ -65,8 +65,8 @@ class TestOverviewProjetosSistema:
         response = api_client.post(url)
         assert response.status_code == 405
 
-    def test_retorna_lista_vazia_sem_projetos_em_andamento(self, api_client):
-        baker.make('api.DimProjeto', status='Concluido')
+    def test_nao_retorna_projetos_cancelados(self, api_client):
+        baker.make('api.DimProjeto', status='Cancelado')
         url = reverse('projetos_overview')
         response = api_client.get(url)
         assert response.json() == []
