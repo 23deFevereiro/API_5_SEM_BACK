@@ -20,6 +20,20 @@ STATUS_CORES = {
 }
 
 
+CAMPOS_ORDENACAO_DB = {'nome_projeto', 'responsavel', 'status'}
+
+ACAO_ORDEM = {
+    'priorizar-vermelho': 0,
+    'corrigir-status': 1,
+    'outro': 2,
+    'priorizar-verde': 3,
+    'check-vermelho': 4,
+    'check-amarelo': 5,
+    'check-verde': 6,
+    'suspenso': 7,
+}
+
+
 def listar_programas(search=''):
     programas = DimPrograma.objects.all()
     if search:
@@ -87,16 +101,29 @@ def get_resumo_programa(programa_id):
     }
 
 
-def get_tabela_projetos(programa_id, page=1, page_size=10):
+def get_tabela_projetos(programa_id, page=1, page_size=10, sort_by='nome_projeto', sort_dir='asc'):
     get_object_or_404(DimPrograma, id=programa_id)
     page = normalizar_pagina(page)
 
-    projetos = DimProjeto.objects.filter(programa_id=programa_id).order_by('id')
-    total_items = projetos.count()
-    total_pages, start, end = calcular_paginacao(total_items, page, page_size)
+    projetos = DimProjeto.objects.filter(programa_id=programa_id)
+    if sort_by in CAMPOS_ORDENACAO_DB:
+        order_field = sort_by if sort_dir == 'asc' else f'-{sort_by}'
+        projetos = projetos.order_by(order_field)
+    else:
+        projetos = projetos.order_by('id')
 
+    total_items = projetos.count()
+
+    # Para ordenação por campo computado, processar todos antes de paginar
+    if sort_by == 'acao':
+        projetos_iter = projetos
+    else:
+        total_pages, start, end = calcular_paginacao(total_items, page, page_size)
+        projetos_iter = projetos[start:end]
+
+    hoje = date.today()
     resultado = []
-    for projeto in projetos[start:end]:
+    for projeto in projetos_iter:
         tarefas = DimTarefa.objects.filter(projeto=projeto)
         total_tarefas = tarefas.count()
         tarefas_concluidas = tarefas.filter(status='Concluída').count()
@@ -126,10 +153,45 @@ def get_tabela_projetos(programa_id, page=1, page_size=10):
             .aggregate(ultima=Max('tempo__data'))['ultima']
         )
 
-        hoje = date.today()
         dentro_do_prazo = (
             projeto.data_fim_prevista is None or hoje <= projeto.data_fim_prevista
         )
+
+        todas_concluidas = total_tarefas > 0 and tarefas_concluidas == total_tarefas
+        acao = 'outro'
+        if projeto.status == 'Suspenso':
+            acao = 'suspenso'
+        elif projeto.status == 'Concluído' and total_tarefas == 0:
+            acao = 'check-verde'
+        elif todas_concluidas and projeto.status in ('Em andamento', 'Planejamento'):
+            acao = 'corrigir-status'
+        elif projeto.status == 'Concluído' and todas_concluidas:
+            tarefas_ids = list(tarefas.values_list('id', flat=True))
+            datas_por_tarefa = (
+                FatoHoras.objects
+                .filter(tarefa_id__in=tarefas_ids)
+                .values('tarefa_id')
+                .annotate(ultima_data=Max('tempo__data'))
+            )
+            if projeto.data_fim_prevista:
+                tarefas_dentro = sum(
+                    1 for t in datas_por_tarefa
+                    if t['ultima_data'] and t['ultima_data'] <= projeto.data_fim_prevista
+                )
+                tarefas_fora = sum(
+                    1 for t in datas_por_tarefa
+                    if t['ultima_data'] and t['ultima_data'] > projeto.data_fim_prevista
+                )
+                if tarefas_fora == 0:
+                    acao = 'check-verde'
+                elif tarefas_dentro == 0:
+                    acao = 'check-vermelho'
+                else:
+                    acao = 'check-amarelo'
+            else:
+                acao = 'check-verde'
+        elif projeto.status not in ('Concluído', 'Suspenso'):
+            acao = 'priorizar-verde' if dentro_do_prazo else 'priorizar-vermelho'
 
         resultado.append({
             'nome_projeto': projeto.nome_projeto,
@@ -146,7 +208,14 @@ def get_tabela_projetos(programa_id, page=1, page_size=10):
             'dias_desde_ultima_atividade': (hoje - data_ultima_atividade).days if data_ultima_atividade else None,
             'dentro_do_prazo': dentro_do_prazo,
             'sem_horas_registradas': horas_realizadas == Decimal('0'),
+            'acao': acao,
         })
+
+    if sort_by == 'acao':
+        reverse = sort_dir == 'desc'
+        resultado.sort(key=lambda p: ACAO_ORDEM.get(p['acao'], 99), reverse=reverse)
+        total_pages, start, end = calcular_paginacao(total_items, page, page_size)
+        resultado = resultado[start:end]
 
     return {
         'count': total_items,

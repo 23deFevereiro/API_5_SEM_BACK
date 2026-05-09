@@ -59,7 +59,13 @@ def get_burnup_custo_programas_view(request):
 def get_tabela_projetos_view(request, programa_id):
     try:
         page = request.GET.get('page', 1)
-        dados = get_tabela_projetos(programa_id, page=page, page_size=10)
+        sort_by = request.GET.get('sort_by', 'nome_projeto')
+        sort_dir = request.GET.get('sort_dir', 'asc')
+        if sort_by not in ('nome_projeto', 'responsavel', 'status', 'acao'):
+            sort_by = 'nome_projeto'
+        if sort_dir not in ('asc', 'desc'):
+            sort_dir = 'asc'
+        dados = get_tabela_projetos(programa_id, page=page, page_size=10, sort_by=sort_by, sort_dir=sort_dir)
         return JsonResponse(dados)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
