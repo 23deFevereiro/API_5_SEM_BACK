@@ -1,0 +1,4 @@
+id,codigo_programa,nome_programa,gerente_programa,gerente_tecnico,data_inicio,data_fim_prevista,status
+1,MANSUP,MANSUP,Carlos Eduardo Martins,Rafael Carvalho,2022-01-10,2024-12-20,Concluído
+2,MANSUP-ER,MANSUP-ER,Mariana Fernandes,Bruno Oliveira,2024-03-15,2026-10-15,Em andamento
+3,MAX12AC,MAX 1.2 AC,Ana Paula Ribeiro,Gustavo Ribeiro,2024-05-01,2027-01-30,Em andamento
