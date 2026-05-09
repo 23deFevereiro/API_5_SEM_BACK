@@ -145,6 +145,7 @@ def get_tabela_projetos(programa_id, page=1, page_size=10):
             'data_ultima_atividade': data_ultima_atividade.isoformat() if data_ultima_atividade else None,
             'dias_desde_ultima_atividade': (hoje - data_ultima_atividade).days if data_ultima_atividade else None,
             'dentro_do_prazo': dentro_do_prazo,
+            'sem_horas_registradas': horas_realizadas == Decimal('0'),
         })
 
     return {
