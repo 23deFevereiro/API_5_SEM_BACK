@@ -126,33 +126,25 @@ def get_tabela_projetos(programa_id, page=1, page_size=10):
             .aggregate(ultima=Max('tempo__data'))['ultima']
         )
 
-        status_original = projeto.status
-        nao_ativo = status_original in ('Concluído', 'Suspenso')
-
-        dias_desde_ultima_atividade = None
-        if not nao_ativo and data_ultima_atividade is not None:
-            dias_desde_ultima_atividade = (date.today() - data_ultima_atividade).days
-
-        if status_original == 'Concluído':
-            status_display = 'Concluído no prazo'
-        elif status_original == 'Suspenso':
-            status_display = 'Suspenso'
-        elif float(desvio) > 0:
-            status_display = 'Atrasado'
-        else:
-            status_display = 'Em andamento'
+        hoje = date.today()
+        dentro_do_prazo = (
+            projeto.data_fim_prevista is None or hoje <= projeto.data_fim_prevista
+        )
 
         resultado.append({
             'nome_projeto': projeto.nome_projeto,
             'responsavel': projeto.responsavel,
-            'status': status_display,
+            'status': projeto.status,
             'horas_estimadas': float(horas_estimadas),
             'horas_realizadas': float(horas_realizadas),
+            'total_tarefas': total_tarefas,
+            'tarefas_concluidas': tarefas_concluidas,
             'percentual_tarefas_concluidas': percentual_tarefas,
             'desvio_horas': float(desvio),
             'percentual_desvio': round(percentual_desvio, 1),
             'data_ultima_atividade': data_ultima_atividade.isoformat() if data_ultima_atividade else None,
-            'dias_desde_ultima_atividade': dias_desde_ultima_atividade,
+            'dias_desde_ultima_atividade': (hoje - data_ultima_atividade).days if data_ultima_atividade else None,
+            'dentro_do_prazo': dentro_do_prazo,
         })
 
     return {
