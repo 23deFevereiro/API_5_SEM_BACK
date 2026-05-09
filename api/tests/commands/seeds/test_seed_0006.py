@@ -1,4 +1,3 @@
-import pytest
 import pandas as pd
 from unittest.mock import patch, MagicMock
 import os
@@ -40,7 +39,6 @@ class TestCarregarDimProjetoCom0006:
             'data_fim_prevista': ['2023-12-31'],
         })
         carregar_dim_projeto(df, cursor)
-        # TRUNCATE + 1 INSERT
         assert cursor.execute.call_count == 2
         mock_print.assert_called_once()
 
@@ -114,7 +112,6 @@ class TestCarregarDimProjetoCom0006:
             'data_fim_prevista': ['2023-12-31', float('nan')],
         })
         carregar_dim_projeto(df, cursor)
-        # TRUNCATE + 2 INSERTs
         assert cursor.execute.call_count == 3
 
 

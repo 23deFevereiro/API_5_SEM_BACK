@@ -39,7 +39,6 @@ class TestCarregarDimProjetoPadrao:
             'status': ['Ativo'],
         })
         carregar_dim_projeto(df, cursor)
-        # TRUNCATE + 1 INSERT
         assert cursor.execute.call_count == 2
         mock_print.assert_called_once()
 
@@ -56,7 +55,6 @@ class TestCarregarDimProjetoPadrao:
             'status': ['Ativo', 'Ativo'],
         })
         carregar_dim_projeto(df, cursor)
-        # TRUNCATE + 2 INSERTs
         assert cursor.execute.call_count == 3
 
 
@@ -68,48 +66,42 @@ class TestRun:
 
     def _patch_read_csv(self, mock_read_csv):
         """Configura side_effect do read_csv para retornar DataFrames vazios com colunas mínimas."""
+        _frames = {
+            'programas': pd.DataFrame({
+                'id': [], 'codigo_programa': [], 'nome_programa': [],
+                'gerente_programa': [], 'data_inicio': [], 'data_fim_prevista': [], 'status': [],
+            }),
+            'projetos': pd.DataFrame({
+                'id': [], 'codigo_projeto': [], 'nome_projeto': [],
+                'programa_id': [], 'responsavel': [], 'custo_hora': [], 'status': [],
+            }),
+            'tempo_tarefas': pd.DataFrame({'usuario': [], 'tarefa_id': [], 'horas_trabalhadas': [], 'data': []}),
+            'tarefas': pd.DataFrame({
+                'id': [], 'codigo_tarefa': [], 'projeto_id': [],
+                'titulo': [], 'responsavel': [], 'estimativa_horas': [], 'status': [],
+            }),
+            'fornecedores': pd.DataFrame({
+                'id': [], 'codigo_fornecedor': [], 'razao_social': [],
+                'cidade': [], 'estado': [], 'categoria': [], 'status': [],
+            }),
+            'empenho': pd.DataFrame({'projeto_id': [], 'material_id': [], 'quantidade_empenhada': [], 'data_empenho': []}),
+            'estoque': pd.DataFrame({'material_id': [], 'projeto_id': [], 'quantidade': []}),
+            'materiais': pd.DataFrame({
+                'id': [], 'codigo_material': [], 'descricao': [],
+                'categoria': [], 'fabricante': [], 'custo_estimado': [], 'status': [],
+            }),
+            'solicitacoes': pd.DataFrame({'id': [], 'projeto_id': [], 'material_id': [], 'data_solicitacao': [], 'quantidade': [], 'status': []}),
+            'compras_projeto': pd.DataFrame({'pedido_compra_id': [], 'valor_alocado': []}),
+            'pedidos': pd.DataFrame({'solicitacao_id': [], 'id': [], 'fornecedor_id': [], 'data_pedido': [], 'data_previsao_entrega': [], 'status': [], 'valor_total': []}),
+        }
+
         def side_effect(path):
             path_str = str(path)
-            if 'programas' in path_str:
-                return pd.DataFrame({
-                    'id': [], 'codigo_programa': [], 'nome_programa': [],
-                    'gerente_programa': [], 'data_inicio': [], 'data_fim_prevista': [], 'status': []
-                })
-            if 'projetos' in path_str:
-                return pd.DataFrame({
-                    'id': [], 'codigo_projeto': [], 'nome_projeto': [],
-                    'programa_id': [], 'responsavel': [], 'custo_hora': [], 'status': []
-                })
-            # 'tempo_tarefas' deve vir antes de 'tarefas' pois o nome contém ambos
-            if 'tempo_tarefas' in path_str:
-                return pd.DataFrame({'usuario': [], 'tarefa_id': [], 'horas_trabalhadas': [], 'data': []})
-            if 'tarefas' in path_str:
-                return pd.DataFrame({
-                    'id': [], 'codigo_tarefa': [], 'projeto_id': [],
-                    'titulo': [], 'responsavel': [], 'estimativa_horas': [], 'status': []
-                })
-            if 'fornecedores' in path_str:
-                return pd.DataFrame({
-                    'id': [], 'codigo_fornecedor': [], 'razao_social': [],
-                    'cidade': [], 'estado': [], 'categoria': [], 'status': []
-                })
-            # 'empenho' e 'estoque' devem vir antes de 'materiais' pois seus nomes contêm 'materiais'
-            if 'empenho' in path_str:
-                return pd.DataFrame({'projeto_id': [], 'material_id': [], 'quantidade_empenhada': [], 'data_empenho': []})
-            if 'estoque' in path_str:
-                return pd.DataFrame({'material_id': [], 'projeto_id': [], 'quantidade': []})
-            if 'materiais' in path_str:
-                return pd.DataFrame({
-                    'id': [], 'codigo_material': [], 'descricao': [],
-                    'categoria': [], 'fabricante': [], 'custo_estimado': [], 'status': []
-                })
-            if 'solicitacoes' in path_str:
-                return pd.DataFrame({'id': [], 'projeto_id': [], 'material_id': [], 'data_solicitacao': [], 'quantidade': [], 'status': []})
-            if 'compras_projeto' in path_str:
-                return pd.DataFrame({'pedido_compra_id': [], 'valor_alocado': []})
-            if 'pedidos' in path_str:
-                return pd.DataFrame({'solicitacao_id': [], 'id': [], 'fornecedor_id': [], 'data_pedido': [], 'data_previsao_entrega': [], 'status': [], 'valor_total': []})
+            for key, df in _frames.items():
+                if key in path_str:
+                    return df
             return pd.DataFrame()
+
         mock_read_csv.side_effect = side_effect
 
     @patch('builtins.print')
