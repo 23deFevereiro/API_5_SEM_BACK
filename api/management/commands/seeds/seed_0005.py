@@ -332,7 +332,9 @@ def carregar_fato_estoque(df_estoque, cursor):
     print(f"   ✅ fato_estoque: {registros} registros")
 
 
-def run():
+def run(carregar_projeto_fn=None):
+    if carregar_projeto_fn is None:
+        carregar_projeto_fn = carregar_dim_projeto
     print(f"\n📦 Seed {MIGRATION_REF} - Carregando dimensões e fatos do Star Model...")
 
     print("\n   📖 Lendo CSVs...")
@@ -355,7 +357,7 @@ def run():
     try:
         print("\n   📥 Carregando dimensões...")
         carregar_dim_programa(df_programas, cursor)
-        carregar_dim_projeto(df_projetos, cursor)
+        carregar_projeto_fn(df_projetos, cursor)
         carregar_dim_tarefa(df_tarefas, cursor)
         carregar_dim_material(df_materiais, cursor)
         carregar_dim_fornecedor(df_fornecedores, cursor)

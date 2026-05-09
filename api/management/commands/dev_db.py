@@ -23,6 +23,28 @@ MIGRATION_WARNINGS = {
         '      do modelo relacional.\n'
         + '!' * 70
     ),
+    '0004': (
+        '\n' + '!' * 70 + '\n'
+        '  ⚠️  AVISO DE INCOMPATIBILIDADE\n\n'
+        '  A seed 0004 popula o modelo estrela SEM os campos\n'
+        '  data_inicio e data_fim_prevista em dim_projeto.\n\n'
+        '  A partir da migration 0006, dim_projeto possui esses campos,\n'
+        '  necessários para a tabela de projetos do programa.\n\n'
+        '  ➡️  Use a seed 0006 para um banco totalmente compatível\n'
+        '      com a aplicação atual.\n'
+        + '!' * 70
+    ),
+    '0005': (
+        '\n' + '!' * 70 + '\n'
+        '  ⚠️  AVISO DE INCOMPATIBILIDADE\n\n'
+        '  A seed 0005 popula o modelo estrela SEM os campos\n'
+        '  data_inicio e data_fim_prevista em dim_projeto.\n\n'
+        '  A partir da migration 0006, dim_projeto possui esses campos,\n'
+        '  necessários para a tabela de projetos do programa.\n\n'
+        '  ➡️  Use a seed 0006 para um banco totalmente compatível\n'
+        '      com a aplicação atual.\n'
+        + '!' * 70
+    ),
 }
 
 

@@ -1,21 +1,41 @@
 from decimal import Decimal
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
+from datetime import date
+from django.db.models import Sum, Count, Max
 from django.shortcuts import get_object_or_404
 from ..models import DimPrograma, DimProjeto, DimTarefa, FatoHoras, FatoMateriais, FatoCompras
 from ..utils.pagination import normalizar_pagina, calcular_paginacao
 
+STATUS_PLANEJAMENTO = 'Planejamento'
+STATUS_EM_ANDAMENTO = 'Em andamento'
+STATUS_SUSPENSO = 'Suspenso'
+STATUS_CONCLUIDO = 'Concluído'
+
 STATUS_PADRAO = [
-    'Planejamento',
-    'Em andamento',
-    'Suspenso',
-    'Concluído',
+    STATUS_PLANEJAMENTO,
+    STATUS_EM_ANDAMENTO,
+    STATUS_SUSPENSO,
+    STATUS_CONCLUIDO,
 ]
 
 STATUS_CORES = {
-    'Planejamento': '#3B82F6',
-    'Em andamento': '#EAB308',
-    'Suspenso': '#F97316',
-    'Concluído': '#22C55E',
+    STATUS_PLANEJAMENTO: '#3B82F6',
+    STATUS_EM_ANDAMENTO: '#EAB308',
+    STATUS_SUSPENSO: '#F97316',
+    STATUS_CONCLUIDO: '#22C55E',
+}
+
+
+CAMPOS_ORDENACAO_DB = {'nome_projeto', 'responsavel', 'status'}
+
+ACAO_ORDEM = {
+    'priorizar-vermelho': 0,
+    'corrigir-status': 1,
+    'outro': 2,
+    'priorizar-verde': 3,
+    'check-vermelho': 4,
+    'check-amarelo': 5,
+    'check-verde': 6,
+    'suspenso': 7,
 }
 
 
@@ -86,50 +106,121 @@ def get_resumo_programa(programa_id):
     }
 
 
-def get_tabela_projetos(programa_id, page=1, page_size=10):
+def _calcular_acao_concluido(projeto, tarefas):
+    if not projeto.data_fim_prevista:
+        return 'check-verde'
+    tarefas_ids = list(tarefas.values_list('id', flat=True))
+    datas_por_tarefa = (
+        FatoHoras.objects
+        .filter(tarefa_id__in=tarefas_ids)
+        .values('tarefa_id')
+        .annotate(ultima_data=Max('tempo__data'))
+    )
+    tarefas_dentro = sum(
+        1 for t in datas_por_tarefa
+        if t['ultima_data'] and t['ultima_data'] <= projeto.data_fim_prevista
+    )
+    tarefas_fora = sum(
+        1 for t in datas_por_tarefa
+        if t['ultima_data'] and t['ultima_data'] > projeto.data_fim_prevista
+    )
+    if tarefas_fora == 0:
+        return 'check-verde'
+    if tarefas_dentro == 0:
+        return 'check-vermelho'
+    return 'check-amarelo'
+
+
+def _calcular_acao(projeto, total_tarefas, todas_concluidas, dentro_do_prazo, tarefas):
+    if projeto.status == STATUS_SUSPENSO:
+        return 'suspenso'
+    if projeto.status == STATUS_CONCLUIDO and total_tarefas == 0:
+        return 'check-verde'
+    if todas_concluidas and projeto.status in (STATUS_EM_ANDAMENTO, STATUS_PLANEJAMENTO):
+        return 'corrigir-status'
+    if projeto.status == STATUS_CONCLUIDO and todas_concluidas:
+        return _calcular_acao_concluido(projeto, tarefas)
+    if projeto.status not in (STATUS_CONCLUIDO, STATUS_SUSPENSO):
+        return 'priorizar-verde' if dentro_do_prazo else 'priorizar-vermelho'
+    return 'outro'
+
+
+def _processar_projeto(projeto, hoje):
+    tarefas = DimTarefa.objects.filter(projeto=projeto)
+    total_tarefas = tarefas.count()
+    tarefas_concluidas = tarefas.filter(status='Concluída').count()
+
+    horas_estimadas = tarefas.aggregate(total=Sum('horas_estimadas'))['total'] or Decimal('0')
+    horas_realizadas = (
+        FatoHoras.objects.filter(projeto=projeto)
+        .aggregate(total=Sum('horas_trabalhadas'))['total'] or Decimal('0')
+    )
+
+    desvio = horas_realizadas - horas_estimadas
+    percentual_desvio = (
+        abs(float(desvio) / float(horas_estimadas)) * 100
+        if horas_estimadas > 0 else 0
+    )
+    percentual_tarefas = (
+        round((tarefas_concluidas / total_tarefas) * 100, 1)
+        if total_tarefas > 0 else 0
+    )
+
+    data_ultima_atividade = (
+        FatoHoras.objects.filter(projeto=projeto)
+        .aggregate(ultima=Max('tempo__data'))['ultima']
+    )
+
+    dentro_do_prazo = projeto.data_fim_prevista is None or hoje <= projeto.data_fim_prevista
+    todas_concluidas = total_tarefas > 0 and tarefas_concluidas == total_tarefas
+    acao = _calcular_acao(projeto, total_tarefas, todas_concluidas, dentro_do_prazo, tarefas)
+
+    return {
+        'nome_projeto': projeto.nome_projeto,
+        'responsavel': projeto.responsavel,
+        'status': projeto.status,
+        'horas_estimadas': float(horas_estimadas),
+        'horas_realizadas': float(horas_realizadas),
+        'total_tarefas': total_tarefas,
+        'tarefas_concluidas': tarefas_concluidas,
+        'percentual_tarefas_concluidas': percentual_tarefas,
+        'desvio_horas': float(desvio),
+        'percentual_desvio': round(percentual_desvio, 1),
+        'data_ultima_atividade': data_ultima_atividade.isoformat() if data_ultima_atividade else None,
+        'dias_desde_ultima_atividade': (hoje - data_ultima_atividade).days if data_ultima_atividade else None,
+        'dentro_do_prazo': dentro_do_prazo,
+        'sem_horas_registradas': horas_realizadas == Decimal('0'),
+        'acao': acao,
+    }
+
+
+def get_tabela_projetos(programa_id, page=1, page_size=10, sort_by='nome_projeto', sort_dir='asc'):
     get_object_or_404(DimPrograma, id=programa_id)
     page = normalizar_pagina(page)
 
-    projetos = DimProjeto.objects.filter(programa_id=programa_id).order_by('id')
+    projetos = DimProjeto.objects.filter(programa_id=programa_id)
+    if sort_by in CAMPOS_ORDENACAO_DB:
+        order_field = sort_by if sort_dir == 'asc' else f'-{sort_by}'
+        projetos = projetos.order_by(order_field)
+    else:
+        projetos = projetos.order_by('id')
+
     total_items = projetos.count()
-    total_pages, start, end = calcular_paginacao(total_items, page, page_size)
 
-    resultado = []
-    for projeto in projetos[start:end]:
-        tarefas = DimTarefa.objects.filter(projeto=projeto)
-        total_tarefas = tarefas.count()
-        tarefas_concluidas = tarefas.filter(status='Concluída').count()
+    if sort_by == 'acao':
+        projetos_iter = projetos
+    else:
+        total_pages, start, end = calcular_paginacao(total_items, page, page_size)
+        projetos_iter = projetos[start:end]
 
-        horas_estimadas = tarefas.aggregate(
-            total=Sum('horas_estimadas')
-        )['total'] or Decimal('0')
+    hoje = date.today()
+    resultado = [_processar_projeto(p, hoje) for p in projetos_iter]
 
-        horas_realizadas = FatoHoras.objects.filter(
-            projeto=projeto
-        ).aggregate(
-            total=Sum('horas_trabalhadas')
-        )['total'] or Decimal('0')
-
-        desvio = horas_realizadas - horas_estimadas
-        percentual_desvio = (
-            abs(float(desvio) / float(horas_estimadas)) * 100
-            if horas_estimadas > 0 else 0
-        )
-        percentual_tarefas = (
-            round((tarefas_concluidas / total_tarefas) * 100, 1)
-            if total_tarefas > 0 else 0
-        )
-
-        resultado.append({
-            'nome_projeto': projeto.nome_projeto,
-            'responsavel': projeto.responsavel,
-            'status': projeto.status,
-            'horas_estimadas': float(horas_estimadas),
-            'horas_realizadas': float(horas_realizadas),
-            'percentual_tarefas_concluidas': percentual_tarefas,
-            'desvio_horas': float(desvio),
-            'percentual_desvio': round(percentual_desvio, 1),
-        })
+    if sort_by == 'acao':
+        reverse = sort_dir == 'desc'
+        resultado.sort(key=lambda p: ACAO_ORDEM.get(p['acao'], 99), reverse=reverse)
+        total_pages, start, end = calcular_paginacao(total_items, page, page_size)
+        resultado = resultado[start:end]
 
     return {
         'count': total_items,
