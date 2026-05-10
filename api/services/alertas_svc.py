@@ -128,7 +128,7 @@ def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
     criticos.sort(key=lambda x: x['dias_para_pedir'])
     atencao.sort(key=lambda x: x['dias_para_pedir'])
 
-    return {'criticos': criticos, 'atencao': atencao[:5]}
+    return {'criticos': criticos[:5], 'atencao': atencao[:5]}
 
 
 _VALID_SORT_KEYS = {'material', 'projeto', 'dias_ate_acabar', 'status'}
