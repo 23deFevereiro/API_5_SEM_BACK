@@ -38,17 +38,14 @@ def make_conn(cursor):
 
 
 class TestGetConnection:
-    @patch.dict(
-        os.environ,
-        {
-            "POSTGRES_HOST": "localhost",
-            "POSTGRES_PORT": "5432",
-            "POSTGRES_DB": "test_db",
-            "POSTGRES_USER": "test_user",
-            "POSTGRES_PASSWORD": "test_pass",  # NOSONAR
-        },
-    )
-    @patch("api.management.commands.seeds.seed_0005.psycopg2.connect")
+    @patch.dict(os.environ, {
+        'POSTGRES_HOST': 'localhost',
+        'POSTGRES_PORT': '5432',
+        'POSTGRES_DB': 'test_db',
+        'POSTGRES_USER': 'test_user',
+        'POSTGRES_PASSWORD': 'test_pass',
+    })
+    @patch('api.management.commands.seeds.seed_0005.psycopg2.connect')
     def test_chama_psycopg2_connect(self, mock_connect):
         get_connection()
         mock_connect.assert_called_once()
