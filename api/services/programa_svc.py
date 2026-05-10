@@ -39,6 +39,32 @@ ACAO_ORDEM = {
 }
 
 
+def get_horas_por_projeto(programa_id):
+    get_object_or_404(DimPrograma, id=programa_id)
+
+    projetos = DimProjeto.objects.filter(programa_id=programa_id).order_by('nome_projeto')
+
+    horas_por_projeto = (
+        FatoHoras.objects
+        .filter(projeto__programa_id=programa_id)
+        .values('projeto_id', 'projeto__nome_projeto')
+        .annotate(horas_realizadas=Sum('horas_trabalhadas'))
+    )
+
+    horas_map = {
+        row['projeto_id']: float(row['horas_realizadas'] or 0)
+        for row in horas_por_projeto
+    }
+
+    return [
+        {
+            'nome_projeto': projeto.nome_projeto,
+            'horas_realizadas': horas_map.get(projeto.id, 0.0),
+        }
+        for projeto in projetos
+    ]
+
+
 def listar_programas(search=''):
     programas = DimPrograma.objects.all()
     if search:

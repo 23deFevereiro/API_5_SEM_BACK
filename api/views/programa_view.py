@@ -7,6 +7,7 @@ from ..services.programa_svc import (
     get_burnup_horas_programas,
     get_burnup_custo_programas,
     get_tabela_projetos,
+    get_horas_por_projeto,
 )
 
 
@@ -51,6 +52,17 @@ def get_burnup_custo_programas_view(request):
     try:
         dados = get_burnup_custo_programas()
         return JsonResponse(dados, safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
+def get_horas_por_projeto_view(request, programa_id):
+    try:
+        dados = get_horas_por_projeto(programa_id)
+        return JsonResponse(dados, safe=False)
+    except Http404:
+        return JsonResponse({'error': 'Programa não encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 

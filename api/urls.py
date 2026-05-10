@@ -36,4 +36,5 @@ urlpatterns = [
     path('api/programas-burnup-horas/', programa_view.get_burnup_horas_programas_view, name='programas_burnup_horas'),
     path('api/programas-burnup-custo/', programa_view.get_burnup_custo_programas_view, name='programas_burnup_custo'),
     path('api/programas/<int:programa_id>/tabela-projetos/', programa_view.get_tabela_projetos_view, name='tabela_projetos'),
+    path('api/programas/<int:programa_id>/horas-por-projeto/', programa_view.get_horas_por_projeto_view, name='horas_por_projeto'),
 ]
