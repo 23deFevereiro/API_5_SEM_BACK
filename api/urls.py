@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
-from .views import projeto_view, horas_view, funcionario_view, programa_view
+from .views import projeto_view, horas_view, funcionario_view, programa_view, compras_view
 
 urlpatterns = [
     path('api/admin/', admin.site.urls),
@@ -37,4 +37,6 @@ urlpatterns = [
     path('api/programas-burnup-custo/', programa_view.get_burnup_custo_programas_view, name='programas_burnup_custo'),
     path('api/programas/<int:programa_id>/tabela-projetos/', programa_view.get_tabela_projetos_view, name='tabela_projetos'),
     path('api/programas/<int:programa_id>/horas-por-projeto/', programa_view.get_horas_por_projeto_view, name='horas_por_projeto'),
+    path('api/compras/materiais/', compras_view.listar_materiais_compras_view, name='compras_materiais'),
+    path('api/compras/lead-time/', compras_view.get_lead_time_view, name='compras_lead_time'),
 ]
