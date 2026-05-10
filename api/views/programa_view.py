@@ -7,7 +7,10 @@ from ..services.programa_svc import (
     get_burnup_horas_programas,
     get_burnup_custo_programas,
     get_tabela_projetos,
+    get_horas_por_projeto,
 )
+
+_PROGRAMA_NAO_ENCONTRADO = 'Programa não encontrado'
 
 
 @require_GET
@@ -23,7 +26,7 @@ def get_resumo_programa_view(request, programa_id):
         resumo = get_resumo_programa(programa_id)
         return JsonResponse(resumo)
     except Http404:
-        return JsonResponse({'error': 'Programa não encontrado'}, status=404)
+        return JsonResponse({'error': _PROGRAMA_NAO_ENCONTRADO}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -56,6 +59,17 @@ def get_burnup_custo_programas_view(request):
 
 
 @require_GET
+def get_horas_por_projeto_view(request, programa_id):
+    try:
+        dados = get_horas_por_projeto(programa_id)
+        return JsonResponse(dados, safe=False)
+    except Http404:
+        return JsonResponse({'error': _PROGRAMA_NAO_ENCONTRADO}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@require_GET
 def get_tabela_projetos_view(request, programa_id):
     try:
         page = request.GET.get('page', 1)
@@ -70,6 +84,6 @@ def get_tabela_projetos_view(request, programa_id):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Http404:
-        return JsonResponse({'error': 'Programa não encontrado'}, status=404)
+        return JsonResponse({'error': _PROGRAMA_NAO_ENCONTRADO}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
