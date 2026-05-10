@@ -326,3 +326,74 @@ class TestProgramaErrosSistema:
         with patch('api.views.programa_view.get_tabela_projetos', side_effect=RuntimeError('falha')):
             response = api_client.get(url)
         assert response.status_code == 500
+
+
+@pytest.mark.django_db
+class TestHorasPorProjetoSistema:
+
+    def test_retorna_200_para_programa_existente(self, api_client, programa):
+        url = reverse('horas_por_projeto', args=[programa.id])
+        response = api_client.get(url)
+        assert response.status_code == 200
+
+    def test_retorna_404_para_programa_inexistente(self, api_client):
+        url = reverse('horas_por_projeto', args=[99999])
+        response = api_client.get(url)
+        assert response.status_code == 404
+
+    def test_retorna_405_para_post(self, api_client, programa):
+        url = reverse('horas_por_projeto', args=[programa.id])
+        response = api_client.post(url)
+        assert response.status_code == 405
+
+    def test_retorna_lista_vazia_sem_projetos(self, api_client, programa):
+        url = reverse('horas_por_projeto', args=[programa.id])
+        response = api_client.get(url)
+        assert response.json() == []
+
+    def test_retorna_lista_json(self, api_client, programa):
+        url = reverse('horas_por_projeto', args=[programa.id])
+        response = api_client.get(url)
+        assert isinstance(response.json(), list)
+
+    def test_retorna_estrutura_correta_com_projetos(self, api_client, programa):
+        baker.make('api.DimProjeto', id=20, programa=programa, nome_projeto='Projeto X')
+        url = reverse('horas_por_projeto', args=[programa.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert len(data) == 1
+        assert 'nome_projeto' in data[0]
+        assert 'horas_realizadas' in data[0]
+
+    def test_horas_realizadas_soma_fato_horas(self, api_client, programa):
+        from datetime import date as d
+        projeto = baker.make('api.DimProjeto', id=21, programa=programa, nome_projeto='Projeto Y')
+        tempo = baker.make(
+            'api.DimTempo',
+            id=20230301,
+            data=d(2023, 3, 1),
+            ano=2023,
+            mes=3,
+            trimestre=1,
+            semestre=1,
+            dia_semana=d(2023, 3, 1).weekday(),
+        )
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=6.0, custo_horas=0)
+        baker.make('api.FatoHoras', projeto=projeto, programa=programa, tempo=tempo, horas_trabalhadas=4.0, custo_horas=0)
+        url = reverse('horas_por_projeto', args=[programa.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert data[0]['horas_realizadas'] == pytest.approx(10.0)
+
+    def test_projeto_sem_horas_exibe_zero(self, api_client, programa):
+        baker.make('api.DimProjeto', id=22, programa=programa, nome_projeto='Projeto Z')
+        url = reverse('horas_por_projeto', args=[programa.id])
+        response = api_client.get(url)
+        data = response.json()
+        assert data[0]['horas_realizadas'] == pytest.approx(0.0)
+
+    def test_retorna_500_quando_service_levanta_excecao(self, api_client, programa):
+        url = reverse('horas_por_projeto', args=[programa.id])
+        with patch('api.views.programa_view.get_horas_por_projeto', side_effect=RuntimeError('falha')):
+            response = api_client.get(url)
+        assert response.status_code == 500
