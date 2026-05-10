@@ -39,4 +39,5 @@ urlpatterns = [
     path('api/programas/<int:programa_id>/horas-por-projeto/', programa_view.get_horas_por_projeto_view, name='horas_por_projeto'),
     path('api/compras/materiais/', compras_view.listar_materiais_compras_view, name='compras_materiais'),
     path('api/compras/lead-time/', compras_view.get_lead_time_view, name='compras_lead_time'),
+    path('api/compras/alertas/', compras_view.get_alertas_view, name='compras_alertas'),
 ]
