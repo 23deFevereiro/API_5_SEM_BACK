@@ -2,10 +2,13 @@ import logging
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
-from ..services.horas_svc import (get_horas_por_funcionario, get_burnup_horas_projetos)
 
+from ..services.horas_svc import (
+    get_burnup_horas_projetos,
+    get_horas_por_funcionario,
+    get_nomes_funcionarios_projeto,
+)
 from .view_utils import ERRO_INTERNO, extrair_periodo
-from ..services.horas_svc import get_horas_por_funcionario, get_nomes_funcionarios_projeto
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +17,7 @@ logger = logging.getLogger(__name__)
 def get_horas_por_funcionario_view(request, projeto_id):
     try:
         data_inicio, data_fim = extrair_periodo(request)
-        funcionario = request.GET.get('funcionario') or None
+        funcionario = request.GET.get("funcionario") or None
         dados = get_horas_por_funcionario(
             projeto_id,
             data_inicio=data_inicio,
@@ -23,26 +26,26 @@ def get_horas_por_funcionario_view(request, projeto_id):
         )
         return JsonResponse(dados, safe=False)
     except ValueError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({"error": str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 @require_GET
 def get_burnup_horas_projetos_view(request):
     try:
-        programa_id = request.GET.get('programa_id')
+        programa_id = request.GET.get("programa_id")
         programa_id = int(programa_id) if programa_id else None
         dados = get_burnup_horas_projetos(programa_id=programa_id)
         return JsonResponse(dados, safe=False)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @require_GET
 def get_nomes_funcionarios_view(request, projeto_id):
     try:
         return JsonResponse(get_nomes_funcionarios_projeto(projeto_id), safe=False)
-    except Exception as _:
-        logger.exception('Erro interno na view de horas')
-        return JsonResponse({'error': ERRO_INTERNO}, status=500)
+    except Exception:
+        logger.exception("Erro interno na view de horas")
+        return JsonResponse({"error": ERRO_INTERNO}, status=500)

@@ -1,5 +1,6 @@
-from api.utils.pagination import normalizar_pagina, calcular_paginacao
+import pytest
 from api.services.projeto_svc import formatar_material
+from api.utils.pagination import calcular_paginacao, normalizar_pagina
 from pytest import approx
 
 
@@ -49,80 +50,83 @@ class TestFormatarMaterial:
 
     def test_renomeia_descricao_para_nome_material(self):
         item = {
-            'material_id': 1,
-            'material__descricao': 'Capacitor',
-            'material__custo_estimado': 15.0,
-            'quantidade': 5,
-            'custo_total_estimado': 75.0,
+            "material_id": 1,
+            "material__descricao": "Capacitor",
+            "material__custo_estimado": 15.0,
+            "quantidade": 5,
+            "custo_total_estimado": 75.0,
         }
         resultado = formatar_material(item)
-        assert resultado['nome_material'] == 'Capacitor'
+        assert resultado["nome_material"] == "Capacitor"
 
     def test_custo_total_nulo_vira_zero(self):
         item = {
-            'material_id': 1,
-            'material__descricao': 'Resistor',
-            'material__custo_estimado': 10.0,
-            'quantidade': 3,
-            'custo_total_estimado': None,
+            "material_id": 1,
+            "material__descricao": "Resistor",
+            "material__custo_estimado": 10.0,
+            "quantidade": 3,
+            "custo_total_estimado": None,
         }
         resultado = formatar_material(item)
-        assert resultado['custo_total_estimado'] == approx(0.0)
+        assert resultado["custo_total_estimado"] == approx(0.0)
 
     def test_remove_campos_internos_do_orm(self):
         item = {
-            'material_id': 1,
-            'material__descricao': 'Diodo',
-            'material__custo_estimado': 5.0,
-            'quantidade': 2,
-            'custo_total_estimado': 10.0,
+            "material_id": 1,
+            "material__descricao": "Diodo",
+            "material__custo_estimado": 5.0,
+            "quantidade": 2,
+            "custo_total_estimado": 10.0,
         }
         resultado = formatar_material(item)
-        assert 'material_id' not in resultado
-        assert 'material__custo_estimado' not in resultado
-        assert 'material__descricao' not in resultado
+        assert "material_id" not in resultado
+        assert "material__custo_estimado" not in resultado
+        assert "material__descricao" not in resultado
 
     def test_retorna_quantidade_correta(self):
         item = {
-            'material_id': 1,
-            'material__descricao': 'Transistor',
-            'material__custo_estimado': 8.0,
-            'quantidade': 10,
-            'custo_total_estimado': 80.0,
+            "material_id": 1,
+            "material__descricao": "Transistor",
+            "material__custo_estimado": 8.0,
+            "quantidade": 10,
+            "custo_total_estimado": 80.0,
         }
         resultado = formatar_material(item)
-        assert resultado['quantidade'] == 10
+        assert resultado["quantidade"] == 10
 
     def test_custo_total_retornado_como_float(self):
         item = {
-            'material_id': 1,
-            'material__descricao': 'LED',
-            'material__custo_estimado': 2.5,
-            'quantidade': 4,
-            'custo_total_estimado': 10,
+            "material_id": 1,
+            "material__descricao": "LED",
+            "material__custo_estimado": 2.5,
+            "quantidade": 4,
+            "custo_total_estimado": 10,
         }
         resultado = formatar_material(item)
-        assert isinstance(resultado['custo_total_estimado'], float)
+        assert isinstance(resultado["custo_total_estimado"], float)
 
 
 class TestParseData:
     def test_retorna_none_quando_valor_nulo(self):
         from api.views.view_utils import _parse_data
-        assert _parse_data(None, 'data_inicio') is None
+
+        assert _parse_data(None, "data_inicio") is None
 
     def test_retorna_none_quando_valor_vazio(self):
         from api.views.view_utils import _parse_data
-        assert _parse_data('', 'data_inicio') is None
+
+        assert _parse_data("", "data_inicio") is None
 
     def test_retorna_date_quando_valor_valido(self):
-        import pytest
         from datetime import date
+
         from api.views.view_utils import _parse_data
-        resultado = _parse_data('2025-01-15', 'data_inicio')
+
+        resultado = _parse_data("2025-01-15", "data_inicio")
         assert resultado == date(2025, 1, 15)
 
     def test_levanta_value_error_quando_formato_invalido(self):
-        import pytest
         from api.views.view_utils import _parse_data
+
         with pytest.raises(ValueError, match="data_inicio"):
-            _parse_data('15/01/2025', 'data_inicio')
+            _parse_data("15/01/2025", "data_inicio")

@@ -7,4 +7,4 @@ class DimStatusPedido(models.Model):
     ordem_prioridade = models.IntegerField(default=0)
 
     class Meta:
-        db_table = 'dim_status_pedido'
+        db_table = "dim_status_pedido"

@@ -11,4 +11,4 @@ class DimFornecedor(models.Model):
     status = models.CharField(max_length=20, blank=True)
 
     class Meta:
-        db_table = 'dim_fornecedor'
+        db_table = "dim_fornecedor"

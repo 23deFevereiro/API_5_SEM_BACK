@@ -11,4 +11,4 @@ class DimTempo(models.Model):
     dia_semana = models.IntegerField()
 
     class Meta:
-        db_table = 'dim_tempo'
+        db_table = "dim_tempo"

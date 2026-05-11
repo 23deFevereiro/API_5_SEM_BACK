@@ -14,3 +14,7 @@ pytest==9.0.2
 pytest-cov==7.1.0
 pytest-django==4.12.0
 sqlparse==0.5.5
+flake8==7.0.0
+black==24.3.0
+isort==5.13.2
+pre-commit==3.7.0

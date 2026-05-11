@@ -24,7 +24,7 @@ ALLOWED_TYPES = [
 ]
 
 COMMIT_PATTERN = re.compile(
-    r"^(?P<type>[a-z]+)\((?P<id>#\d+|RF\d+|RNF\d+)\): (?P<msg>.+)$"
+    r"^(?P<type>[a-z]+)\((?P<id>#\d+|RF-\d+|RNF-\d+)\): (?P<msg>.+)$"
 )
 
 SKIP_PREFIXES = (
@@ -53,30 +53,27 @@ def validate(commit_msg_file: str) -> None:
 
     if len(first_line) > MAX_FIRST_LINE:
         _fail(
-            f"First line too long ({len(first_line)} chars). "
-            f"Max: {MAX_FIRST_LINE}.\n"
+            "First line too long "
+            f"({len(first_line)} chars). Max: {MAX_FIRST_LINE}.\n"
             f"  Got: {first_line}"
         )
 
     match = COMMIT_PATTERN.match(first_line)
     if not match:
         _fail(
-            f"""Commit message does not match the required format.
-
-  Expected:  type(#123): short message in English
-             type(RF-01): short message in English
-             type(RNF-01): short message in English
-
-  Got:       {first_line}
-
-  Allowed types: {', '.join(ALLOWED_TYPES)}"""
+            "Commit message does not match the required format.\n\n"
+            "  Expected:  type(#123): short message in English\n"
+            "             type(RF-01): short message in English\n"
+            "             type(RNF-01): short message in English\n\n"
+            f"  Got:       {first_line}\n\n"
+            f"  Allowed types: {', '.join(ALLOWED_TYPES)}"
         )
 
     commit_type = match.group("type")
     if commit_type not in ALLOWED_TYPES:
         _fail(
-            f"Invalid commit type: '{commit_type}'.\n  "
-            f"Allowed types: {', '.join(ALLOWED_TYPES)}"
+            f"Invalid commit type: '{commit_type}'.\n"
+            f"  Allowed types: {', '.join(ALLOWED_TYPES)}"
         )
 
     print(f"[OK] Commit message OK: {first_line}")
