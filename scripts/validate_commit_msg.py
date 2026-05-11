@@ -27,6 +27,13 @@ COMMIT_PATTERN = re.compile(
     r"^(?P<type>[a-z]+)\((?P<id>#\d+|RF\d+|RNF\d+)\): (?P<msg>.+)$"
 )
 
+SKIP_PREFIXES = (
+    "Merge pull request",
+    "Merge branch",
+    "Merge remote-tracking branch",
+    "Revert ",
+)
+
 MAX_FIRST_LINE = 72
 
 
@@ -40,9 +47,15 @@ def validate(commit_msg_file: str) -> None:
 
     first_line = content_lines[0].rstrip()
 
+    if any(first_line.startswith(prefix) for prefix in SKIP_PREFIXES):
+        print(f"[SKIP] Auto-generated commit, skipping: {first_line}")
+        sys.exit(0)
+
     if len(first_line) > MAX_FIRST_LINE:
         _fail(
-            f"First line too long ({len(first_line)} chars). Max: {MAX_FIRST_LINE}.\n  Got: {first_line}"
+            f"First line too long ({len(first_line)} chars). "
+            f"Max: {MAX_FIRST_LINE}.\n"
+            f"  Got: {first_line}"
         )
 
     match = COMMIT_PATTERN.match(first_line)
@@ -62,7 +75,8 @@ def validate(commit_msg_file: str) -> None:
     commit_type = match.group("type")
     if commit_type not in ALLOWED_TYPES:
         _fail(
-            f"Invalid commit type: '{commit_type}'.\n  Allowed types: {', '.join(ALLOWED_TYPES)}"
+            f"Invalid commit type: '{commit_type}'.\n  "
+            f"Allowed types: {', '.join(ALLOWED_TYPES)}"
         )
 
     print(f"[OK] Commit message OK: {first_line}")
