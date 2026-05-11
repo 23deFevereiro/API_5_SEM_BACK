@@ -45,6 +45,37 @@ jobs:
 
       - name: Check migrate
         run: python manage.py migrate
+  populate-db:
+    runs-on: ubuntu-latest
+    name: Populate DB
+    needs: [check-migrations]
+    services:
+      database:
+        image: postgres:18
+        env:
+          POSTGRES_DB: lunae
+          POSTGRES_USER: fev-23
+          POSTGRES_PASSWORD: fev-23
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run migrate
+        run: python manage.py migrate
+
+      - name: Validate dev_db command
+        run: python manage.py dev_db
 
   test:
     runs-on: ubuntu-latest
@@ -78,6 +109,7 @@ jobs:
   general-check:
     runs-on: ubuntu-latest
     name: General checks
+    needs: [populate-db]
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
