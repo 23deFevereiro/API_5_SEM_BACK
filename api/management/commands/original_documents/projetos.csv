@@ -1,0 +1,101 @@
+id,codigo_projeto,nome_projeto,programa_id,responsavel,custo_hora,data_inicio,data_fim_prevista,status
+1,PRJ001,Conversor DC-DC Isolado,3,Felipe Rocha,91.74,2024-06-27,2024-11-06,Planejamento
+2,PRJ002,Driver LED Dimerizável,3,Fernanda Gomes,77.38,2025-02-04,2025-07-18,Planejamento
+3,PRJ003,Unidade Teste Automático,1,João Pedro Alves,117.09,2022-05-09,2023-05-22,Suspenso
+4,PRJ004,Conversor DC-DC Isolado,1,Vinícius Moreira,140.2,2022-08-27,2023-10-22,Em andamento
+5,PRJ005,Conversor DC-DC Isolado,3,Rafael Carvalho,91.15,2024-12-03,2025-09-23,Concluído
+6,PRJ006,Controlador Motor Brushless,1,Carla Souza,138.56,2022-02-26,2023-01-06,Concluído
+7,PRJ007,Sensor Array Térmico,1,Luciana Pinto,103.39,2022-09-02,2023-10-01,Concluído
+8,PRJ008,Driver Motor de Passo,3,Diego Santana,80.22,2024-11-02,2025-12-22,Em andamento
+9,PRJ009,Controlador Motor Brushless,2,Patrícia Lima,95.85,2024-04-24,2024-12-19,Concluído
+10,PRJ010,Unidade Proteção Surto,1,Marcelo Cardoso,95.02,2022-07-18,2023-05-15,Planejamento
+11,PRJ011,Carregador de Bateria Li-Ion,3,Bruno Oliveira,109.67,2024-07-27,2025-08-24,Concluído
+12,PRJ012,Circuito Medição Corrente,3,Roberto Nogueira,132.62,2025-02-10,2025-09-30,Planejamento
+13,PRJ013,Módulo Bluetooth BLE,1,André Barbosa,79.96,2022-01-26,2022-11-03,Concluído
+14,PRJ014,Placa Relé Inteligente,1,Rafael Carvalho,94.87,2022-09-22,2023-08-10,Em andamento
+15,PRJ015,Módulo GPS Rastreamento,3,Renato Barros,118.84,2025-02-12,2026-03-14,Suspenso
+16,PRJ016,Interface SPI ADC,2,Ana Carolina Duarte,81.82,2024-07-05,2025-01-11,Planejamento
+17,PRJ017,Módulo RF 433MHz,1,Vinícius Moreira,126.04,2022-03-29,2023-06-13,Planejamento
+18,PRJ018,Placa Relé Inteligente,2,Beatriz Monteiro,93.86,2024-09-26,2025-11-25,Planejamento
+19,PRJ019,Placa Regulador Switching,3,Thiago Nascimento,95.01,2024-06-28,2025-10-10,Concluído
+20,PRJ020,Módulo RF 433MHz,1,Camila Batista,75.24,2022-06-09,2023-05-17,Concluído
+21,PRJ021,Controlador Motor Brushless,3,Amanda Ferreira,121.9,2024-07-31,2025-08-14,Em andamento
+22,PRJ022,Placa Regulador Switching,1,Thiago Nascimento,144.18,2022-07-20,2023-02-07,Planejamento
+23,PRJ023,Módulo Supervisor de Tensão,3,Pedro Henrique Souza,144.68,2024-10-13,2025-10-18,Concluído
+24,PRJ024,Módulo Zigbee Mesh,1,Lucas Pereira,81.42,2022-02-08,2022-10-09,Suspenso
+25,PRJ025,PCB Teste Funcional,1,Marcelo Cardoso,110.65,2022-10-09,2023-04-11,Em andamento
+26,PRJ026,Sistema Alarme Vibração,2,Gustavo Ribeiro,144.67,2024-12-10,2026-02-13,Em andamento
+27,PRJ027,Unidade Controle PID,3,Camila Batista,142.47,2024-10-07,2025-08-27,Suspenso
+28,PRJ028,Placa Interface CAN Bus,1,Juliana Costa,76.58,2022-05-16,2023-01-06,Em andamento
+29,PRJ029,Placa Interface CAN Bus,3,Diego Santana,122.33,2024-08-21,2024-12-22,Em andamento
+30,PRJ030,Placa Interface CAN Bus,1,Beatriz Monteiro,92.85,2022-01-26,2022-11-11,Suspenso
+31,PRJ031,Módulo Zigbee Mesh,1,Tatiane Duarte,110.45,2022-10-13,2023-04-18,Suspenso
+32,PRJ032,Controlador Motor Brushless,2,Marcelo Cardoso,107.33,2024-06-20,2024-12-05,Suspenso
+33,PRJ033,Fonte de Alimentação 24V,2,Marcelo Cardoso,124.01,2024-11-09,2026-03-17,Planejamento
+34,PRJ034,Amplificador Áudio Classe D,1,Vinícius Moreira,139.63,2022-08-04,2023-12-09,Em andamento
+35,PRJ035,Conversor USB-Serial,1,Rafael Carvalho,106.64,2022-04-17,2023-05-16,Concluído
+36,PRJ036,Conversor USB-Serial,2,Vinícius Moreira,139.6,2024-07-20,2024-12-25,Planejamento
+37,PRJ037,Módulo Aquisição de Dados,1,Luciana Pinto,131.52,2022-10-13,2023-02-17,Em andamento
+38,PRJ038,Módulo LoRa Gateway,1,Gustavo Ribeiro,139.85,2022-08-06,2023-08-09,Planejamento
+39,PRJ039,Placa Filtro EMI,1,André Barbosa,144.49,2022-07-23,2022-11-21,Suspenso
+40,PRJ040,Sensor Pressão Industrial,2,Marcelo Cardoso,128.88,2024-10-17,2026-02-05,Em andamento
+41,PRJ041,Fonte de Alimentação 24V 2,1,Tatiane Duarte,130.18,2022-06-10,2023-01-27,Planejamento
+42,PRJ042,Fonte de Alimentação 24V 2,3,Tatiane Duarte,110.76,2024-10-08,2025-03-06,Em andamento
+43,PRJ043,Interface HMI Touch 2,1,Lucas Pereira,119.63,2022-09-27,2023-03-07,Em andamento
+44,PRJ044,Carregador de Bateria Li-Ion 2,2,Tatiane Duarte,119.59,2024-05-15,2025-06-30,Planejamento
+45,PRJ045,Módulo WiFi Bridge 2,2,Juliana Costa,145.1,2025-01-07,2026-02-20,Em andamento
+46,PRJ046,Módulo GPS Rastreamento 2,3,Patrícia Lima,84.82,2024-10-08,2025-06-07,Concluído
+47,PRJ047,Redesign Placa de Controle 2,2,Camila Batista,121.59,2024-08-23,2025-01-27,Planejamento
+48,PRJ048,Interface SPI ADC 2,1,André Barbosa,84.93,2022-10-12,2023-05-29,Concluído
+49,PRJ049,Sistema Monitoramento IoT 2,1,Bruno Oliveira,107.86,2022-05-15,2023-03-20,Concluído
+50,PRJ050,Sensor Pressão Industrial 2,3,Ricardo Teixeira,144.88,2025-01-26,2025-05-30,Planejamento
+51,PRJ051,Controlador Motor Brushless 2,1,Renato Barros,116.49,2022-05-25,2022-11-20,Concluído
+52,PRJ052,Amplificador Áudio Classe D 2,2,Gustavo Ribeiro,126.56,2024-06-30,2025-10-30,Concluído
+53,PRJ053,Fonte de Alimentação 24V 2,3,Lucas Pereira,122.57,2025-01-06,2025-09-11,Concluído
+54,PRJ054,PCB Teste Funcional 2,1,Eduardo Fernandes,148.48,2022-01-11,2022-10-28,Em andamento
+55,PRJ055,Sistema Alarme Vibração 2,3,Larissa Freitas,75.73,2024-12-13,2026-01-19,Planejamento
+56,PRJ056,Painel Indicador LED 2,3,Roberto Nogueira,102.69,2024-07-16,2025-08-19,Em andamento
+57,PRJ057,Placa Expansão GPIO 2,2,Carla Souza,142.42,2024-05-19,2024-10-07,Planejamento
+58,PRJ058,Carregador de Bateria Li-Ion 2,2,Marcelo Cardoso,82.71,2024-06-30,2025-10-12,Suspenso
+59,PRJ059,Módulo RF 433MHz 2,3,Vinícius Moreira,135.81,2024-07-19,2025-03-17,Suspenso
+60,PRJ060,Amplificador Áudio Classe D 2,1,Vinícius Moreira,144.81,2022-04-11,2023-08-21,Em andamento
+61,PRJ061,Controlador Motor Brushless 2,2,Patrícia Lima,140.41,2024-06-04,2025-09-26,Suspenso
+62,PRJ062,Módulo Ethernet Industrial 2,1,Ricardo Teixeira,136.54,2022-04-22,2023-04-12,Em andamento
+63,PRJ063,Driver Motor de Passo 2,1,Patrícia Lima,99.62,2022-01-22,2023-04-24,Planejamento
+64,PRJ064,Interface SPI ADC 2,2,Patrícia Lima,125.96,2024-09-10,2025-12-02,Concluído
+65,PRJ065,Interface HMI Touch 2,1,Tatiane Duarte,147.19,2022-03-10,2022-11-18,Concluído
+66,PRJ066,Sistema Alarme Vibração 2,1,Carla Souza,129.64,2022-03-06,2023-05-05,Concluído
+67,PRJ067,Placa Filtro EMI 2,2,Isabela Mendes,118.24,2024-12-01,2025-05-29,Concluído
+68,PRJ068,Módulo WiFi Bridge 2,1,Luciana Pinto,135.49,2022-08-21,2022-12-19,Em andamento
+69,PRJ069,Amplificador Áudio Classe D 2,2,Marina Lopes,98.54,2024-10-21,2025-03-25,Planejamento
+70,PRJ070,Placa Expansão GPIO 2,3,Marcelo Cardoso,105.63,2024-10-01,2025-10-15,Suspenso
+71,PRJ071,PCB Teste Funcional 2,3,Gustavo Ribeiro,106.53,2024-09-29,2025-11-06,Suspenso
+72,PRJ072,Módulo Zigbee Mesh 2,3,Ricardo Teixeira,105.46,2024-07-29,2025-10-07,Planejamento
+73,PRJ073,Sistema Alarme Vibração 2,2,Vinícius Moreira,118.5,2024-08-08,2025-03-23,Concluído
+74,PRJ074,Unidade Proteção Surto 2,2,Beatriz Monteiro,110.49,2024-10-27,2025-10-08,Em andamento
+75,PRJ075,Interface SPI ADC 2,3,Marcelo Cardoso,122.47,2024-06-13,2025-03-05,Concluído
+76,PRJ076,Placa Expansão GPIO 2,1,Felipe Rocha,135.49,2022-05-10,2023-08-17,Em andamento
+77,PRJ077,Módulo LoRa Gateway 2,1,Marina Lopes,138.73,2022-02-02,2022-10-05,Planejamento
+78,PRJ078,Módulo Zigbee Mesh 2,2,Gustavo Ribeiro,128.88,2024-10-13,2025-12-29,Suspenso
+79,PRJ079,Firmware de Diagnóstico 2,2,Eduardo Fernandes,126.57,2024-10-05,2025-06-06,Planejamento
+80,PRJ080,Módulo WiFi Bridge 2,2,Camila Batista,78.77,2024-07-05,2025-01-31,Em andamento
+81,PRJ081,Placa Relé Inteligente 3,1,Marcelo Cardoso,114.83,2022-08-31,2023-03-07,Concluído
+82,PRJ082,Sensor Pressão Industrial 3,2,Camila Batista,142.29,2024-11-28,2025-11-01,Suspenso
+83,PRJ083,Conversor DC-DC Isolado 3,2,Thiago Nascimento,133.33,2024-07-25,2025-03-28,Suspenso
+84,PRJ084,Conversor USB-Serial 3,3,Lucas Pereira,128.52,2024-08-31,2025-05-18,Em andamento
+85,PRJ085,Placa Regulador Switching 3,2,Lucas Pereira,85.38,2024-09-02,2025-06-12,Em andamento
+86,PRJ086,Unidade Proteção Surto 3,2,Lucas Pereira,106.12,2024-06-01,2025-09-25,Concluído
+87,PRJ087,Fonte de Alimentação 24V 3,3,Gustavo Ribeiro,137.47,2024-12-25,2025-11-22,Suspenso
+88,PRJ088,Placa Filtro EMI 3,3,Ana Carolina Duarte,75.44,2024-05-11,2025-06-29,Concluído
+89,PRJ089,Placa Regulador Switching 3,2,Renato Barros,130.1,2024-09-30,2025-08-30,Em andamento
+90,PRJ090,Sistema Alarme Vibração 3,2,Ana Carolina Duarte,77.18,2024-07-05,2025-03-21,Concluído
+91,PRJ091,Módulo RF 433MHz 3,3,Roberto Nogueira,110.05,2024-11-24,2026-03-29,Em andamento
+92,PRJ092,Módulo Bluetooth BLE 3,3,Tatiane Duarte,117.33,2025-01-29,2025-06-11,Planejamento
+93,PRJ093,Placa Relé Inteligente 3,1,Bruno Oliveira,78.77,2022-08-17,2023-02-22,Suspenso
+94,PRJ094,Circuito Medição Corrente 3,2,Juliana Costa,132.09,2024-07-01,2025-06-18,Suspenso
+95,PRJ095,Módulo Aquisição de Dados 3,2,Ana Carolina Duarte,76.45,2024-10-16,2025-06-22,Planejamento
+96,PRJ096,Placa Interface CAN Bus 3,2,Thiago Nascimento,146.8,2024-07-07,2025-10-02,Planejamento
+97,PRJ097,Módulo Supervisor de Tensão 3,1,Marina Lopes,86.43,2022-05-16,2022-12-24,Em andamento
+98,PRJ098,Unidade Proteção Surto 3,2,Camila Batista,127.46,2024-05-12,2025-06-24,Concluído
+99,PRJ099,Placa Expansão GPIO 3,1,Pedro Henrique Souza,118.4,2022-03-09,2022-09-28,Concluído
+100,PRJ100,Driver Motor de Passo 3,3,Lucas Pereira,119.41,2024-11-09,2025-09-28,Em andamento
