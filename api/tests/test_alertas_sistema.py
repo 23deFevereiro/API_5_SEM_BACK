@@ -51,6 +51,5 @@ class TestGetAlertasView:
         assert resp.status_code == 400
 
     def test_atencao_max_ajustado_quando_menor_que_critico_max(self, client):
-        # atencao_max=10 com critico_max=30 → atencao_max é ajustado para 31 internamente
         resp = client.get('/api/compras/alertas/?critico_max=30&atencao_max=10')
         assert resp.status_code == 200
