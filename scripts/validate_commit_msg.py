@@ -77,8 +77,13 @@ def validate(commit_msg_file: str) -> None:
     commit_type = match.group("type")
     if commit_type not in ALLOWED_TYPES:
         _fail(
+<<<<<<< HEAD
             f"Invalid commit type: '{commit_type}'.\n  "
             f"Allowed types: {', '.join(ALLOWED_TYPES)}"
+=======
+            f"Invalid commit type: '{commit_type}'.\n"
+            f"  Allowed types: {', '.join(ALLOWED_TYPES)}"
+>>>>>>> db88931 (test(#45): implement backend QA validations and automated testing)
         )
 
     print(f"[OK] Commit message OK: {first_line}")
