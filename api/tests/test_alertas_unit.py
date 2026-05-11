@@ -5,7 +5,7 @@ from api.services.alertas_svc import get_alertas_materiais, PENDENTE_STATUS
 
 
 def make_tempo(data_str, pk=None):
-    ano, mes, dia = data_str.split('-')
+    ano, mes, _ = data_str.split('-')
     pk = pk or int(data_str.replace('-', ''))
     return baker.make(
         'api.DimTempo',
