@@ -5,7 +5,7 @@ from ..models import DimMaterial, FatoCompras, FatoEstoque, FatoMateriais
 PENDENTE_STATUS = ['Aberto', 'Enviado', 'Parcialmente Entregue']
 
 
-def get_alertas_materiais():
+def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
     tempo_range = FatoMateriais.objects.aggregate(
         data_min=Min('tempo__data'),
         data_max=Max('tempo__data'),
@@ -64,7 +64,8 @@ def get_alertas_materiais():
 
     lead_times_qs = (
         FatoCompras.objects
-        .filter(lead_time__isnull=False, status__categoria='Concluído')
+        .filter(lead_time__isnull=False)
+        .exclude(status__categoria='Cancelado')
         .values('material_id', 'fornecedor_id', 'fornecedor__razao_social')
         .annotate(lt_medio=Avg('lead_time'))
     )
@@ -101,9 +102,9 @@ def get_alertas_materiais():
             'dias_cobertura': round(dias_cobertura),
         }
 
-        if dias_para_pedir <= 30:
+        if dias_para_pedir <= critico_max:
             criticos.append(item)
-        elif dias_para_pedir <= 60:
+        elif dias_para_pedir <= atencao_max:
             atencao.append(item)
 
     criticos.sort(key=lambda x: x['dias_para_pedir'])

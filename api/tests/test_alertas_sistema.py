@@ -38,3 +38,19 @@ class TestGetAlertasView:
     def test_nao_aceita_post(self, client):
         resp = client.post('/api/compras/alertas/')
         assert resp.status_code == 405
+
+    def test_aceita_parametros_critico_max_e_atencao_max(self, client):
+        resp = client.get('/api/compras/alertas/?critico_max=90&atencao_max=180')
+        assert resp.status_code == 200
+        data = resp.json()
+        assert 'criticos' in data
+        assert 'atencao' in data
+
+    def test_parametros_invalidos_retornam_400(self, client):
+        resp = client.get('/api/compras/alertas/?critico_max=abc')
+        assert resp.status_code == 400
+
+    def test_atencao_max_ajustado_quando_menor_que_critico_max(self, client):
+        # atencao_max=10 com critico_max=30 → atencao_max é ajustado para 31 internamente
+        resp = client.get('/api/compras/alertas/?critico_max=30&atencao_max=10')
+        assert resp.status_code == 200

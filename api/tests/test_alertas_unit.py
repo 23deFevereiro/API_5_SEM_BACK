@@ -255,3 +255,86 @@ class TestGetAlertasMateriais:
         assert 'Parcialmente Entregue' in PENDENTE_STATUS
         assert 'Cancelado' not in PENDENTE_STATUS
         assert 'Entregue' not in PENDENTE_STATUS
+
+    def test_usa_lead_time_de_pedido_nao_cancelado(self):
+        """Lead_time de pedido 'Aberto' (não Cancelado) deve ser considerado no cálculo."""
+        material = baker.make('api.DimMaterial', descricao='Componente X')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor', razao_social='Forn Aberto')
+        t1 = make_tempo('2024-01-01', pk=20240101)
+        baker.make('api.FatoMateriais', material=material, projeto=projeto,
+                   programa=programa, tempo=t1, quantidade_empenhada=1)
+        baker.make('api.FatoEstoque', material=material, projeto=projeto,
+                   tempo=t1, quantidade_estoque=5)
+        # Pedido Aberto (Pendente) com lead_time preenchido — antes era ignorado
+        status_aberto = baker.make('api.DimStatusPedido', nome_status='Aberto', categoria='Pendente')
+        baker.make('api.FatoCompras', material=material, fornecedor=fornecedor,
+                   tempo=t1, status=status_aberto, lead_time=2,
+                   quantidade_solicitada=10, quantidade_entregue=0)
+        resultado = get_alertas_materiais()
+        # Consumo=1/d, estoque=5, pendente=10, cobertura=15, lt=2 → pedir_em=13 → crítico
+        assert len(resultado['criticos']) == 1
+        assert resultado['criticos'][0]['lead_time_min'] == 2
+        assert resultado['criticos'][0]['fornecedor'] == 'Forn Aberto'
+
+    def test_ignora_lead_time_de_pedido_cancelado(self):
+        """Pedido Cancelado com lead_time NÃO deve entrar no cálculo."""
+        material = baker.make('api.DimMaterial', descricao='Sem LT')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor')
+        t1 = make_tempo('2024-01-01', pk=20240101)
+        baker.make('api.FatoMateriais', material=material, projeto=projeto,
+                   programa=programa, tempo=t1, quantidade_empenhada=1)
+        baker.make('api.FatoEstoque', material=material, projeto=projeto,
+                   tempo=t1, quantidade_estoque=5)
+        # Apenas pedido Cancelado com lead_time — deve ser excluído
+        status_cancel = baker.make('api.DimStatusPedido', nome_status='Cancelado', categoria='Cancelado')
+        baker.make('api.FatoCompras', material=material, fornecedor=fornecedor,
+                   tempo=t1, status=status_cancel, lead_time=5,
+                   quantidade_solicitada=10, quantidade_entregue=0)
+        resultado = get_alertas_materiais()
+        assert resultado == {'criticos': [], 'atencao': []}
+
+    def test_parametro_critico_max_personalizado(self):
+        """Com critico_max=90, material com dias_para_pedir=70 deve ser classificado como crítico."""
+        material = baker.make('api.DimMaterial', descricao='CompX')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor', razao_social='FornX')
+        t1 = make_tempo('2024-01-01', pk=20240101)
+        baker.make('api.FatoMateriais', material=material, projeto=projeto,
+                   programa=programa, tempo=t1, quantidade_empenhada=1)
+        baker.make('api.FatoEstoque', material=material, projeto=projeto,
+                   tempo=t1, quantidade_estoque=80)
+        status_ok = baker.make('api.DimStatusPedido', nome_status='Entregue', categoria='Concluído')
+        baker.make('api.FatoCompras', material=material, fornecedor=fornecedor,
+                   tempo=t1, status=status_ok, lead_time=10,
+                   quantidade_solicitada=10, quantidade_entregue=10)
+        # dias_para_pedir = 80 - 10 = 70 → padrão (30): confortável; com critico_max=90: crítico
+        assert get_alertas_materiais() == {'criticos': [], 'atencao': []}
+        resultado = get_alertas_materiais(critico_max=90, atencao_max=120)
+        assert len(resultado['criticos']) == 1
+        assert resultado['criticos'][0]['material'] == 'CompX'
+
+    def test_parametro_atencao_max_personalizado(self):
+        """Com atencao_max=120, material com dias_para_pedir=100 deve entrar em atenção."""
+        material = baker.make('api.DimMaterial', descricao='CompY')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor', razao_social='FornY')
+        t1 = make_tempo('2024-01-01', pk=20240101)
+        baker.make('api.FatoMateriais', material=material, projeto=projeto,
+                   programa=programa, tempo=t1, quantidade_empenhada=1)
+        baker.make('api.FatoEstoque', material=material, projeto=projeto,
+                   tempo=t1, quantidade_estoque=110)
+        status_ok = baker.make('api.DimStatusPedido', nome_status='Entregue', categoria='Concluído')
+        baker.make('api.FatoCompras', material=material, fornecedor=fornecedor,
+                   tempo=t1, status=status_ok, lead_time=10,
+                   quantidade_solicitada=10, quantidade_entregue=10)
+        # dias_para_pedir = 110 - 10 = 100 → padrão (60): confortável; com atencao_max=120: atenção
+        assert get_alertas_materiais() == {'criticos': [], 'atencao': []}
+        resultado = get_alertas_materiais(critico_max=30, atencao_max=120)
+        assert len(resultado['atencao']) == 1
+        assert resultado['atencao'][0]['material'] == 'CompY'

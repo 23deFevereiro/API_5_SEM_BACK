@@ -40,7 +40,14 @@ def get_lead_time_view(request):
 @require_GET
 def get_alertas_view(request):
     try:
-        data = get_alertas_materiais()
+        critico_max_raw = request.GET.get('critico_max', '30')
+        atencao_max_raw = request.GET.get('atencao_max', '60')
+        try:
+            critico_max = max(1, int(critico_max_raw))
+            atencao_max = max(critico_max + 1, int(atencao_max_raw))
+        except ValueError:
+            return JsonResponse({'error': 'critico_max e atencao_max devem ser inteiros'}, status=400)
+        data = get_alertas_materiais(critico_max=critico_max, atencao_max=atencao_max)
         return JsonResponse(data)
     except Exception:
         logger.exception('Erro ao buscar alertas de materiais')
