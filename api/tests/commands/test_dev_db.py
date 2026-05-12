@@ -43,7 +43,6 @@ class TestGetConnection:
         'POSTGRES_PORT': '5432',
         'POSTGRES_DB': 'test_db',
         'POSTGRES_USER': 'test_user',
-        'POSTGRES_PASSWORD': 'test_pass',  # NOSONAR
     })
     @patch('api.management.commands.seeds.seed_0005.psycopg2.connect')
     def test_chama_psycopg2_connect(self, mock_connect):
