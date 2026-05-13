@@ -1,6 +1,10 @@
 from datetime import date
 
 import pytest
+from django.test import RequestFactory
+from model_bakery import baker
+from pytest import approx
+
 from api.services.horas_svc import (
     get_horas_por_funcionario,
     get_nomes_funcionarios_projeto,
@@ -9,9 +13,6 @@ from api.views.horas_view import (
     get_horas_por_funcionario_view,
     get_nomes_funcionarios_view,
 )
-from django.test import RequestFactory
-from model_bakery import baker
-from pytest import approx
 
 
 def make_fato_horas(

@@ -18,7 +18,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-from .views import funcionario_view, horas_view, programa_view, projeto_view
+from .views import (
+    compras_view,
+    funcionario_view,
+    horas_view,
+    programa_view,
+    projeto_view,
+)
 
 urlpatterns = [
     path("api/admin/", admin.site.urls),
@@ -96,4 +102,18 @@ urlpatterns = [
         programa_view.get_horas_por_projeto_view,
         name="horas_por_projeto",
     ),
+<<<<<<< HEAD
+=======
+    path(
+        "api/compras/materiais/",
+        compras_view.listar_materiais_compras_view,
+        name="compras_materiais",
+    ),
+    path(
+        "api/compras/lead-time/",
+        compras_view.get_lead_time_view,
+        name="compras_lead_time",
+    ),
+    path("api/compras/alertas/", compras_view.get_alertas_view, name="compras_alertas"),
+>>>>>>> ad268a4 (chore(45): add flake8 and pyproject config with formatting and QA setup)
 ]

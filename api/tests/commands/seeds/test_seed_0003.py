@@ -779,8 +779,9 @@ class TestRun:
         conn = self._make_conn_mock(cursor)
         csv_data = self._patch_read_csv()
 
-        with patch("seed_0003.get_connection", return_value=conn), patch(
-            "seed_0003.pd.read_csv", side_effect=csv_data
+        with (
+            patch("seed_0003.get_connection", return_value=conn),
+            patch("seed_0003.pd.read_csv", side_effect=csv_data),
         ):
             run()
 
@@ -796,8 +797,9 @@ class TestRun:
         conn = self._make_conn_mock(cursor)
         csv_data = self._patch_read_csv()
 
-        with patch("seed_0003.get_connection", return_value=conn), patch(
-            "seed_0003.pd.read_csv", side_effect=csv_data
+        with (
+            patch("seed_0003.get_connection", return_value=conn),
+            patch("seed_0003.pd.read_csv", side_effect=csv_data),
         ):
             with pytest.raises(Exception, match="DB error"):
                 run()

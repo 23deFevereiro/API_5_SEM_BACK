@@ -1,6 +1,7 @@
+from django.core.management.base import BaseCommand
+
 from api.management.commands.seeds.seed_0005 import _none
 from api.management.commands.seeds.seed_0005 import run as _run_base
-from django.core.management.base import BaseCommand
 
 MIGRATION_REF = "0006"
 

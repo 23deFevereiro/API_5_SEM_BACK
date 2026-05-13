@@ -693,9 +693,11 @@ class TestCarregarFatoEstoque:
 
 class TestRun:
     def test_delega_para_seed_0003_e_seed_0005(self):
-        with patch("api.management.commands.seeds.seed_0003.run") as mock_s3_run, patch(
-            "api.management.commands.seeds.seed_0005.run"
-        ) as mock_s5_run, patch("builtins.print"):
+        with (
+            patch("api.management.commands.seeds.seed_0003.run") as mock_s3_run,
+            patch("api.management.commands.seeds.seed_0005.run") as mock_s5_run,
+            patch("builtins.print"),
+        ):
             from api.management.commands.seeds.seed_0004 import run as run_0004
 
             run_0004()

@@ -6,6 +6,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
+
 from api.management.commands.fix_csv import (
     STATUS_CONCLUIDA,
     STATUS_CONCLUIDO,

@@ -2,6 +2,10 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from django.http import Http404
+from model_bakery import baker
+from pytest import approx
+
 from api.services.programa_svc import (
     get_burnup_custo_programas,
     get_burnup_horas_programas,
@@ -10,9 +14,6 @@ from api.services.programa_svc import (
     get_tabela_projetos,
     listar_programas,
 )
-from django.http import Http404
-from model_bakery import baker
-from pytest import approx
 
 
 @pytest.mark.django_db

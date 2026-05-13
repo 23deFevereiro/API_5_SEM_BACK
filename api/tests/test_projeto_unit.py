@@ -1,7 +1,8 @@
 import pytest
+from pytest import approx
+
 from api.services.projeto_svc import formatar_material
 from api.utils.pagination import calcular_paginacao, normalizar_pagina
-from pytest import approx
 
 
 class TestNormalizarPagina:

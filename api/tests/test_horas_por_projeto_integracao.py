@@ -1,7 +1,8 @@
 import pytest
-from api.services.programa_svc import get_horas_por_projeto
 from model_bakery import baker
 from pytest import approx
+
+from api.services.programa_svc import get_horas_por_projeto
 
 
 @pytest.mark.django_db

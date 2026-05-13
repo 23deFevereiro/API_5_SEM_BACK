@@ -1,6 +1,10 @@
 from datetime import date
 
 import pytest
+from django.test import RequestFactory
+from model_bakery import baker
+from pytest import approx
+
 from api.services.projeto_svc import (
     get_materiais_disponiveis,
     get_materiais_projeto,
@@ -15,9 +19,6 @@ from api.views.projeto_view import (
     get_resumo_projeto_view,
     listar_projetos_view,
 )
-from django.test import RequestFactory
-from model_bakery import baker
-from pytest import approx
 
 
 @pytest.mark.django_db

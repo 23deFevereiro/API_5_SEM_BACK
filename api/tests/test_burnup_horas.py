@@ -1,8 +1,9 @@
 from unittest.mock import patch
 
 import pytest
-from api.services.horas_svc import get_burnup_horas_projetos
 from django.test import Client
+
+from api.services.horas_svc import get_burnup_horas_projetos
 
 
 @patch("api.services.horas_svc.FatoHoras")

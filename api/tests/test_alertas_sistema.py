@@ -11,45 +11,45 @@ def client():
 class TestGetAlertasView:
 
     def test_retorna_200_get(self, client):
-        resp = client.get('/api/compras/alertas/')
+        resp = client.get("/api/compras/alertas/")
         assert resp.status_code == 200
 
     def test_retorna_json_com_chaves_criticos_e_atencao(self, client):
-        resp = client.get('/api/compras/alertas/')
+        resp = client.get("/api/compras/alertas/")
         data = resp.json()
-        assert 'criticos' in data
-        assert 'atencao' in data
+        assert "criticos" in data
+        assert "atencao" in data
 
     def test_chaves_sao_listas(self, client):
-        resp = client.get('/api/compras/alertas/')
+        resp = client.get("/api/compras/alertas/")
         data = resp.json()
-        assert isinstance(data['criticos'], list)
-        assert isinstance(data['atencao'], list)
+        assert isinstance(data["criticos"], list)
+        assert isinstance(data["atencao"], list)
 
     def test_retorna_listas_vazias_sem_dados(self, client):
-        resp = client.get('/api/compras/alertas/')
+        resp = client.get("/api/compras/alertas/")
         data = resp.json()
-        assert data == {'criticos': [], 'atencao': []}
+        assert data == {"criticos": [], "atencao": []}
 
     def test_content_type_json(self, client):
-        resp = client.get('/api/compras/alertas/')
-        assert 'application/json' in resp['Content-Type']
+        resp = client.get("/api/compras/alertas/")
+        assert "application/json" in resp["Content-Type"]
 
     def test_nao_aceita_post(self, client):
-        resp = client.post('/api/compras/alertas/')
+        resp = client.post("/api/compras/alertas/")
         assert resp.status_code == 405
 
     def test_aceita_parametros_critico_max_e_atencao_max(self, client):
-        resp = client.get('/api/compras/alertas/?critico_max=90&atencao_max=180')
+        resp = client.get("/api/compras/alertas/?critico_max=90&atencao_max=180")
         assert resp.status_code == 200
         data = resp.json()
-        assert 'criticos' in data
-        assert 'atencao' in data
+        assert "criticos" in data
+        assert "atencao" in data
 
     def test_parametros_invalidos_retornam_400(self, client):
-        resp = client.get('/api/compras/alertas/?critico_max=abc')
+        resp = client.get("/api/compras/alertas/?critico_max=abc")
         assert resp.status_code == 400
 
     def test_atencao_max_ajustado_quando_menor_que_critico_max(self, client):
-        resp = client.get('/api/compras/alertas/?critico_max=30&atencao_max=10')
+        resp = client.get("/api/compras/alertas/?critico_max=30&atencao_max=10")
         assert resp.status_code == 200

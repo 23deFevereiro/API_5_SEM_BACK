@@ -53,13 +53,8 @@ def validate(commit_msg_file: str) -> None:
 
     if len(first_line) > MAX_FIRST_LINE:
         _fail(
-<<<<<<< HEAD
-            "First line too long "
-            f"({len(first_line)} chars). Max: {MAX_FIRST_LINE}.\n"
-=======
             f"First line too long ({len(first_line)} chars). "
             f"Max: {MAX_FIRST_LINE}.\n"
->>>>>>> 9a1dd59 (fix(#41): adjust validate branch)
             f"  Got: {first_line}"
         )
 
@@ -77,13 +72,8 @@ def validate(commit_msg_file: str) -> None:
     commit_type = match.group("type")
     if commit_type not in ALLOWED_TYPES:
         _fail(
-<<<<<<< HEAD
             f"Invalid commit type: '{commit_type}'.\n  "
             f"Allowed types: {', '.join(ALLOWED_TYPES)}"
-=======
-            f"Invalid commit type: '{commit_type}'.\n"
-            f"  Allowed types: {', '.join(ALLOWED_TYPES)}"
->>>>>>> db88931 (test(#45): implement backend QA validations and automated testing)
         )
 
     print(f"[OK] Commit message OK: {first_line}")

@@ -2,10 +2,11 @@ import json
 from datetime import date
 
 import pytest
-from api.services.funcionario_svc import get_funcionarios_projeto
-from api.views.funcionario_view import get_funcionarios_projeto_view
 from django.test import RequestFactory
 from model_bakery import baker
+
+from api.services.funcionario_svc import get_funcionarios_projeto
+from api.views.funcionario_view import get_funcionarios_projeto_view
 
 
 def make_fato_horas(
