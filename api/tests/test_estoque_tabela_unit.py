@@ -33,7 +33,7 @@ class TestGetEstoqueTabela:
         assert resultado['count'] == 0
 
     def test_retorna_material_com_status_ok_sem_lead_time(self):
-        """Material sem lead_time histórico → status Ok."""
+        """Material sem lead_time histórico com cobertura suficiente → status Ok."""
         material = baker.make('api.DimMaterial', descricao='Capacitor')
         projeto = baker.make('api.DimProjeto', nome_projeto='Projeto Alpha')
         programa = baker.make('api.DimPrograma')
@@ -41,13 +41,13 @@ class TestGetEstoqueTabela:
         baker.make('api.FatoMateriais', material=material, projeto=projeto,
                    programa=programa, tempo=t1, quantidade_empenhada=10)
         baker.make('api.FatoEstoque', material=material, projeto=projeto,
-                   tempo=t1, quantidade_estoque=20)
+                   tempo=t1, quantidade_estoque=700)  # 700/10 = 70 dias > atencao_max=60
         resultado = get_estoque_tabela()
         assert resultado['count'] == 1
         item = resultado['results'][0]
         assert item['material'] == 'Capacitor'
         assert item['projeto'] == 'Projeto Alpha'
-        assert item['estoque_atual'] == 20
+        assert item['estoque_atual'] == 700
         assert item['status'] == 'Ok'
 
     def test_status_urgente_quando_dias_para_pedir_menor_que_critico_max(self):
@@ -225,3 +225,27 @@ class TestGetEstoqueTabela:
         resultado = get_estoque_tabela(material_id=mat.id + 9999)
         assert resultado['count'] == 0
         assert resultado['results'] == []
+
+    def test_pendente_nao_e_contado_em_dias_ate_acabar(self):
+        """Pedidos pendentes não devem inflar dias_ate_acabar nem o status.
+        Estoque físico = 0 → dias = 0 → Urgente, mesmo com pendente grande."""
+        material = baker.make('api.DimMaterial', descricao='Capacitor')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor')
+        t1 = make_tempo('2024-01-01', pk=20240101)
+        baker.make('api.FatoMateriais', material=material, projeto=projeto,
+                   programa=programa, tempo=t1, quantidade_empenhada=1)
+        # estoque físico = 0
+        baker.make('api.FatoEstoque', material=material, projeto=projeto,
+                   tempo=t1, quantidade_estoque=0)
+        # pedido aberto com quantidade alta (pendente = 1000)
+        status_aberto = baker.make('api.DimStatusPedido', nome_status='Aberto', categoria='Pendente')
+        baker.make('api.FatoCompras', material=material, fornecedor=fornecedor,
+                   tempo=t1, status=status_aberto, lead_time=2,
+                   quantidade_solicitada=1000, quantidade_entregue=0)
+        # lead_time = 2 dias → dias_para_pedir = 0 - 2 = -2 → Urgente
+        resultado = get_estoque_tabela(critico_max=30)
+        item = resultado['results'][0]
+        assert item['dias_ate_acabar'] == 0
+        assert item['status'] == 'Urgente'

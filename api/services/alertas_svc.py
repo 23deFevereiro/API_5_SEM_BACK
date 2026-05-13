@@ -66,17 +66,21 @@ def _get_pendente_map() -> dict[int, int]:
 
 
 def _classify_material(mat_id, consumo_diario, estoque_map, pendente_map, lead_time_map, nome_map):
-    if mat_id not in lead_time_map:
-        return None, None
-
     estoque = estoque_map.get(mat_id, 0)
     pendente = pendente_map.get(mat_id, 0)
     dias_cobertura = max(estoque + pendente, 0) / consumo_diario
-    lt_min, fornecedor_nome = lead_time_map[mat_id]
 
-    return dias_cobertura - lt_min, {
+    if mat_id in lead_time_map:
+        lt_min, fornecedor_nome = lead_time_map[mat_id]
+        dias_para_pedir = dias_cobertura - lt_min
+    else:
+        lt_min = 0.0
+        fornecedor_nome = '-'
+        dias_para_pedir = dias_cobertura
+
+    return dias_para_pedir, {
         'material': nome_map.get(mat_id, str(mat_id)),
-        'dias_para_pedir': round(dias_cobertura - lt_min),
+        'dias_para_pedir': round(dias_para_pedir),
         'lead_time_min': round(lt_min),
         'fornecedor': fornecedor_nome,
         'dias_cobertura': round(dias_cobertura),
@@ -116,8 +120,6 @@ def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
         dias_para_pedir, item = _classify_material(
             mat_id, consumo_diario, estoque_map, pendente_map, lead_time_map, nome_map
         )
-        if item is None:
-            continue
         if dias_para_pedir <= critico_max:
             criticos.append(item)
         elif dias_para_pedir <= atencao_max:
@@ -126,7 +128,7 @@ def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
     criticos.sort(key=lambda x: x['dias_para_pedir'])
     atencao.sort(key=lambda x: x['dias_para_pedir'])
 
-    return {'criticos': criticos[:5], 'atencao': atencao[:5]}
+    return {'criticos': criticos, 'atencao': atencao[:5]}
 
 
 _VALID_SORT_KEYS = {'material', 'projeto', 'dias_ate_acabar', 'status'}
@@ -141,16 +143,15 @@ def _classify_status(dias_para_pedir: float, critico_max: int, atencao_max: int)
     return 'Ok'
 
 
-def _build_estoque_row(mat_id, consumo_diario, estoque_map, pendente_map, lead_time_map, nome_map, projeto_map, critico_max, atencao_max):
+def _build_estoque_row(mat_id, consumo_diario, estoque_map, lead_time_map, nome_map, projeto_map, critico_max, atencao_max):
     estoque = estoque_map.get(mat_id, 0)
-    pendente = pendente_map.get(mat_id, 0)
-    dias_cobertura = max(estoque + pendente, 0) / consumo_diario
+    dias_cobertura = estoque / consumo_diario
 
     if mat_id in lead_time_map:
         lt_min, _ = lead_time_map[mat_id]
         status = _classify_status(dias_cobertura - lt_min, critico_max, atencao_max)
     else:
-        status = 'Ok'
+        status = _classify_status(dias_cobertura, critico_max, atencao_max)
 
     return {
         'material': nome_map.get(mat_id, str(mat_id)),
@@ -192,7 +193,6 @@ def get_estoque_tabela(critico_max: int = 30, atencao_max: int = 60, page: int =
         return vazio
 
     estoque_map = _get_estoque_map()
-    pendente_map = _get_pendente_map()
     lead_time_map = _build_lead_time_map(
         FatoCompras.objects
         .filter(lead_time__isnull=False)
@@ -219,7 +219,7 @@ def get_estoque_tabela(critico_max: int = 30, atencao_max: int = 60, page: int =
             projeto_map[mid] = p['projeto__nome_projeto'] or ''
 
     results = [
-        _build_estoque_row(mat_id, consumo_diario, estoque_map, pendente_map, lead_time_map, nome_map, projeto_map, critico_max, atencao_max)
+        _build_estoque_row(mat_id, consumo_diario, estoque_map, lead_time_map, nome_map, projeto_map, critico_max, atencao_max)
         for mat_id, consumo_diario in consumo_map.items()
     ]
 
