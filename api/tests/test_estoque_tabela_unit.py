@@ -193,13 +193,12 @@ class TestGetEstoqueTabela:
         programa = baker.make('api.DimPrograma')
         t1 = make_tempo('2024-01-01', pk=20240101)
         t2 = make_tempo('2024-01-10', pk=20240110)
-        # 10 dias de período, 10 unidades empenhadas → 1/dia
         baker.make('api.FatoMateriais', material=material, projeto=projeto,
                    programa=programa, tempo=t1, quantidade_empenhada=5)
         baker.make('api.FatoMateriais', material=material, projeto=projeto,
                    programa=programa, tempo=t2, quantidade_empenhada=5)
         resultado = get_estoque_tabela()
-        assert resultado['results'][0]['consumo_previsto'] == 1.0
+        assert resultado['results'][0]['consumo_previsto'] == pytest.approx(1.0)
 
     def test_filtra_por_material_id(self):
         """Quando material_id fornecido, apenas esse material é retornado."""

@@ -130,6 +130,48 @@ def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
 
 
 _VALID_SORT_KEYS = {'material', 'projeto', 'dias_ate_acabar', 'status'}
+_STATUS_ORDER = {'Urgente': 0, 'Atenção': 1, 'Ok': 2}
+
+
+def _classify_status(dias_para_pedir: float, critico_max: int, atencao_max: int) -> str:
+    if dias_para_pedir <= critico_max:
+        return 'Urgente'
+    if dias_para_pedir <= atencao_max:
+        return 'Atenção'
+    return 'Ok'
+
+
+def _build_estoque_row(mat_id, consumo_diario, estoque_map, pendente_map, lead_time_map, nome_map, projeto_map, critico_max, atencao_max):
+    estoque = estoque_map.get(mat_id, 0)
+    pendente = pendente_map.get(mat_id, 0)
+    dias_cobertura = max(estoque + pendente, 0) / consumo_diario
+
+    if mat_id in lead_time_map:
+        lt_min, _ = lead_time_map[mat_id]
+        status = _classify_status(dias_cobertura - lt_min, critico_max, atencao_max)
+    else:
+        status = 'Ok'
+
+    return {
+        'material': nome_map.get(mat_id, str(mat_id)),
+        'projeto': projeto_map.get(mat_id, ''),
+        'estoque_atual': estoque,
+        'consumo_previsto': round(consumo_diario, 2),
+        'dias_ate_acabar': round(dias_cobertura),
+        'status': status,
+    }
+
+
+def _sort_estoque_results(results: list, sort_by: str, sort_dir: str) -> None:
+    effective_sort = sort_by if sort_by in _VALID_SORT_KEYS else 'status'
+    reverse = sort_dir == 'desc'
+    sort_keys = {
+        'status': lambda x: (_STATUS_ORDER[x['status']], x['material']),
+        'material': lambda x: x['material'].lower(),
+        'projeto': lambda x: x['projeto'].lower(),
+        'dias_ate_acabar': lambda x: x['dias_ate_acabar'],
+    }
+    results.sort(key=sort_keys[effective_sort], reverse=reverse)
 
 
 def get_estoque_tabela(critico_max: int = 30, atencao_max: int = 60, page: int = 1, page_size: int = 5, material_id: int | None = None, sort_by: str = 'status', sort_dir: str = 'asc'):
@@ -176,45 +218,12 @@ def get_estoque_tabela(critico_max: int = 30, atencao_max: int = 60, page: int =
         if mid not in projeto_map:
             projeto_map[mid] = p['projeto__nome_projeto'] or ''
 
-    STATUS_ORDER = {'Urgente': 0, 'Atenção': 1, 'Ok': 2}
-    results = []
-    for mat_id, consumo_diario in consumo_map.items():
-        estoque = estoque_map.get(mat_id, 0)
-        pendente = pendente_map.get(mat_id, 0)
-        dias_cobertura = max(estoque + pendente, 0) / consumo_diario
+    results = [
+        _build_estoque_row(mat_id, consumo_diario, estoque_map, pendente_map, lead_time_map, nome_map, projeto_map, critico_max, atencao_max)
+        for mat_id, consumo_diario in consumo_map.items()
+    ]
 
-        if mat_id in lead_time_map:
-            lt_min, _ = lead_time_map[mat_id]
-            dias_para_pedir = dias_cobertura - lt_min
-            if dias_para_pedir <= critico_max:
-                status = 'Urgente'
-            elif dias_para_pedir <= atencao_max:
-                status = 'Atenção'
-            else:
-                status = 'Ok'
-        else:
-            status = 'Ok'
-
-        results.append({
-            'material': nome_map.get(mat_id, str(mat_id)),
-            'projeto': projeto_map.get(mat_id, ''),
-            'estoque_atual': estoque,
-            'consumo_previsto': round(consumo_diario, 2),
-            'dias_ate_acabar': round(dias_cobertura),
-            'status': status,
-        })
-
-    effective_sort = sort_by if sort_by in _VALID_SORT_KEYS else 'status'
-    reverse = sort_dir == 'desc'
-
-    if effective_sort == 'status':
-        results.sort(key=lambda x: (STATUS_ORDER[x['status']], x['material']), reverse=reverse)
-    elif effective_sort == 'material':
-        results.sort(key=lambda x: x['material'].lower(), reverse=reverse)
-    elif effective_sort == 'projeto':
-        results.sort(key=lambda x: x['projeto'].lower(), reverse=reverse)
-    elif effective_sort == 'dias_ate_acabar':
-        results.sort(key=lambda x: x['dias_ate_acabar'], reverse=reverse)
+    _sort_estoque_results(results, sort_by, sort_dir)
 
     total = len(results)
     total_pages = max(1, math.ceil(total / page_size))
