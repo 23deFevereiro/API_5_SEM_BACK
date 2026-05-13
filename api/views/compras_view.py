@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
 from .view_utils import ERRO_INTERNO
-from ..services.alertas_svc import get_alertas_materiais
+from ..services.alertas_svc import get_alertas_materiais, get_estoque_tabela
 from ..services.compras_svc import listar_materiais_com_compras, get_lead_time_por_material
 
 logger = logging.getLogger(__name__)
@@ -51,4 +51,27 @@ def get_alertas_view(request):
         return JsonResponse(data)
     except Exception:
         logger.exception('Erro ao buscar alertas de materiais')
+        return JsonResponse({'error': ERRO_INTERNO}, status=500)
+
+
+@require_GET
+def get_estoque_tabela_view(request):
+    try:
+        critico_max_raw = request.GET.get('critico_max', '30')
+        atencao_max_raw = request.GET.get('atencao_max', '60')
+        page_raw = request.GET.get('page', '1')
+        material_id_raw = request.GET.get('material_id')
+        sort_by = request.GET.get('sort_by', 'status')
+        sort_dir = request.GET.get('sort_dir', 'asc')
+        try:
+            critico_max = max(1, int(critico_max_raw))
+            atencao_max = max(critico_max + 1, int(atencao_max_raw))
+            page = max(1, int(page_raw))
+            material_id = int(material_id_raw) if material_id_raw else None
+        except ValueError:
+            return JsonResponse({'error': 'Parâmetros inválidos'}, status=400)
+        data = get_estoque_tabela(critico_max=critico_max, atencao_max=atencao_max, page=page, material_id=material_id, sort_by=sort_by, sort_dir=sort_dir)
+        return JsonResponse(data)
+    except Exception:
+        logger.exception('Erro ao buscar tabela de estoque')
         return JsonResponse({'error': ERRO_INTERNO}, status=500)

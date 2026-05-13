@@ -31,8 +31,9 @@ class TestGetAlertasMateriais:
         resultado = get_alertas_materiais()
         assert resultado == {'criticos': [], 'atencao': []}
 
-    def test_retorna_listas_vazias_sem_lead_time_historico(self):
-        material = baker.make('api.DimMaterial')
+    def test_classifica_material_sem_lead_time_historico(self):
+        """Material sem lead_time histórico deve ser classificado usando dias_cobertura diretamente."""
+        material = baker.make('api.DimMaterial', descricao='Capacitor')
         projeto = baker.make('api.DimProjeto')
         programa = baker.make('api.DimPrograma')
         fornecedor = baker.make('api.DimFornecedor')
@@ -48,7 +49,11 @@ class TestGetAlertasMateriais:
                    tempo=t1, status=status_pendente, lead_time=None,
                    quantidade_solicitada=10, quantidade_entregue=0)
         resultado = get_alertas_materiais()
-        assert resultado == {'criticos': [], 'atencao': []}
+        # consumo=10/dia, estoque físico=5, pendente=10 → cobertura=1.5 dias → Urgente
+        assert len(resultado['criticos']) == 1
+        assert resultado['criticos'][0]['material'] == 'Capacitor'
+        assert resultado['criticos'][0]['lead_time_min'] == 0
+        assert resultado['criticos'][0]['fornecedor'] == '-'
 
     def test_classifica_material_critico(self):
         """Consumo=1/dia, estoque=5, lead time=2 → cobertura=5, dias_para_pedir=3 → crítico."""
@@ -182,8 +187,9 @@ class TestGetAlertasMateriais:
         assert resultado['criticos'][0]['fornecedor'] == 'Rápido'
         assert resultado['criticos'][0]['lead_time_min'] == 2
 
-    def test_limita_criticos_a_5(self):
-        """Nunca deve retornar mais de 5 materiais críticos."""
+    def test_retorna_todos_criticos_sem_limite(self):
+        """Todos os materiais críticos devem ser retornados (sem limite no backend).
+        A limitação a 5 itens visíveis é responsabilidade do frontend."""
         status_ok = baker.make('api.DimStatusPedido', nome_status='Entregue', categoria='Concluído')
         for i in range(7):
             material = baker.make('api.DimMaterial', descricao=f'Mat{i}')
@@ -200,7 +206,7 @@ class TestGetAlertasMateriais:
                        tempo=t1, status=status_ok, lead_time=2,
                        quantidade_solicitada=10, quantidade_entregue=10)
         resultado = get_alertas_materiais()
-        assert len(resultado['criticos']) <= 5
+        assert len(resultado['criticos']) == 7
 
     def test_limita_atencao_a_5(self):
         """Nunca deve retornar mais de 5 materiais em atenção."""
@@ -279,7 +285,8 @@ class TestGetAlertasMateriais:
         assert resultado['criticos'][0]['fornecedor'] == 'Forn Aberto'
 
     def test_ignora_lead_time_de_pedido_cancelado(self):
-        """Pedido Cancelado com lead_time NÃO deve entrar no cálculo."""
+        """Pedido Cancelado com lead_time NÃO deve entrar no cálculo do lead_time_min.
+        O material ainda aparece nos alertas usando dias_cobertura diretamente."""
         material = baker.make('api.DimMaterial', descricao='Sem LT')
         projeto = baker.make('api.DimProjeto')
         programa = baker.make('api.DimPrograma')
@@ -289,13 +296,16 @@ class TestGetAlertasMateriais:
                    programa=programa, tempo=t1, quantidade_empenhada=1)
         baker.make('api.FatoEstoque', material=material, projeto=projeto,
                    tempo=t1, quantidade_estoque=5)
-        # Apenas pedido Cancelado com lead_time — deve ser excluído
+        # Apenas pedido Cancelado com lead_time — lead_time deve ser ignorado
         status_cancel = baker.make('api.DimStatusPedido', nome_status='Cancelado', categoria='Cancelado')
         baker.make('api.FatoCompras', material=material, fornecedor=fornecedor,
                    tempo=t1, status=status_cancel, lead_time=5,
                    quantidade_solicitada=10, quantidade_entregue=0)
         resultado = get_alertas_materiais()
-        assert resultado == {'criticos': [], 'atencao': []}
+        # cobertura=5dias, sem lead_time válido → dias_para_pedir=5 → Urgente
+        assert len(resultado['criticos']) == 1
+        assert resultado['criticos'][0]['lead_time_min'] == 0
+        assert resultado['criticos'][0]['dias_para_pedir'] == 5
 
     def test_parametro_critico_max_personalizado(self):
         """Com critico_max=90, material com dias_para_pedir=70 deve ser classificado como crítico."""
