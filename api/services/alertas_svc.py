@@ -1,3 +1,5 @@
+import math
+
 from django.db.models import Avg, ExpressionWrapper, F, IntegerField, Max, Min, OuterRef, Subquery, Sum
 
 from ..models import DimMaterial, FatoCompras, FatoEstoque, FatoMateriais
@@ -125,3 +127,104 @@ def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
     atencao.sort(key=lambda x: x['dias_para_pedir'])
 
     return {'criticos': criticos[:5], 'atencao': atencao[:5]}
+
+
+_VALID_SORT_KEYS = {'material', 'projeto', 'dias_ate_acabar', 'status'}
+
+
+def get_estoque_tabela(critico_max: int = 30, atencao_max: int = 60, page: int = 1, page_size: int = 5, material_id: int | None = None, sort_by: str = 'status', sort_dir: str = 'asc'):
+    vazio = {'count': 0, 'page': page, 'page_size': page_size, 'total_pages': 0, 'results': []}
+
+    tempo_range = FatoMateriais.objects.aggregate(
+        data_min=Min('tempo__data'),
+        data_max=Max('tempo__data'),
+    )
+    if not tempo_range['data_min'] or not tempo_range['data_max']:
+        return vazio
+
+    dias_periodo = max((tempo_range['data_max'] - tempo_range['data_min']).days + 1, 1)
+    consumo_map = _get_consumo_map(dias_periodo)
+    if material_id is not None:
+        consumo_map = {k: v for k, v in consumo_map.items() if k == material_id}
+    if not consumo_map:
+        return vazio
+
+    estoque_map = _get_estoque_map()
+    pendente_map = _get_pendente_map()
+    lead_time_map = _build_lead_time_map(
+        FatoCompras.objects
+        .filter(lead_time__isnull=False)
+        .exclude(status__categoria='Cancelado')
+        .values('material_id', 'fornecedor_id', 'fornecedor__razao_social')
+        .annotate(lt_medio=Avg('lead_time'))
+    )
+    nome_map = {
+        m['id']: m['descricao']
+        for m in DimMaterial.objects.filter(id__in=consumo_map.keys()).values('id', 'descricao')
+    }
+
+    projeto_qs = (
+        FatoMateriais.objects
+        .filter(material_id__in=consumo_map.keys())
+        .values('material_id', 'projeto__nome_projeto')
+        .annotate(total=Sum('quantidade_empenhada'))
+        .order_by('material_id', '-total')
+    )
+    projeto_map: dict[int, str] = {}
+    for p in projeto_qs:
+        mid = p['material_id']
+        if mid not in projeto_map:
+            projeto_map[mid] = p['projeto__nome_projeto'] or ''
+
+    STATUS_ORDER = {'Urgente': 0, 'Atenção': 1, 'Ok': 2}
+    results = []
+    for mat_id, consumo_diario in consumo_map.items():
+        estoque = estoque_map.get(mat_id, 0)
+        pendente = pendente_map.get(mat_id, 0)
+        dias_cobertura = max(estoque + pendente, 0) / consumo_diario
+
+        if mat_id in lead_time_map:
+            lt_min, _ = lead_time_map[mat_id]
+            dias_para_pedir = dias_cobertura - lt_min
+            if dias_para_pedir <= critico_max:
+                status = 'Urgente'
+            elif dias_para_pedir <= atencao_max:
+                status = 'Atenção'
+            else:
+                status = 'Ok'
+        else:
+            status = 'Ok'
+
+        results.append({
+            'material': nome_map.get(mat_id, str(mat_id)),
+            'projeto': projeto_map.get(mat_id, ''),
+            'estoque_atual': estoque,
+            'consumo_previsto': round(consumo_diario, 2),
+            'dias_ate_acabar': round(dias_cobertura),
+            'status': status,
+        })
+
+    effective_sort = sort_by if sort_by in _VALID_SORT_KEYS else 'status'
+    reverse = sort_dir == 'desc'
+
+    if effective_sort == 'status':
+        results.sort(key=lambda x: (STATUS_ORDER[x['status']], x['material']), reverse=reverse)
+    elif effective_sort == 'material':
+        results.sort(key=lambda x: x['material'].lower(), reverse=reverse)
+    elif effective_sort == 'projeto':
+        results.sort(key=lambda x: x['projeto'].lower(), reverse=reverse)
+    elif effective_sort == 'dias_ate_acabar':
+        results.sort(key=lambda x: x['dias_ate_acabar'], reverse=reverse)
+
+    total = len(results)
+    total_pages = max(1, math.ceil(total / page_size))
+    page = max(1, min(page, total_pages))
+    start = (page - 1) * page_size
+
+    return {
+        'count': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': total_pages,
+        'results': results[start:start + page_size],
+    }
