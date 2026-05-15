@@ -1,8 +1,10 @@
-from ..models import DimMaterial, FatoCompras
+from ..models import DimMaterial, FatoCompras, FatoMateriais
 
 
 def listar_materiais_com_compras():
-    ids = FatoCompras.objects.values_list('material_id', flat=True).distinct()
+    ids_compras = set(FatoCompras.objects.values_list('material_id', flat=True).distinct())
+    ids_materiais = set(FatoMateriais.objects.values_list('material_id', flat=True).distinct())
+    ids = ids_compras | ids_materiais
     materiais = (
         DimMaterial.objects
         .filter(id__in=ids)

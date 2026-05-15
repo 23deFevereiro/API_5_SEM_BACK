@@ -216,7 +216,7 @@ def _processar_projeto(projeto, hoje):
         'dias_desde_ultima_atividade': (hoje - data_ultima_atividade).days if data_ultima_atividade else None,
         'dentro_do_prazo': dentro_do_prazo,
         'sem_horas_registradas': horas_realizadas == Decimal('0'),
-        'acao': acao,
+        'situacao': acao,
     }
 
 
@@ -233,7 +233,7 @@ def get_tabela_projetos(programa_id, page=1, page_size=10, sort_by='nome_projeto
 
     total_items = projetos.count()
 
-    if sort_by == 'acao':
+    if sort_by == 'situacao':
         projetos_iter = projetos
     else:
         total_pages, start, end = calcular_paginacao(total_items, page, page_size)
@@ -242,9 +242,9 @@ def get_tabela_projetos(programa_id, page=1, page_size=10, sort_by='nome_projeto
     hoje = date.today()
     resultado = [_processar_projeto(p, hoje) for p in projetos_iter]
 
-    if sort_by == 'acao':
+    if sort_by == 'situacao':
         reverse = sort_dir == 'desc'
-        resultado.sort(key=lambda p: ACAO_ORDEM.get(p['acao'], 99), reverse=reverse)
+        resultado.sort(key=lambda p: ACAO_ORDEM.get(p['situacao'], 99), reverse=reverse)
         total_pages, start, end = calcular_paginacao(total_items, page, page_size)
         resultado = resultado[start:end]
 
