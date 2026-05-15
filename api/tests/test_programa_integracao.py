@@ -703,13 +703,13 @@ class TestGetTabelaProjetos:
         programa = baker.make('api.DimPrograma')
         baker.make('api.DimProjeto', id=1, programa=programa, status='Suspenso')
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'suspenso'
+        assert resultado['results'][0]['situacao'] == 'suspenso'
 
     def test_acao_check_verde_quando_concluido_sem_tarefas(self):
         programa = baker.make('api.DimPrograma')
         baker.make('api.DimProjeto', id=1, programa=programa, status='Concluído')
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'check-verde'
+        assert resultado['results'][0]['situacao'] == 'check-verde'
 
     def test_acao_corrigir_status_quando_todas_concluidas_e_em_andamento(self):
         programa = baker.make('api.DimPrograma')
@@ -717,21 +717,21 @@ class TestGetTabelaProjetos:
         baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=5.0, status='Concluída')
         baker.make('api.DimTarefa', id=2, projeto=projeto, horas_estimadas=5.0, status='Concluída')
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'corrigir-status'
+        assert resultado['results'][0]['situacao'] == 'corrigir-status'
 
     def test_acao_corrigir_status_quando_todas_concluidas_e_planejamento(self):
         programa = baker.make('api.DimPrograma')
         projeto = baker.make('api.DimProjeto', id=1, programa=programa, status='Planejamento')
         baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=5.0, status='Concluída')
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'corrigir-status'
+        assert resultado['results'][0]['situacao'] == 'corrigir-status'
 
     def test_acao_check_verde_quando_concluido_todas_tarefas_sem_data_fim(self):
         programa = baker.make('api.DimPrograma')
         projeto = baker.make('api.DimProjeto', id=1, programa=programa, status='Concluído', data_fim_prevista=None)
         baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=5.0, status='Concluída')
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'check-verde'
+        assert resultado['results'][0]['situacao'] == 'check-verde'
 
     def test_acao_check_verde_quando_concluido_todas_tarefas_dentro_do_prazo(self):
         programa = baker.make('api.DimPrograma')
@@ -743,7 +743,7 @@ class TestGetTabelaProjetos:
         )
         baker.make('api.FatoHoras', projeto=projeto, programa=programa, tarefa=tarefa, tempo=tempo, horas_trabalhadas=5.0, custo_horas=0)
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'check-verde'
+        assert resultado['results'][0]['situacao'] == 'check-verde'
 
     def test_acao_check_vermelho_quando_concluido_todas_tarefas_fora_do_prazo(self):
         programa = baker.make('api.DimPrograma')
@@ -755,7 +755,7 @@ class TestGetTabelaProjetos:
         )
         baker.make('api.FatoHoras', projeto=projeto, programa=programa, tarefa=tarefa, tempo=tempo, horas_trabalhadas=5.0, custo_horas=0)
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'check-vermelho'
+        assert resultado['results'][0]['situacao'] == 'check-vermelho'
 
     def test_acao_check_amarelo_quando_concluido_tarefas_mistas(self):
         programa = baker.make('api.DimPrograma')
@@ -773,7 +773,7 @@ class TestGetTabelaProjetos:
         baker.make('api.FatoHoras', projeto=projeto, programa=programa, tarefa=tarefa1, tempo=tempo_dentro, horas_trabalhadas=5.0, custo_horas=0)
         baker.make('api.FatoHoras', projeto=projeto, programa=programa, tarefa=tarefa2, tempo=tempo_fora, horas_trabalhadas=5.0, custo_horas=0)
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'check-amarelo'
+        assert resultado['results'][0]['situacao'] == 'check-amarelo'
 
     def test_acao_priorizar_verde_quando_dentro_do_prazo(self):
         from datetime import timedelta
@@ -781,13 +781,13 @@ class TestGetTabelaProjetos:
         prazo_futuro = date.today() + timedelta(days=30)
         baker.make('api.DimProjeto', id=1, programa=programa, status='Em andamento', data_fim_prevista=prazo_futuro)
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'priorizar-verde'
+        assert resultado['results'][0]['situacao'] == 'priorizar-verde'
 
     def test_acao_priorizar_verde_quando_sem_data_fim(self):
         programa = baker.make('api.DimPrograma')
         baker.make('api.DimProjeto', id=1, programa=programa, status='Em andamento', data_fim_prevista=None)
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'priorizar-verde'
+        assert resultado['results'][0]['situacao'] == 'priorizar-verde'
 
     def test_acao_priorizar_vermelho_quando_fora_do_prazo(self):
         from datetime import timedelta
@@ -795,7 +795,7 @@ class TestGetTabelaProjetos:
         prazo_passado = date.today() - timedelta(days=10)
         baker.make('api.DimProjeto', id=1, programa=programa, status='Em andamento', data_fim_prevista=prazo_passado)
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'priorizar-vermelho'
+        assert resultado['results'][0]['situacao'] == 'priorizar-vermelho'
 
     def test_acao_outro_quando_concluido_com_tarefas_pendentes(self):
         programa = baker.make('api.DimPrograma')
@@ -803,7 +803,7 @@ class TestGetTabelaProjetos:
         baker.make('api.DimTarefa', id=1, projeto=projeto, horas_estimadas=5.0, status='Concluída')
         baker.make('api.DimTarefa', id=2, projeto=projeto, horas_estimadas=5.0, status='Em andamento')
         resultado = get_tabela_projetos(programa.id)
-        assert resultado['results'][0]['acao'] == 'outro'
+        assert resultado['results'][0]['situacao'] == 'outro'
 
     def test_ordena_por_nome_projeto_asc(self):
         programa = baker.make('api.DimPrograma')
@@ -847,8 +847,8 @@ class TestGetTabelaProjetos:
         baker.make('api.DimProjeto', id=1, programa=programa, status='Em andamento', data_fim_prevista=prazo_futuro)
         baker.make('api.DimProjeto', id=2, programa=programa, status='Suspenso')
         baker.make('api.DimProjeto', id=3, programa=programa, status='Em andamento', data_fim_prevista=prazo_passado)
-        resultado = get_tabela_projetos(programa.id, sort_by='acao', sort_dir='asc')
-        acoes = [r['acao'] for r in resultado['results']]
+        resultado = get_tabela_projetos(programa.id, sort_by='situacao', sort_dir='asc')
+        acoes = [r['situacao'] for r in resultado['results']]
         assert acoes == sorted(acoes, key=lambda a: ACAO_ORDEM.get(a, 99))
 
     def test_ordena_por_acao_desc_inverte_ordem(self):
@@ -860,8 +860,8 @@ class TestGetTabelaProjetos:
         baker.make('api.DimProjeto', id=1, programa=programa, status='Suspenso')
         baker.make('api.DimProjeto', id=2, programa=programa, status='Em andamento', data_fim_prevista=prazo_passado)
         baker.make('api.DimProjeto', id=3, programa=programa, status='Em andamento', data_fim_prevista=prazo_futuro)
-        resultado = get_tabela_projetos(programa.id, sort_by='acao', sort_dir='desc')
-        acoes = [r['acao'] for r in resultado['results']]
+        resultado = get_tabela_projetos(programa.id, sort_by='situacao', sort_dir='desc')
+        acoes = [r['situacao'] for r in resultado['results']]
         assert acoes == sorted(acoes, key=lambda a: ACAO_ORDEM.get(a, 99), reverse=True)
 
     def test_ordenacao_por_acao_pagina_corretamente(self):
@@ -872,7 +872,7 @@ class TestGetTabelaProjetos:
             baker.make('api.DimProjeto', id=i, programa=programa, status='Suspenso')
         for i in range(7, 13):
             baker.make('api.DimProjeto', id=i, programa=programa, status='Em andamento', data_fim_prevista=prazo_passado)
-        resultado = get_tabela_projetos(programa.id, page=2, sort_by='acao', sort_dir='asc')
+        resultado = get_tabela_projetos(programa.id, page=2, sort_by='situacao', sort_dir='asc')
         assert resultado['count'] == 12
         assert resultado['page'] == 2
         assert len(resultado['results']) == 2

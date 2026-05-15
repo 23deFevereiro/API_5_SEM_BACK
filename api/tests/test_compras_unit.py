@@ -8,7 +8,7 @@ from api.services.compras_svc import listar_materiais_com_compras, get_lead_time
 @pytest.mark.django_db
 class TestListarMateriaisComCompras:
 
-    def test_retorna_lista_vazia_sem_compras(self):
+    def test_retorna_lista_vazia_sem_dados(self):
         resultado = listar_materiais_com_compras()
         assert resultado == []
 
@@ -25,10 +25,40 @@ class TestListarMateriaisComCompras:
         assert resultado[0]['codigo_material'] == 'M001'
         assert resultado[0]['descricao'] == 'Capacitor'
 
-    def test_nao_retorna_material_sem_compras(self):
+    def test_nao_retorna_material_sem_fatos(self):
         baker.make('api.DimMaterial', codigo_material='SEM', descricao='Sem compra')
         resultado = listar_materiais_com_compras()
         assert resultado == []
+
+    def test_retorna_material_apenas_em_fatomateriais(self):
+        material = baker.make('api.DimMaterial', codigo_material='M002', descricao='Resistor')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor')
+        tempo = baker.make('api.DimTempo')
+        baker.make('api.FatoMateriais', material=material, projeto=projeto,
+                   programa=programa, fornecedor=fornecedor, tempo=tempo,
+                   quantidade_empenhada=5)
+        resultado = listar_materiais_com_compras()
+        assert len(resultado) == 1
+        assert resultado[0]['id'] == material.id
+        assert resultado[0]['codigo_material'] == 'M002'
+        assert resultado[0]['descricao'] == 'Resistor'
+
+    def test_nao_duplica_material_em_ambas_as_tabelas(self):
+        material = baker.make('api.DimMaterial')
+        fornecedor = baker.make('api.DimFornecedor')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        tempo = baker.make('api.DimTempo')
+        status = baker.make('api.DimStatusPedido', nome_status='Aberto', categoria='Pendente')
+        baker.make('api.FatoCompras', material=material, fornecedor=fornecedor,
+                   tempo=tempo, status=status, lead_time=5)
+        baker.make('api.FatoMateriais', material=material, projeto=projeto,
+                   programa=programa, fornecedor=fornecedor, tempo=tempo,
+                   quantidade_empenhada=3)
+        resultado = listar_materiais_com_compras()
+        assert len(resultado) == 1
 
     def test_nao_duplica_material_com_multiplas_compras(self):
         material = baker.make('api.DimMaterial')
