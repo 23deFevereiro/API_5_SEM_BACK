@@ -208,21 +208,25 @@ def _processar_projeto(projeto, hoje):
     )
 
     return {
-        'nome_projeto': projeto.nome_projeto,
-        'responsavel': projeto.responsavel,
-        'status': projeto.status,
-        'horas_estimadas': float(horas_estimadas),
-        'horas_realizadas': float(horas_realizadas),
-        'total_tarefas': total_tarefas,
-        'tarefas_concluidas': tarefas_concluidas,
-        'percentual_tarefas_concluidas': percentual_tarefas,
-        'desvio_horas': float(desvio),
-        'percentual_desvio': round(percentual_desvio, 1),
-        'data_ultima_atividade': data_ultima_atividade.isoformat() if data_ultima_atividade else None,
-        'dias_desde_ultima_atividade': (hoje - data_ultima_atividade).days if data_ultima_atividade else None,
-        'dentro_do_prazo': dentro_do_prazo,
-        'sem_horas_registradas': horas_realizadas == Decimal('0'),
-        'situacao': acao,
+        "nome_projeto": projeto.nome_projeto,
+        "responsavel": projeto.responsavel,
+        "status": projeto.status,
+        "horas_estimadas": float(horas_estimadas),
+        "horas_realizadas": float(horas_realizadas),
+        "total_tarefas": total_tarefas,
+        "tarefas_concluidas": tarefas_concluidas,
+        "percentual_tarefas_concluidas": percentual_tarefas,
+        "desvio_horas": float(desvio),
+        "percentual_desvio": round(percentual_desvio, 1),
+        "data_ultima_atividade": (
+            data_ultima_atividade.isoformat() if data_ultima_atividade else None
+        ),
+        "dias_desde_ultima_atividade": (
+            (hoje - data_ultima_atividade).days if data_ultima_atividade else None
+        ),
+        "dentro_do_prazo": dentro_do_prazo,
+        "sem_horas_registradas": horas_realizadas == Decimal("0"),
+        "situacao": acao,
     }
 
 

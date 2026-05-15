@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 import pytest
+
 from api.management.commands.seeds.seed_0004 import run as run_0004
 from api.management.commands.seeds.seed_0005 import (
     carregar_dim_fornecedor,
@@ -38,14 +39,17 @@ def make_conn(cursor):
 
 
 class TestGetConnection:
-    @patch.dict(os.environ, {
-        'POSTGRES_HOST': 'localhost',
-        'POSTGRES_PORT': '5432',
-        'POSTGRES_DB': 'test_db',
-        'POSTGRES_USER': 'test_user',
-        'POSTGRES_PASSWORD': 'test_pass',
-    })
-    @patch('api.management.commands.seeds.seed_0005.psycopg2.connect')
+    @patch.dict(
+        os.environ,
+        {
+            "POSTGRES_HOST": "localhost",
+            "POSTGRES_PORT": "5432",
+            "POSTGRES_DB": "test_db",
+            "POSTGRES_USER": "test_user",
+            "POSTGRES_PASSWORD": "test_pass",
+        },
+    )
+    @patch("api.management.commands.seeds.seed_0005.psycopg2.connect")
     def test_chama_psycopg2_connect(self, mock_connect):
         get_connection()
         mock_connect.assert_called_once()
@@ -636,9 +640,11 @@ class TestRun:
 
 class TestRun0004:
     def test_delega_para_seed_0003_e_seed_0005(self):
-        with patch("api.management.commands.seeds.seed_0003.run") as mock_s3_run, patch(
-            "api.management.commands.seeds.seed_0005.run"
-        ) as mock_s5_run, patch("builtins.print"):
+        with (
+            patch("api.management.commands.seeds.seed_0003.run") as mock_s3_run,
+            patch("api.management.commands.seeds.seed_0005.run") as mock_s5_run,
+            patch("builtins.print"),
+        ):
             run_0004()
         mock_s3_run.assert_called_once()
         mock_s5_run.assert_called_once()
@@ -690,13 +696,12 @@ class TestDevDbOrquestrador:
         cmd.stdout = MagicMock()
         cmd.style = MagicMock()
 
-        with patch.object(dev_db, "ensure_corrected_documents"), patch.object(
-            dev_db, "has_pending_migrations", return_value=False
-        ), patch.object(
-            dev_db, "get_latest_applied_migration", return_value="0004"
-        ), patch.object(
-            dev_db, "load_seed"
-        ) as mock_load:
+        with (
+            patch.object(dev_db, "ensure_corrected_documents"),
+            patch.object(dev_db, "has_pending_migrations", return_value=False),
+            patch.object(dev_db, "get_latest_applied_migration", return_value="0004"),
+            patch.object(dev_db, "load_seed") as mock_load,
+        ):
             mock_seed = MagicMock()
             mock_load.return_value = mock_seed
             cmd.handle(migration=None)
@@ -710,10 +715,11 @@ class TestDevDbOrquestrador:
         cmd.stdout = MagicMock()
         cmd.style = MagicMock()
 
-        with patch.object(dev_db, "ensure_corrected_documents"), patch.object(
-            dev_db, "get_latest_applied_migration"
-        ) as mock_detect, patch.object(dev_db, "load_seed") as mock_load, patch(
-            "api.management.commands.dev_db.call_command"
+        with (
+            patch.object(dev_db, "ensure_corrected_documents"),
+            patch.object(dev_db, "get_latest_applied_migration") as mock_detect,
+            patch.object(dev_db, "load_seed") as mock_load,
+            patch("api.management.commands.dev_db.call_command"),
         ):
             mock_seed = MagicMock()
             mock_load.return_value = mock_seed
