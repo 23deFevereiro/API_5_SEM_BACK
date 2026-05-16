@@ -1,7 +1,9 @@
+from datetime import date
+
 import pytest
 from model_bakery import baker
 
-from api.services.alertas_svc import get_alertas_materiais, PENDENTE_STATUS
+from api.services.alertas_svc import get_alertas_materiais, get_sugestao_proxima_compra, PENDENTE_STATUS
 
 
 def make_tempo(data_str, pk=None):
@@ -348,3 +350,141 @@ class TestGetAlertasMateriais:
         resultado = get_alertas_materiais(critico_max=30, atencao_max=120)
         assert len(resultado['atencao']) == 1
         assert resultado['atencao'][0]['material'] == 'CompY'
+
+@pytest.mark.django_db
+class TestGetSugestaoProximaCompra:
+
+    def _criar_tempo(self, data, tempo_id):
+        return baker.make(
+            'api.DimTempo',
+            id=tempo_id,
+            data=data,
+            ano=data.year,
+            mes=data.month,
+            trimestre=1,
+            semestre=1,
+            dia_semana=0,
+        )
+
+    def test_retorna_vazio_sem_consumo(self):
+        resultado = get_sugestao_proxima_compra(
+            data_referencia=date(2024, 1, 10)
+        )
+
+        assert resultado['data_sugerida'] is None
+        assert resultado['comprar_imediatamente'] is False
+        assert resultado['materiais'] == []
+
+    def test_recomenda_compra_com_lead_time_do_fornecedor(self):
+        material = baker.make(
+            'api.DimMaterial',
+            codigo_material='MAT-001',
+            descricao='Parafuso',
+        )
+        fornecedor = baker.make(
+            'api.DimFornecedor',
+            razao_social='Fornecedor Alpha',
+        )
+        status = baker.make(
+            'api.DimStatusPedido',
+            nome_status='Entregue',
+            categoria='Concluído',
+        )
+        tempo_consumo = self._criar_tempo(date(2024, 1, 1), 20240101)
+        tempo_estoque = self._criar_tempo(date(2024, 1, 10), 20240110)
+
+        baker.make(
+            'api.FatoMateriais',
+            material=material,
+            tempo=tempo_consumo,
+            quantidade_empenhada=100,
+        )
+        baker.make(
+            'api.FatoEstoque',
+            material=material,
+            tempo=tempo_estoque,
+            quantidade_estoque=20,
+        )
+        baker.make(
+            'api.FatoCompras',
+            material=material,
+            fornecedor=fornecedor,
+            tempo=tempo_consumo,
+            status=status,
+            lead_time=5,
+            quantidade_solicitada=100,
+            quantidade_entregue=100,
+            valor_total=1000,
+        )
+
+        resultado = get_sugestao_proxima_compra(
+            data_referencia=date(2024, 1, 10)
+        )
+
+        assert resultado['materiais']
+        assert resultado['comprar_imediatamente'] is True
+
+        item = resultado['materiais'][0]
+        assert item['material'] == 'Parafuso'
+        assert item['fornecedor_sugerido'] == 'Fornecedor Alpha'
+        assert item['lead_time'] == 5
+        assert item['comprar_imediatamente'] is True
+
+    def test_usa_lead_time_padrao_sem_compra_com_lead_time(self):
+        material = baker.make(
+            'api.DimMaterial',
+            codigo_material='MAT-002',
+            descricao='Cabo',
+        )
+        tempo_consumo = self._criar_tempo(date(2024, 1, 1), 20240201)
+        tempo_estoque = self._criar_tempo(date(2024, 1, 10), 20240210)
+
+        baker.make(
+            'api.FatoMateriais',
+            material=material,
+            tempo=tempo_consumo,
+            quantidade_empenhada=100,
+        )
+        baker.make(
+            'api.FatoEstoque',
+            material=material,
+            tempo=tempo_estoque,
+            quantidade_estoque=10,
+        )
+
+        resultado = get_sugestao_proxima_compra(
+            data_referencia=date(2024, 1, 10)
+        )
+
+        item = resultado['materiais'][0]
+        assert item['lead_time'] == 30
+        assert item['fornecedor_sugerido'] == 'Fornecedor não definido'
+
+    def test_ignora_material_com_cobertura_maior_que_limite(self):
+        material = baker.make(
+            'api.DimMaterial',
+            codigo_material='MAT-003',
+            descricao='Motor',
+        )
+        tempo_consumo = self._criar_tempo(date(2024, 1, 1), 20240301)
+        tempo_estoque = self._criar_tempo(date(2024, 1, 10), 20240310)
+
+        baker.make(
+            'api.FatoMateriais',
+            material=material,
+            tempo=tempo_consumo,
+            quantidade_empenhada=10,
+        )
+        baker.make(
+            'api.FatoEstoque',
+            material=material,
+            tempo=tempo_estoque,
+            quantidade_estoque=1000,
+        )
+
+        resultado = get_sugestao_proxima_compra(
+            data_referencia=date(2024, 1, 10)
+        )
+
+        assert resultado['materiais'] == []
+        assert resultado['comprar_imediatamente'] is False

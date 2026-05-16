@@ -53,3 +53,35 @@ class TestGetAlertasView:
     def test_atencao_max_ajustado_quando_menor_que_critico_max(self, client):
         resp = client.get('/api/compras/alertas/?critico_max=30&atencao_max=10')
         assert resp.status_code == 200
+
+@pytest.mark.django_db
+class TestGetSugestaoProximaCompraView:
+
+    def test_retorna_200_get(self, client):
+        resp = client.get('/api/compras/sugestao-proxima-compra/')
+        assert resp.status_code == 200
+
+    def test_retorna_json_com_chaves_esperadas(self, client):
+        resp = client.get('/api/compras/sugestao-proxima-compra/')
+        data = resp.json()
+
+        assert 'data_sugerida' in data
+        assert 'comprar_imediatamente' in data
+        assert 'materiais' in data
+
+    def test_materiais_eh_lista(self, client):
+        resp = client.get('/api/compras/sugestao-proxima-compra/')
+        data = resp.json()
+
+        assert isinstance(data['materiais'], list)
+
+    def test_retorna_400_para_data_referencia_invalida(self, client):
+        resp = client.get(
+            '/api/compras/sugestao-proxima-compra/?data_referencia=10-01-2024'
+        )
+
+        assert resp.status_code == 400
+
+    def test_nao_aceita_post(self, client):
+        resp = client.post('/api/compras/sugestao-proxima-compra/')
+        assert resp.status_code == 405

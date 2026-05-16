@@ -4,10 +4,8 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
 from .view_utils import ERRO_INTERNO
-from ..services.alertas_svc import get_alertas_materiais, get_estoque_tabela
+from ..services.alertas_svc import get_alertas_materiais, get_estoque_tabela, get_sugestao_proxima_compra
 from ..services.compras_svc import listar_materiais_com_compras, get_lead_time_por_material
-from ..services.alertas_svc import get_alertas_materiais
-from ..services.compras_svc import listar_materiais_com_compras, get_lead_time_por_material, get_sugestao_proxima_compra
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +74,7 @@ def get_estoque_tabela_view(request):
         return JsonResponse(data)
     except Exception:
         logger.exception('Erro ao buscar tabela de estoque')
+        return JsonResponse({'error': ERRO_INTERNO}, status=500)
     
 @require_GET
 def get_sugestao_proxima_compra_view(request):
