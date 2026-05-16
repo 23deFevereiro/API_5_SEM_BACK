@@ -22,6 +22,7 @@ def criar_pasta_saida():
 
 
 def salvar_csv(df, nome_arquivo):
+    criar_pasta_saida()
     caminho = os.path.join(OUTPUT_FOLDER, nome_arquivo)
     df.to_csv(caminho, index=False, encoding="utf-8-sig")
     print(f"   ✅ Salvo: {nome_arquivo} ({len(df)} registros)")
