@@ -213,6 +213,9 @@ class TestGetLeadTimePorMaterial:
         self._criar_compra(mat2, tempo_id=20240501, data='2024-05-01')
         resultado = get_lead_time_por_material(mat1.id)
         assert resultado == []
+        
+@pytest.mark.django_db
+class TestGetSugestaoProximaCompra:
 
     def _criar_tempo(self, data, tempo_id):
         return baker.make(
