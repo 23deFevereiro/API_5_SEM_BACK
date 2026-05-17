@@ -57,4 +57,5 @@ urlpatterns = [
     path('api/compras/materiais/', compras_view.listar_materiais_compras_view, name='compras_materiais'),
     path('api/compras/lead-time/', compras_view.get_lead_time_view, name='compras_lead_time'),
     path('api/compras/alertas/', compras_view.get_alertas_view, name='compras_alertas'),
+    path('api/compras/estoque-tabela/', compras_view.get_estoque_tabela_view, name='compras_estoque_tabela'),
 ]

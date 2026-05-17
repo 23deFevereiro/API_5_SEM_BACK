@@ -223,7 +223,7 @@ def get_tabela_projetos_view(request, programa_id):
         page = request.GET.get('page', 1)
         sort_by = request.GET.get('sort_by', 'nome_projeto')
         sort_dir = request.GET.get('sort_dir', 'asc')
-        if sort_by not in ('nome_projeto', 'responsavel', 'status', 'acao'):
+        if sort_by not in ('nome_projeto', 'responsavel', 'status', 'situacao'):
             sort_by = 'nome_projeto'
         if sort_dir not in ('asc', 'desc'):
             sort_dir = 'asc'
