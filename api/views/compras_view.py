@@ -6,9 +6,9 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view
 
-from .view_utils import ERRO_INTERNO
-from ..services.alertas_svc import get_alertas_materiais, get_estoque_tabela, get_sugestao_proxima_compra
-from ..services.compras_svc import listar_materiais_com_compras, get_lead_time_por_material
+from ..services.alertas_svc import get_alertas_materiais
+from ..services.compras_svc import get_lead_time_por_material, listar_materiais_com_compras
+from .view_utils import ERRO_INTERNO, resposta_erro, resposta_sucesso, schema_array, schema_obj, schema_paginada
 
 logger = logging.getLogger(__name__)
 
