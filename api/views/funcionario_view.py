@@ -1,14 +1,34 @@
 import logging
 
+from drf_yasg import openapi
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
+from rest_framework.decorators import api_view
+from drf_yasg.utils import swagger_auto_schema
 
-from .view_utils import ERRO_INTERNO, extrair_periodo
+from .view_utils import ERRO_INTERNO, extrair_periodo, resposta_erro, resposta_sucesso, schema_array, schema_obj, schema_paginada
 from ..services.funcionario_svc import get_funcionarios_projeto
 
 logger = logging.getLogger(__name__)
 
+FUNCIONARIO_PROJETO_SCHEMA = schema_obj({
+    'funcionario': openapi.Schema(type=openapi.TYPE_STRING),
+    'total_horas': openapi.Schema(type=openapi.TYPE_NUMBER),
+    'projetos': schema_array(openapi.Schema(type=openapi.TYPE_STRING)),
+})
 
+
+@swagger_auto_schema(
+    method='get',
+    operation_summary='Lista funcionarios do projeto',
+    operation_description='Retorna os funcionarios associados a um projeto com suporte a paginacao e filtros por periodo e nome do funcionario.',
+    responses={
+        200: resposta_sucesso('Lista paginada de funcionarios do projeto.', schema_paginada(FUNCIONARIO_PROJETO_SCHEMA)),
+        400: resposta_erro('Periodo informado em formato invalido.'),
+        500: resposta_erro('Erro interno ao listar funcionarios do projeto.'),
+    },
+)
+@api_view(['GET'])
 @require_GET
 def get_funcionarios_projeto_view(request, projeto_id):
     try:
