@@ -141,9 +141,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("\n⚙️  Verificando migrações pendentes..")
             if has_pending_migrations():
-                self.stdout.write(
-                    "   ⚠️  Migrações pendentes encontradas. " "Aplicando.."
-                )
+                self.stdout.write("   ⚠️ Migrações pendentes encontradas. Aplicando...")
                 call_command("migrate")
                 self.stdout.write("   ✅ migrate concluído.")
             else:

@@ -15,40 +15,10 @@ env:
   POSTGRES_PORT: 5432
   
 jobs:
-  populate-db:
+  quality:
     runs-on: ubuntu-latest
-    name: Populate DB
-    services:
-      database:
-        image: postgres:18
-        env:
-          POSTGRES_DB: lunae
-          POSTGRES_USER: fev-23
-          POSTGRES_PASSWORD: fev-23
-        ports:
-          - 5432:5432
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
+    name: Quality
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Run migrate
-        run: python manage.py migrate
-
-      - name: Validate dev_db command
-        run: python manage.py dev_db
-
-  test:
-    runs-on: ubuntu-latest
-    name: Test
     services:
       postgres:
         image: postgres:18
@@ -58,8 +28,10 @@ jobs:
           POSTGRES_PASSWORD: fev-23
         ports:
           - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -70,39 +42,27 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      
-      - name: Run tests with coverage
-        run: |
-          pytest --cov=api --cov-report=term-missing --cov-fail-under=80
-
-  general-check:
-    runs-on: ubuntu-latest
-    name: General checks
-    needs: [populate-db]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          
-      - name: Run Flake8
-        run: flake8 api scripts
-
-      - name: Validate Black formatting
-        run: black --check api scripts
 
       - name: Validate isort imports
         run: isort --check-only --profile black api scripts
 
-      - name: Run pre-commit
-        run: pre-commit run --all-files
-      
+      - name: Validate Black formatting
+        run: black --check api scripts
+
+      - name: Run Flake8
+        run: flake8 api scripts
+
       - name: Run Django checks
         run: python manage.py check
+
+      - name: Run migrations
+        run: python manage.py migrate
+
+      - name: Validate dev_db command
+        run: python manage.py dev_db
+
+      - name: Run tests with coverage
+        run: pytest --cov=api --cov-report=xml:coverage.xml --cov-fail-under=80
+
+      - name: Run pre-commit
+        run: pre-commit run --all-files
