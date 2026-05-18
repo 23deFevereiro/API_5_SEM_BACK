@@ -132,8 +132,6 @@ def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
 
     return {'criticos': criticos, 'atencao': atencao[:5]}
 
-DIAS_COBERTURA_MAX = 60
-STATUS_ENTREGUE = 'Entregue'
 MENSAGEM_NENHUM_MATERIAL = 'Nenhum material precisa de compra no momento'
 
 

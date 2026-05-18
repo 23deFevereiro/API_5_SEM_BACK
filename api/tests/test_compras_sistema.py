@@ -1,7 +1,6 @@
 import pytest
 from model_bakery import baker
 from django.urls import reverse
-from unittest.mock import patch
 
 
 @pytest.fixture
