@@ -5,7 +5,6 @@ from django.db.models import Avg, ExpressionWrapper, F, IntegerField, Max, Min, 
 from ..models import DimMaterial, FatoCompras, FatoEstoque, FatoMateriais
 
 PENDENTE_STATUS = ['Aberto', 'Enviado', 'Parcialmente Entregue']
-PENDENTE_STATUS = ['Aberto', 'Enviado', 'Parcialmente Entregue']
 DIAS_COBERTURA_MAX = 60
 STATUS_ENTREGUE = 'Entregue'
 
@@ -135,6 +134,16 @@ def get_alertas_materiais(critico_max: int = 30, atencao_max: int = 60):
 
 DIAS_COBERTURA_MAX = 60
 STATUS_ENTREGUE = 'Entregue'
+MENSAGEM_NENHUM_MATERIAL = 'Nenhum material precisa de compra no momento'
+
+
+def _empty_sugestao_proxima_compra():
+    return {
+        'data_sugerida': None,
+        'comprar_imediatamente': False,
+        'materiais': [],
+        'mensagem': MENSAGEM_NENHUM_MATERIAL,
+    }
 
 
 def get_sugestao_proxima_compra(data_referencia=None):
@@ -146,23 +155,13 @@ def get_sugestao_proxima_compra(data_referencia=None):
     )
 
     if not tempo_range['data_min'] or not tempo_range['data_max']:
-        return {
-            'data_sugerida': None,
-            'comprar_imediatamente': False,
-            'materiais': [],
-            'mensagem': 'Nenhum material precisa de compra no momento',
-        }
+        return _empty_sugestao_proxima_compra()
 
     dias_periodo = max((tempo_range['data_max'] - tempo_range['data_min']).days + 1, 1)
 
     consumo_map = _get_consumo_map(dias_periodo)
     if not consumo_map:
-        return {
-            'data_sugerida': None,
-            'comprar_imediatamente': False,
-            'materiais': [],
-            'mensagem': 'Nenhum material precisa de compra no momento',
-        }
+        return _empty_sugestao_proxima_compra()
 
     estoque_map = _get_estoque_map()
     pendente_map = _get_pendente_map()
@@ -218,12 +217,7 @@ def get_sugestao_proxima_compra(data_referencia=None):
         })
 
     if not materiais:
-        return {
-            'data_sugerida': None,
-            'comprar_imediatamente': False,
-            'materiais': [],
-            'mensagem': 'Nenhum material precisa de compra no momento',
-        }
+        return _empty_sugestao_proxima_compra()
 
     materiais.sort(key=lambda item: item['data_limite_compra'])
 
