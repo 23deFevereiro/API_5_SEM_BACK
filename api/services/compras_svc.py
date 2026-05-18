@@ -1,11 +1,4 @@
-from ..models import DimMaterial, FatoCompras, FatoEstoque, FatoMateriais
-from datetime import date, timedelta
-from django.db.models import F, IntegerField, Max, Min, OuterRef, Subquery, Sum
-from django.db.models import ExpressionWrapper
-
-PENDENTE_STATUS = ['Aberto', 'Enviado', 'Parcialmente Entregue']
-DEFAULT_LEAD_TIME = 30
-DIAS_COBERTURA_MAX = 60
+from ..models import DimMaterial, FatoCompras, FatoMateriais
 
 
 def listar_materiais_com_compras():
