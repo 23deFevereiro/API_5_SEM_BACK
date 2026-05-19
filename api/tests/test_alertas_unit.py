@@ -1,7 +1,9 @@
+from datetime import date
+
 import pytest
 from model_bakery import baker
 
-from api.services.alertas_svc import get_alertas_materiais, PENDENTE_STATUS
+from api.services.alertas_svc import get_alertas_materiais, get_sugestao_proxima_compra, PENDENTE_STATUS
 
 
 def make_tempo(data_str, pk=None):
@@ -348,3 +350,60 @@ class TestGetAlertasMateriais:
         resultado = get_alertas_materiais(critico_max=30, atencao_max=120)
         assert len(resultado['atencao']) == 1
         assert resultado['atencao'][0]['material'] == 'CompY'
+
+@pytest.mark.django_db
+class TestGetSugestaoProximaCompra:
+
+    def test_retorna_mensagem_sem_dados(self):
+        resultado = get_sugestao_proxima_compra()
+
+        assert resultado == {
+            'data_sugerida': None,
+            'comprar_imediatamente': False,
+            'materiais': [],
+            'mensagem': 'Nenhum material precisa de compra no momento',
+        }
+
+    def test_retorna_compra_imediata_quando_data_limite_ja_passou(self):
+        material = baker.make('api.DimMaterial', descricao='Sensor')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor', razao_social='Fornecedor A')
+        status = baker.make('api.DimStatusPedido', nome_status='Entregue', categoria='Concluído')
+        t1 = make_tempo('2024-01-01', pk=20240101)
+
+        baker.make('api.FatoMateriais',material=material, projeto=projeto,
+            programa=programa,tempo=t1,quantidade_empenhada=1,)
+        baker.make('api.FatoEstoque', material=material, projeto=projeto,
+            tempo=t1, quantidade_estoque=5,)
+        baker.make('api.FatoCompras',material=material,fornecedor=fornecedor,
+            tempo=t1,status=status,lead_time=10,quantidade_solicitada=10,
+            quantidade_entregue=10,)
+
+        resultado = get_sugestao_proxima_compra(data_referencia=date(2024, 4, 1))
+
+        assert resultado['comprar_imediatamente'] is True
+        assert resultado['data_sugerida'] == '2024-03-27'
+        assert len(resultado['materiais']) == 1
+        assert resultado['materiais'][0]['material'] == 'Sensor'
+        assert resultado['materiais'][0]['fornecedor_sugerido'] == 'Fornecedor A'
+
+    def test_ignora_material_com_cobertura_maior_ou_igual_a_60(self):
+        material = baker.make('api.DimMaterial', descricao='Estoque confortável')
+        projeto = baker.make('api.DimProjeto')
+        programa = baker.make('api.DimPrograma')
+        fornecedor = baker.make('api.DimFornecedor')
+        status = baker.make('api.DimStatusPedido', nome_status='Entregue', categoria='Concluído')
+        t1 = make_tempo('2024-01-01', pk=20240101)
+
+        baker.make('api.FatoMateriais',material=material,projeto=projeto,
+            programa=programa,tempo=t1,quantidade_empenhada=1,)
+        baker.make('api.FatoEstoque',material=material,projeto=projeto,
+            tempo=t1,quantidade_estoque=60,)
+        baker.make('api.FatoCompras',material=material,fornecedor=fornecedor,
+            tempo=t1,status=status,lead_time=10,)
+
+        resultado = get_sugestao_proxima_compra(data_referencia=date(2024, 4, 1))
+
+        assert resultado['materiais'] == []
+        assert resultado['mensagem'] == 'Nenhum material precisa de compra no momento'
