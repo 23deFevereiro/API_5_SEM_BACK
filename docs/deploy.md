@@ -13,9 +13,9 @@ Não cobre instalação básica de Postgres, Linux ou de um servidor web.
 ### 1.1 Topologia
 
 ```
-                    Internet / rede corporativa
+                  Internet / rede corporativa
                               │
-                              ▼ 80, 443
+                              ▼ 80
         ┌──────────────────────────────────────────┐
         │   VM única                               │
         │                                          │
@@ -59,10 +59,10 @@ Não cobre instalação básica de Postgres, Linux ou de um servidor web.
 
 ### 2.1 Recursos da VM
 
-| Período | vCPUs | RAM | Disco |
-|---|---|---|---|
+|   Período   | vCPUs | RAM  | Disco |
+|-------------|-------|------|-------|
 | Mês 1 ao 12 | **1** | 2 GB | 20 GB |
-| Mês 13+ | **4** | 2 GB | 20 GB |
+| Mês 13+     | **4** | 2 GB | 20 GB |
 
 > RAM não é gargalo. O ponto de pressão é CPU.
 
@@ -70,11 +70,11 @@ Não cobre instalação básica de Postgres, Linux ou de um servidor web.
 
 Os testes de carga mostraram:
 
-| Cenário | RPS | p50 | p95 | Falhas |
-|---|---|---|---|---|
-| 50 usuários · 1 vCPU | 8,6 | 2,2 s | 3,6 s | 0 |
-| 200 usuários · 1 vCPU | 16,0 | 8,6 s | **11 s** | 0 |
-| 200 usuários · 4 vCPUs | 32,5 | 2,4 s | 4,0 s | 0 |
+|        Cenário         | RPS  |  p50  |    p95   | Falhas |
+|------------------------|------|-------|----------|--------|
+|  50 usuários · 1 vCPU  | 8,6  | 2,2 s |  3,6 s   |   0    |
+| 200 usuários · 1 vCPU  | 16,0 | 8,6 s | **11 s** |   0    |
+| 200 usuários · 4 vCPUs | 32,5 | 2,4 s |  4,0 s   |   0    |
 
 - **1 vCPU** atende a carga estimada até o mês 12 (~50 usuários
   simultâneos) com latência aceitável.
@@ -85,7 +85,7 @@ Os testes de carga mostraram:
   ao patamar de uso normal mesmo no pico, com margem de crescimento.
 
 A justificativa visual está em
-[`loadtests/apresentacao.html`](../loadtests/apresentacao.html) e os
+[`loadtests/apresentacao.html`](../loadtests/index.html) e os
 dados brutos em [`loadtests/`](../loadtests/).
 
 ### 2.3 O que NÃO precisa mudar no mês 12
