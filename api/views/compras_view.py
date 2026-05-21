@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 
 from django.http import JsonResponse
@@ -6,7 +7,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import api_view
 
-from ..services.alertas_svc import get_alertas_materiais, get_estoque_tabela
+from ..services.alertas_svc import get_alertas_materiais, get_estoque_tabela, get_sugestao_proxima_compra
 from ..services.compras_svc import get_lead_time_por_material, listar_materiais_com_compras
 from .view_utils import ERRO_INTERNO, resposta_erro, resposta_sucesso, schema_array, schema_obj, schema_paginada
 
@@ -158,4 +159,26 @@ def get_estoque_tabela_view(request):
         return JsonResponse(data)
     except Exception:
         logger.exception('Erro ao buscar tabela de estoque')
+        return JsonResponse({'error': ERRO_INTERNO}, status=500)
+    
+@require_GET
+def get_sugestao_proxima_compra_view(request):
+    try:
+        data_referencia_raw = request.GET.get('data_referencia')
+
+        data_referencia = None
+        if data_referencia_raw:
+            try:
+                data_referencia = datetime.strptime(data_referencia_raw, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse(
+                    {'error': 'data_referencia deve estar no formato YYYY-MM-DD'},
+                    status=400,
+                )
+
+        data = get_sugestao_proxima_compra(data_referencia=data_referencia)
+        return JsonResponse(data)
+
+    except Exception:
+        logger.exception('Erro ao buscar sugestão de próxima compra')
         return JsonResponse({'error': ERRO_INTERNO}, status=500)
