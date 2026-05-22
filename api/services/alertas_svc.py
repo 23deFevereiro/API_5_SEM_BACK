@@ -243,7 +243,6 @@ def get_estoque_tabela(critico_max: int = 30, atencao_max: int = 60, page: int =
 
 MENSAGEM_NENHUM_MATERIAL = 'Nenhum material precisa de compra no momento'
 
-
 def _empty_sugestao_proxima_compra():
     return {
         'data_sugerida': None,
