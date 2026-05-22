@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 import math
 
 from django.db.models import Avg, ExpressionWrapper, F, IntegerField, Max, Min, OuterRef, Subquery, Sum
@@ -5,6 +6,8 @@ from django.db.models import Avg, ExpressionWrapper, F, IntegerField, Max, Min, 
 from ..models import DimMaterial, FatoCompras, FatoEstoque, FatoMateriais
 
 PENDENTE_STATUS = ['Aberto', 'Enviado', 'Parcialmente Entregue']
+DIAS_COBERTURA_MAX = 60
+STATUS_ENTREGUE = 'Entregue'
 
 
 def _build_lead_time_map(lead_times_qs) -> dict[int, tuple[float, str]]:
@@ -236,4 +239,97 @@ def get_estoque_tabela(critico_max: int = 30, atencao_max: int = 60, page: int =
         'page_size': page_size,
         'total_pages': total_pages,
         'results': results[start:start + page_size],
+    }
+
+MENSAGEM_NENHUM_MATERIAL = 'Nenhum material precisa de compra no momento'
+
+
+def _empty_sugestao_proxima_compra():
+    return {
+        'data_sugerida': None,
+        'comprar_imediatamente': False,
+        'materiais': [],
+        'mensagem': MENSAGEM_NENHUM_MATERIAL,
+    }
+
+
+def get_sugestao_proxima_compra(data_referencia=None):
+    data_referencia = data_referencia or date.today()
+
+    tempo_range = FatoMateriais.objects.aggregate(
+        data_min=Min('tempo__data'),
+        data_max=Max('tempo__data'),
+    )
+
+    if not tempo_range['data_min'] or not tempo_range['data_max']:
+        return _empty_sugestao_proxima_compra()
+
+    dias_periodo = max((tempo_range['data_max'] - tempo_range['data_min']).days + 1, 1)
+
+    consumo_map = _get_consumo_map(dias_periodo)
+    if not consumo_map:
+        return _empty_sugestao_proxima_compra()
+
+    estoque_map = _get_estoque_map()
+    pendente_map = _get_pendente_map()
+
+    lead_time_map = _build_lead_time_map(
+        FatoCompras.objects
+        .filter(
+            lead_time__isnull=False,
+            status__nome_status=STATUS_ENTREGUE,
+        )
+        .values('material_id', 'fornecedor_id', 'fornecedor__razao_social')
+        .annotate(lt_medio=Min('lead_time'))
+    )
+
+    nome_map = {
+        m['id']: m['descricao']
+        for m in DimMaterial.objects
+        .filter(id__in=consumo_map.keys())
+        .values('id', 'descricao')
+    }
+
+    materiais = []
+
+    for mat_id, consumo_diario in consumo_map.items():
+        if consumo_diario <= 0:
+            continue
+
+        estoque = estoque_map.get(mat_id, 0)
+        pendente = pendente_map.get(mat_id, 0)
+        dias_cobertura = (estoque + pendente) / consumo_diario
+
+        if dias_cobertura >= DIAS_COBERTURA_MAX:
+            continue
+
+        if mat_id in lead_time_map:
+            lead_time, fornecedor = lead_time_map[mat_id]
+        else:
+            lead_time = 30
+            fornecedor = 'Fornecedor não definido'
+
+        dias_para_pedir = dias_cobertura - lead_time
+        data_limite_compra = data_referencia + timedelta(days=round(dias_para_pedir))
+
+        materiais.append({
+            'material_id': mat_id,
+            'material': nome_map.get(mat_id, str(mat_id)),
+            'fornecedor_sugerido': fornecedor,
+            'dias_cobertura': round(dias_cobertura),
+            'lead_time': round(lead_time),
+            'dias_para_pedir': round(dias_para_pedir),
+            'data_limite_compra': data_limite_compra.isoformat(),
+            'comprar_imediatamente': data_limite_compra <= data_referencia,
+        })
+
+    if not materiais:
+        return _empty_sugestao_proxima_compra()
+
+    materiais.sort(key=lambda item: item['data_limite_compra'])
+
+    return {
+        'data_sugerida': materiais[0]['data_limite_compra'],
+        'comprar_imediatamente': materiais[0]['comprar_imediatamente'],
+        'materiais': materiais,
     }
