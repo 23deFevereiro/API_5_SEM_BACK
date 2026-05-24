@@ -1,3 +1,4 @@
+from django.urls import reverse
 import pytest
 from django.test import Client
 
@@ -53,3 +54,27 @@ class TestGetAlertasView:
     def test_atencao_max_ajustado_quando_menor_que_critico_max(self, client):
         resp = client.get("/api/compras/alertas/?critico_max=30&atencao_max=10")
         assert resp.status_code == 200
+
+@pytest.mark.django_db
+class TestSugestaoProximaCompraSistema:
+
+    def test_retorna_200_para_get(self, api_client):
+        url = reverse('compras_sugestao_proxima_compra')
+        response = api_client.get(url)
+
+        assert response.status_code == 200
+
+    def test_retorna_405_para_post(self, api_client):
+        url = reverse('compras_sugestao_proxima_compra')
+        response = api_client.post(url)
+
+        assert response.status_code == 405
+
+    def test_data_referencia_invalida_retorna_400(self, api_client):
+        url = reverse('compras_sugestao_proxima_compra')
+        response = api_client.get(url, {'data_referencia': '01-04-2024'})
+
+        assert response.status_code == 400
+        assert response.json() == {
+            'error': 'data_referencia deve estar no formato YYYY-MM-DD'
+        }
