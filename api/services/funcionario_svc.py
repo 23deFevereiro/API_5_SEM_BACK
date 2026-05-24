@@ -1,9 +1,13 @@
 from math import ceil
+
 from django.db.models import Sum
+
 from ..models import FatoHoras
 
 
-def get_funcionarios_projeto(projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, funcionario=None):
+def get_funcionarios_projeto(
+    projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, funcionario=None
+):
     page = max(int(page), 1)
 
     base_qs = FatoHoras.objects.filter(projeto_id=projeto_id)
@@ -15,10 +19,9 @@ def get_funcionarios_projeto(projeto_id, page=1, page_size=10, data_inicio=None,
         base_qs = base_qs.filter(funcionario__nome__icontains=funcionario)
 
     funcionarios_qs = (
-        base_qs
-        .values('funcionario__nome')
-        .annotate(total_horas=Sum('horas_trabalhadas'))
-        .order_by('funcionario__nome')
+        base_qs.values("funcionario__nome")
+        .annotate(total_horas=Sum("horas_trabalhadas"))
+        .order_by("funcionario__nome")
     )
 
     total_items = funcionarios_qs.count()
@@ -30,21 +33,20 @@ def get_funcionarios_projeto(projeto_id, page=1, page_size=10, data_inicio=None,
 
     for item in resultados:
         codigos = list(
-            FatoHoras.objects
-            .filter(funcionario__nome=item['funcionario__nome'])
-            .values_list('projeto__codigo_projeto', flat=True)
+            FatoHoras.objects.filter(funcionario__nome=item["funcionario__nome"])
+            .values_list("projeto__codigo_projeto", flat=True)
             .distinct()
-            .order_by('projeto__codigo_projeto')
+            .order_by("projeto__codigo_projeto")
         )
 
-        item['funcionario'] = item.pop('funcionario__nome')
-        item['total_horas'] = float(item['total_horas'] or 0)
-        item['projetos'] = codigos
+        item["funcionario"] = item.pop("funcionario__nome")
+        item["total_horas"] = float(item["total_horas"] or 0)
+        item["projetos"] = codigos
 
     return {
-        'count': total_items,
-        'page': page,
-        'page_size': page_size,
-        'total_pages': total_pages,
-        'results': resultados,
+        "count": total_items,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+        "results": resultados,
     }

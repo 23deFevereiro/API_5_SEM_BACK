@@ -1,7 +1,8 @@
 from django.db import models
-from .dim_tempo import DimTempo
+
 from .dim_material import DimMaterial
 from .dim_projeto import DimProjeto
+from .dim_tempo import DimTempo
 
 
 class FatoEstoque(models.Model):
@@ -11,7 +12,7 @@ class FatoEstoque(models.Model):
     quantidade_estoque = models.IntegerField(default=0)
 
     class Meta:
-        db_table = 'fato_estoque'
+        db_table = "fato_estoque"
         indexes = [
-            models.Index(fields=['material']),
+            models.Index(fields=["material"]),
         ]

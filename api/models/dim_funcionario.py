@@ -5,4 +5,4 @@ class DimFuncionario(models.Model):
     nome = models.CharField(max_length=100, unique=True)
 
     class Meta:
-        db_table = 'dim_funcionario'
+        db_table = "dim_funcionario"

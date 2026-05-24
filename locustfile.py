@@ -29,6 +29,7 @@ class UsuarioDashboard(HttpUser):
     Simula um analista navegando pelo dashboard.
     Espera entre 2 e 5 segundos entre cada ação — comportamento humano realista.
     """
+
     wait_time = between(2, 5)
 
     # ── Visão geral (página inicial — mais acessada) ──────────────────────────
@@ -50,69 +51,102 @@ class UsuarioDashboard(HttpUser):
 
     @task(3)
     def burnup_horas_projetos(self):
-        self.client.get("/api/projetos/burnup-horas/", name="/api/projetos/burnup-horas/")
+        self.client.get(
+            "/api/projetos/burnup-horas/", name="/api/projetos/burnup-horas/"
+        )
 
     @task(2)
     def burnup_horas_programas(self):
-        self.client.get("/api/programas-burnup-horas/", name="/api/programas-burnup-horas/")
+        self.client.get(
+            "/api/programas-burnup-horas/", name="/api/programas-burnup-horas/"
+        )
 
     @task(2)
     def burnup_custo_programas(self):
-        self.client.get("/api/programas-burnup-custo/", name="/api/programas-burnup-custo/")
+        self.client.get(
+            "/api/programas-burnup-custo/", name="/api/programas-burnup-custo/"
+        )
 
     # ── Detalhes de projeto (usuário abre um projeto específico) ──────────────
 
     @task(3)
     def resumo_projeto(self):
         pid = random.choice(PROJETO_IDS)
-        self.client.get(f"/api/projetos/{pid}/resumo/", name="/api/projetos/[id]/resumo/")
+        self.client.get(
+            f"/api/projetos/{pid}/resumo/", name="/api/projetos/[id]/resumo/"
+        )
 
     @task(2)
     def materiais_projeto(self):
         pid = random.choice(PROJETO_IDS)
-        self.client.get(f"/api/projetos/{pid}/materiais/", name="/api/projetos/[id]/materiais/")
+        self.client.get(
+            f"/api/projetos/{pid}/materiais/", name="/api/projetos/[id]/materiais/"
+        )
 
     @task(2)
     def horas_por_funcionario(self):
         pid = random.choice(PROJETO_IDS)
-        self.client.get(f"/api/projetos/{pid}/horas-por-funcionario/", name="/api/projetos/[id]/horas-por-funcionario/")
+        self.client.get(
+            f"/api/projetos/{pid}/horas-por-funcionario/",
+            name="/api/projetos/[id]/horas-por-funcionario/",
+        )
 
     @task(2)
     def funcionarios_projeto(self):
         pid = random.choice(PROJETO_IDS)
-        self.client.get(f"/api/projetos/{pid}/funcionarios/", name="/api/projetos/[id]/funcionarios/")
+        self.client.get(
+            f"/api/projetos/{pid}/funcionarios/",
+            name="/api/projetos/[id]/funcionarios/",
+        )
 
     @task(1)
     def nomes_funcionarios(self):
         pid = random.choice(PROJETO_IDS)
-        self.client.get(f"/api/projetos/{pid}/nomes-funcionarios/", name="/api/projetos/[id]/nomes-funcionarios/")
+        self.client.get(
+            f"/api/projetos/{pid}/nomes-funcionarios/",
+            name="/api/projetos/[id]/nomes-funcionarios/",
+        )
 
     @task(1)
     def materiais_disponiveis(self):
         pid = random.choice(PROJETO_IDS)
-        self.client.get(f"/api/projetos/{pid}/materiais-disponiveis/", name="/api/projetos/[id]/materiais-disponiveis/")
+        self.client.get(
+            f"/api/projetos/{pid}/materiais-disponiveis/",
+            name="/api/projetos/[id]/materiais-disponiveis/",
+        )
 
     # ── Detalhes de programa ──────────────────────────────────────────────────
 
     @task(2)
     def resumo_programa(self):
         pgid = random.choice(PROGRAMA_IDS)
-        self.client.get(f"/api/programas/{pgid}/resumo/", name="/api/programas/[id]/resumo/")
+        self.client.get(
+            f"/api/programas/{pgid}/resumo/", name="/api/programas/[id]/resumo/"
+        )
 
     @task(2)
     def tabela_projetos_programa(self):
         pgid = random.choice(PROGRAMA_IDS)
-        self.client.get(f"/api/programas/{pgid}/tabela-projetos/", name="/api/programas/[id]/tabela-projetos/")
+        self.client.get(
+            f"/api/programas/{pgid}/tabela-projetos/",
+            name="/api/programas/[id]/tabela-projetos/",
+        )
 
     @task(1)
     def distribuicao_status(self):
         pgid = random.choice(PROGRAMA_IDS)
-        self.client.get(f"/api/programas/{pgid}/distribuicao-status/", name="/api/programas/[id]/distribuicao-status/")
+        self.client.get(
+            f"/api/programas/{pgid}/distribuicao-status/",
+            name="/api/programas/[id]/distribuicao-status/",
+        )
 
     @task(1)
     def horas_por_projeto(self):
         pgid = random.choice(PROGRAMA_IDS)
-        self.client.get(f"/api/programas/{pgid}/horas-por-projeto/", name="/api/programas/[id]/horas-por-projeto/")
+        self.client.get(
+            f"/api/programas/{pgid}/horas-por-projeto/",
+            name="/api/programas/[id]/horas-por-projeto/",
+        )
 
     # ── Compras (módulo consultado com menos frequência) ─────────────────────
 
@@ -136,4 +170,6 @@ class UsuarioDashboard(HttpUser):
 
     @task(1)
     def compras_estoque_tabela(self):
-        self.client.get("/api/compras/estoque-tabela/", name="/api/compras/estoque-tabela/")
+        self.client.get(
+            "/api/compras/estoque-tabela/", name="/api/compras/estoque-tabela/"
+        )
