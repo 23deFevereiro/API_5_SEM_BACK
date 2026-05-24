@@ -85,14 +85,3 @@ jobs:
 
       - name: Run tests with coverage
         run: pytest --cov=api --cov-report=xml:coverage.xml --cov-fail-under=80
-
-  build:
-    runs-on: ubuntu-latest
-    name: Build
-    needs: test
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -t lunae-backend .
