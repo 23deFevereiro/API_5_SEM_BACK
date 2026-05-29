@@ -4,13 +4,13 @@ Valida o nome da branch atual.
 
 Formato aceito:  tipo/descricao-com-hifen
 Exemplos válidos:
-  feat/user-authentication
-  fix/login-bug
-  docs/update-readme
-  chore/42-setup-docker
+  feat/SCRUM-11-CSV-Upload
+  fix/SCRUM-42-Login-Bug
+  chore/SCRUM-12-Requirements-Track-Back
 
 Branches protegidas (não podem receber commits diretos):
   main, master  →  bloqueadas pelo hook no-commit-to-branch do pre-commit-hooks
+
 """
 
 import os
@@ -30,7 +30,7 @@ ALLOWED_TYPES = [
     "perf",
 ]
 
-BRANCH_PATTERN = re.compile(r"^(?P<type>[a-z]+)/(?P<desc>[a-z0-9][a-z0-9\-]*)$")
+BRANCH_PATTERN = re.compile(r"^(?P<type>[a-z]+)/SCRUM-\d+-[a-zA-Z0-9][a-zA-Z0-9\-]*$")
 
 PROTECTED_BRANCHES = {"main", "master"}
 
@@ -73,10 +73,10 @@ def validate() -> None:
     if not match:
         _fail(
             f"Branch name '{branch}' does not match the required format.\n\n"
-            "  Expected:  type/short-description-with-hyphens\n"
-            "  Examples:  feat/user-authentication\n"
-            "             fix/42-login-bug\n"
-            "             docs/update-readme\n\n"
+            "  Expected:  type/SCRUM-11-short-description\n"
+            "  Examples:  feat/SCRUM-11-CSV-Upload\n"
+            "             fix/SCRUM-42-Login-Bug\n"
+            "             chore/SCRUM-12-Requirements-Track-Back\n\n"
             f"  Allowed types: {', '.join(ALLOWED_TYPES)}\n"
             "  Rules: lowercase letters, numbers and hyphens only in description"
         )
