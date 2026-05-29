@@ -79,3 +79,9 @@ class TestSugestaoProximaCompraSistema:
         assert response.json() == {
             "error": "data_referencia deve estar no formato YYYY-MM-DD"
         }
+
+    def test_exemplo_devops_soma_dois_numeros(self):
+        numero1 = 2
+        numero2 = 3
+
+        assert numero1 + numero2 == 5
