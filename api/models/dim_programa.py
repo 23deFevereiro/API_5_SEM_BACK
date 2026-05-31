@@ -11,4 +11,4 @@ class DimPrograma(models.Model):
     status = models.CharField(max_length=30, blank=True)
 
     class Meta:
-        db_table = 'dim_programa'
+        db_table = "dim_programa"

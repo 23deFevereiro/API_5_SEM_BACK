@@ -7,189 +7,412 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0003_alter_fornecedor_cidade_alter_programa_nome_programa'),
+        ("api", "0003_alter_fornecedor_cidade_alter_programa_nome_programa"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='DimFornecedor',
+            name="DimFornecedor",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('codigo_fornecedor', models.CharField(max_length=20, unique=True)),
-                ('razao_social', models.CharField(max_length=100)),
-                ('cidade', models.CharField(blank=True, max_length=50)),
-                ('estado', models.CharField(blank=True, max_length=2)),
-                ('categoria', models.CharField(blank=True, max_length=50)),
-                ('status', models.CharField(blank=True, max_length=20)),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("codigo_fornecedor", models.CharField(max_length=20, unique=True)),
+                ("razao_social", models.CharField(max_length=100)),
+                ("cidade", models.CharField(blank=True, max_length=50)),
+                ("estado", models.CharField(blank=True, max_length=2)),
+                ("categoria", models.CharField(blank=True, max_length=50)),
+                ("status", models.CharField(blank=True, max_length=20)),
             ],
             options={
-                'db_table': 'dim_fornecedor',
+                "db_table": "dim_fornecedor",
             },
         ),
         migrations.CreateModel(
-            name='DimFuncionario',
+            name="DimFuncionario",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome', models.CharField(max_length=100, unique=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome", models.CharField(max_length=100, unique=True)),
             ],
             options={
-                'db_table': 'dim_funcionario',
+                "db_table": "dim_funcionario",
             },
         ),
         migrations.CreateModel(
-            name='DimMaterial',
+            name="DimMaterial",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('codigo_material', models.CharField(max_length=20, unique=True)),
-                ('descricao', models.CharField(max_length=200)),
-                ('categoria', models.CharField(blank=True, max_length=50)),
-                ('fabricante', models.CharField(blank=True, max_length=100)),
-                ('custo_estimado', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
-                ('status', models.CharField(blank=True, max_length=20)),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("codigo_material", models.CharField(max_length=20, unique=True)),
+                ("descricao", models.CharField(max_length=200)),
+                ("categoria", models.CharField(blank=True, max_length=50)),
+                ("fabricante", models.CharField(blank=True, max_length=100)),
+                (
+                    "custo_estimado",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
+                ("status", models.CharField(blank=True, max_length=20)),
             ],
             options={
-                'db_table': 'dim_material',
+                "db_table": "dim_material",
             },
         ),
         migrations.CreateModel(
-            name='DimPrograma',
+            name="DimPrograma",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('codigo_programa', models.CharField(max_length=20, unique=True)),
-                ('nome_programa', models.CharField(max_length=100)),
-                ('gerente_programa', models.CharField(blank=True, max_length=100)),
-                ('data_inicio', models.DateField(blank=True, null=True)),
-                ('data_fim_prevista', models.DateField(blank=True, null=True)),
-                ('status', models.CharField(blank=True, max_length=30)),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("codigo_programa", models.CharField(max_length=20, unique=True)),
+                ("nome_programa", models.CharField(max_length=100)),
+                ("gerente_programa", models.CharField(blank=True, max_length=100)),
+                ("data_inicio", models.DateField(blank=True, null=True)),
+                ("data_fim_prevista", models.DateField(blank=True, null=True)),
+                ("status", models.CharField(blank=True, max_length=30)),
             ],
             options={
-                'db_table': 'dim_programa',
+                "db_table": "dim_programa",
             },
         ),
         migrations.CreateModel(
-            name='DimStatusPedido',
+            name="DimStatusPedido",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nome_status', models.CharField(max_length=30, unique=True)),
-                ('categoria', models.CharField(max_length=20)),
-                ('ordem_prioridade', models.IntegerField(default=0)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("nome_status", models.CharField(max_length=30, unique=True)),
+                ("categoria", models.CharField(max_length=20)),
+                ("ordem_prioridade", models.IntegerField(default=0)),
             ],
             options={
-                'db_table': 'dim_status_pedido',
+                "db_table": "dim_status_pedido",
             },
         ),
         migrations.CreateModel(
-            name='DimTempo',
+            name="DimTempo",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('data', models.DateField(unique=True)),
-                ('ano', models.IntegerField()),
-                ('mes', models.IntegerField()),
-                ('trimestre', models.IntegerField()),
-                ('semestre', models.IntegerField()),
-                ('dia_semana', models.IntegerField()),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("data", models.DateField(unique=True)),
+                ("ano", models.IntegerField()),
+                ("mes", models.IntegerField()),
+                ("trimestre", models.IntegerField()),
+                ("semestre", models.IntegerField()),
+                ("dia_semana", models.IntegerField()),
             ],
             options={
-                'db_table': 'dim_tempo',
+                "db_table": "dim_tempo",
             },
         ),
         migrations.CreateModel(
-            name='DimProjeto',
+            name="DimProjeto",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('codigo_projeto', models.CharField(max_length=20, unique=True)),
-                ('nome_projeto', models.CharField(max_length=100)),
-                ('responsavel', models.CharField(blank=True, max_length=100)),
-                ('custo_hora', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
-                ('status', models.CharField(blank=True, max_length=30)),
-                ('programa', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='api.dimprograma')),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("codigo_projeto", models.CharField(max_length=20, unique=True)),
+                ("nome_projeto", models.CharField(max_length=100)),
+                ("responsavel", models.CharField(blank=True, max_length=100)),
+                (
+                    "custo_hora",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
+                ("status", models.CharField(blank=True, max_length=30)),
+                (
+                    "programa",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimprograma",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'dim_projeto',
+                "db_table": "dim_projeto",
             },
         ),
         migrations.CreateModel(
-            name='DimTarefa',
+            name="DimTarefa",
             fields=[
-                ('id', models.IntegerField(primary_key=True, serialize=False)),
-                ('codigo_tarefa', models.CharField(max_length=20, unique=True)),
-                ('titulo', models.CharField(max_length=200)),
-                ('responsavel', models.CharField(blank=True, max_length=100)),
-                ('horas_estimadas', models.DecimalField(blank=True, decimal_places=2, max_digits=10, null=True)),
-                ('status', models.CharField(blank=True, max_length=30)),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimprojeto')),
+                ("id", models.IntegerField(primary_key=True, serialize=False)),
+                ("codigo_tarefa", models.CharField(max_length=20, unique=True)),
+                ("titulo", models.CharField(max_length=200)),
+                ("responsavel", models.CharField(blank=True, max_length=100)),
+                (
+                    "horas_estimadas",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=10, null=True
+                    ),
+                ),
+                ("status", models.CharField(blank=True, max_length=30)),
+                (
+                    "projeto",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimprojeto"
+                    ),
+                ),
             ],
             options={
-                'db_table': 'dim_tarefa',
+                "db_table": "dim_tarefa",
             },
         ),
         migrations.CreateModel(
-            name='FatoCompras',
+            name="FatoCompras",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('quantidade_solicitada', models.IntegerField(default=0)),
-                ('quantidade_entregue', models.IntegerField(default=0)),
-                ('valor_alocado', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('valor_total', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('lead_time', models.IntegerField(blank=True, null=True)),
-                ('data_previsao_entrega', models.DateField(blank=True, null=True)),
-                ('fornecedor', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimfornecedor')),
-                ('material', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimmaterial')),
-                ('projeto', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='api.dimprojeto')),
-                ('status', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimstatuspedido')),
-                ('tempo', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimtempo')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("quantidade_solicitada", models.IntegerField(default=0)),
+                ("quantidade_entregue", models.IntegerField(default=0)),
+                (
+                    "valor_alocado",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                (
+                    "valor_total",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                ("lead_time", models.IntegerField(blank=True, null=True)),
+                ("data_previsao_entrega", models.DateField(blank=True, null=True)),
+                (
+                    "fornecedor",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimfornecedor",
+                    ),
+                ),
+                (
+                    "material",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimmaterial",
+                    ),
+                ),
+                (
+                    "projeto",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimprojeto",
+                    ),
+                ),
+                (
+                    "status",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimstatuspedido",
+                    ),
+                ),
+                (
+                    "tempo",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimtempo"
+                    ),
+                ),
             ],
             options={
-                'db_table': 'fato_compras',
-                'indexes': [models.Index(fields=['tempo'], name='fato_compra_tempo_i_23a598_idx'), models.Index(fields=['material'], name='fato_compra_materia_90115f_idx')],
+                "db_table": "fato_compras",
+                "indexes": [
+                    models.Index(
+                        fields=["tempo"], name="fato_compra_tempo_i_23a598_idx"
+                    ),
+                    models.Index(
+                        fields=["material"], name="fato_compra_materia_90115f_idx"
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='FatoEstoque',
+            name="FatoEstoque",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('quantidade_estoque', models.IntegerField(default=0)),
-                ('material', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimmaterial')),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimprojeto')),
-                ('tempo', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimtempo')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("quantidade_estoque", models.IntegerField(default=0)),
+                (
+                    "material",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimmaterial",
+                    ),
+                ),
+                (
+                    "projeto",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimprojeto"
+                    ),
+                ),
+                (
+                    "tempo",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimtempo"
+                    ),
+                ),
             ],
             options={
-                'db_table': 'fato_estoque',
-                'indexes': [models.Index(fields=['material'], name='fato_estoqu_materia_081216_idx')],
+                "db_table": "fato_estoque",
+                "indexes": [
+                    models.Index(
+                        fields=["material"], name="fato_estoqu_materia_081216_idx"
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='FatoHoras',
+            name="FatoHoras",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('horas_trabalhadas', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('custo_horas', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('funcionario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimfuncionario')),
-                ('programa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimprograma')),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimprojeto')),
-                ('tarefa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimtarefa')),
-                ('tempo', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimtempo')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "horas_trabalhadas",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                (
+                    "custo_horas",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                (
+                    "funcionario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimfuncionario",
+                    ),
+                ),
+                (
+                    "programa",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimprograma",
+                    ),
+                ),
+                (
+                    "projeto",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimprojeto"
+                    ),
+                ),
+                (
+                    "tarefa",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimtarefa"
+                    ),
+                ),
+                (
+                    "tempo",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimtempo"
+                    ),
+                ),
             ],
             options={
-                'db_table': 'fato_horas',
-                'indexes': [models.Index(fields=['tempo'], name='fato_horas_tempo_i_f87714_idx'), models.Index(fields=['projeto'], name='fato_horas_projeto_e06233_idx'), models.Index(fields=['tarefa'], name='fato_horas_tarefa__373e92_idx')],
+                "db_table": "fato_horas",
+                "indexes": [
+                    models.Index(
+                        fields=["tempo"], name="fato_horas_tempo_i_f87714_idx"
+                    ),
+                    models.Index(
+                        fields=["projeto"], name="fato_horas_projeto_e06233_idx"
+                    ),
+                    models.Index(
+                        fields=["tarefa"], name="fato_horas_tarefa__373e92_idx"
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='FatoMateriais',
+            name="FatoMateriais",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('quantidade_empenhada', models.IntegerField(default=0)),
-                ('custo_materiais', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('fornecedor', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='api.dimfornecedor')),
-                ('material', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimmaterial')),
-                ('programa', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimprograma')),
-                ('projeto', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimprojeto')),
-                ('tempo', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='api.dimtempo')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("quantidade_empenhada", models.IntegerField(default=0)),
+                (
+                    "custo_materiais",
+                    models.DecimalField(decimal_places=2, default=0, max_digits=10),
+                ),
+                (
+                    "fornecedor",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimfornecedor",
+                    ),
+                ),
+                (
+                    "material",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimmaterial",
+                    ),
+                ),
+                (
+                    "programa",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="api.dimprograma",
+                    ),
+                ),
+                (
+                    "projeto",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimprojeto"
+                    ),
+                ),
+                (
+                    "tempo",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="api.dimtempo"
+                    ),
+                ),
             ],
             options={
-                'db_table': 'fato_materiais',
-                'indexes': [models.Index(fields=['tempo'], name='fato_materi_tempo_i_0dc944_idx'), models.Index(fields=['material'], name='fato_materi_materia_612606_idx')],
+                "db_table": "fato_materiais",
+                "indexes": [
+                    models.Index(
+                        fields=["tempo"], name="fato_materi_tempo_i_0dc944_idx"
+                    ),
+                    models.Index(
+                        fields=["material"], name="fato_materi_materia_612606_idx"
+                    ),
+                ],
             },
         ),
     ]

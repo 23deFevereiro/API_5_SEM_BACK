@@ -1,9 +1,10 @@
 from django.db import models
-from .dim_tempo import DimTempo
-from .dim_projeto import DimProjeto
-from .dim_programa import DimPrograma
-from .dim_tarefa import DimTarefa
+
 from .dim_funcionario import DimFuncionario
+from .dim_programa import DimPrograma
+from .dim_projeto import DimProjeto
+from .dim_tarefa import DimTarefa
+from .dim_tempo import DimTempo
 
 
 class FatoHoras(models.Model):
@@ -16,9 +17,9 @@ class FatoHoras(models.Model):
     custo_horas = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     class Meta:
-        db_table = 'fato_horas'
+        db_table = "fato_horas"
         indexes = [
-            models.Index(fields=['tempo']),
-            models.Index(fields=['projeto']),
-            models.Index(fields=['tarefa']),
+            models.Index(fields=["tempo"]),
+            models.Index(fields=["projeto"]),
+            models.Index(fields=["tarefa"]),
         ]

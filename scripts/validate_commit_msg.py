@@ -3,9 +3,8 @@
 Valida o formato da mensagem de commit.
 
 Formatos aceitos:
-  Com card:      tipo(#123): mensagem curta em inglês
-  Sem card (RF): tipo(RF-01): mensagem curta em inglês
-  Sem card (RNF): tipo(RNF-01): mensagem curta em inglês
+  feat(SCRUM-11): mensagem curta em inglês
+  fix(SCRUM-42): mensagem curta em inglês
 """
 
 import re
@@ -24,10 +23,17 @@ ALLOWED_TYPES = [
 ]
 
 COMMIT_PATTERN = re.compile(
-    r"^(?P<type>[a-z]+)\((?P<id>#\d+|RF\d+|RNF\d+)\): (?P<msg>.+)$"
+    r"^(?P<type>[a-z]+)\((?P<id>(?:SCRUM-\d+|#\d+))\): (?P<msg>.+)$"
 )
 
 MAX_FIRST_LINE = 72
+
+SKIP_PREFIXES = (
+    "Merge pull request",
+    "Merge branch",
+    "Merge remote-tracking branch",
+    "Revert ",
+)
 
 
 def validate(commit_msg_file: str) -> None:
@@ -40,29 +46,31 @@ def validate(commit_msg_file: str) -> None:
 
     first_line = content_lines[0].rstrip()
 
+    if any(first_line.startswith(prefix) for prefix in SKIP_PREFIXES):
+        print(f"[SKIP] Auto-generated commit, skipping: {first_line}")
+        sys.exit(0)
+
     if len(first_line) > MAX_FIRST_LINE:
         _fail(
-            f"First line too long ({len(first_line)} chars). Max: {MAX_FIRST_LINE}.\n  Got: {first_line}"
+            "First line too long "
+            f"({len(first_line)} chars). Max: {MAX_FIRST_LINE}.\n"
+            f"  Got: {first_line}"
         )
 
     match = COMMIT_PATTERN.match(first_line)
     if not match:
         _fail(
-            f"""Commit message does not match the required format.
-
-  Expected:  type(#123): short message in English
-             type(RF-01): short message in English
-             type(RNF-01): short message in English
-
-  Got:       {first_line}
-
-  Allowed types: {', '.join(ALLOWED_TYPES)}"""
+            "Commit message does not match the required format.\n\n"
+            "  Expected:  type(SCRUM-123): short message in English\n\n"
+            f"  Got:       {first_line}\n\n"
+            f"  Allowed types: {', '.join(ALLOWED_TYPES)}"
         )
 
     commit_type = match.group("type")
     if commit_type not in ALLOWED_TYPES:
         _fail(
-            f"Invalid commit type: '{commit_type}'.\n  Allowed types: {', '.join(ALLOWED_TYPES)}"
+            f"Invalid commit type: '{commit_type}'.\n"
+            f"  Allowed types: {', '.join(ALLOWED_TYPES)}"
         )
 
     print(f"[OK] Commit message OK: {first_line}")

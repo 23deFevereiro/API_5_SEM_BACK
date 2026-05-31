@@ -1,14 +1,17 @@
 from django.db import models
-from .dim_tempo import DimTempo
-from .dim_projeto import DimProjeto
-from .dim_material import DimMaterial
+
 from .dim_fornecedor import DimFornecedor
+from .dim_material import DimMaterial
+from .dim_projeto import DimProjeto
 from .dim_status_pedido import DimStatusPedido
+from .dim_tempo import DimTempo
 
 
 class FatoCompras(models.Model):
     tempo = models.ForeignKey(DimTempo, on_delete=models.CASCADE)
-    projeto = models.ForeignKey(DimProjeto, on_delete=models.CASCADE, null=True, blank=True)
+    projeto = models.ForeignKey(
+        DimProjeto, on_delete=models.CASCADE, null=True, blank=True
+    )
     material = models.ForeignKey(DimMaterial, on_delete=models.CASCADE)
     fornecedor = models.ForeignKey(DimFornecedor, on_delete=models.CASCADE)
     status = models.ForeignKey(DimStatusPedido, on_delete=models.CASCADE)
@@ -20,8 +23,8 @@ class FatoCompras(models.Model):
     data_previsao_entrega = models.DateField(null=True, blank=True)
 
     class Meta:
-        db_table = 'fato_compras'
+        db_table = "fato_compras"
         indexes = [
-            models.Index(fields=['tempo']),
-            models.Index(fields=['material']),
+            models.Index(fields=["tempo"]),
+            models.Index(fields=["material"]),
         ]

@@ -12,12 +12,12 @@ repos:
     rev: v4.6.0
     hooks:
       - id: trailing-whitespace
-        exclude: \.yml$          # não toca em yamls de CI
+        exclude: \.yml$
       - id: end-of-file-fixer
-        exclude: \.yml$          # não toca em yamls de CI
+        exclude: \.yml$
       - id: check-yaml
       - id: check-merge-conflict
-      - id: debug-statements     # detecta print() / breakpoint() esquecidos
+      - id: debug-statements
       - id: no-commit-to-branch
         args: [--branch, main, --branch, master]
 
@@ -27,7 +27,7 @@ repos:
     hooks:
       - id: black
         language_version: python3
-        types: [python]          # só arquivos .py
+        types: [python]
 
   # ── Linting Python ───────────────────────────────────────────────────────────
   - repo: https://github.com/PyCQA/flake8
@@ -35,7 +35,7 @@ repos:
     hooks:
       - id: flake8
         args: [--max-line-length=88]
-        types: [python]          # só arquivos .py
+        types: [python]
 
   # ── Ordenação de imports ─────────────────────────────────────────────────────
   - repo: https://github.com/PyCQA/isort
@@ -43,7 +43,7 @@ repos:
     hooks:
       - id: isort
         args: [--profile=black]
-        types: [python]          # só arquivos .py
+        types: [python]
 
   # ── Validação da mensagem de commit ─────────────────────────────────────────
   - repo: local
