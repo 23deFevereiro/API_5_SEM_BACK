@@ -41,6 +41,16 @@ PROTECTED_BRANCHES = {"main", "master"}
 EXEMPT_BRANCHES = {"develop", "staging", "release"}
 
 
+def is_merge_commit() -> bool:
+    """Check if the current commit is a merge commit."""
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD^2"],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0
+
+
 def get_current_branch() -> str:
     github_ref = os.environ.get("GITHUB_HEAD_REF") or os.environ.get("GITHUB_REF_NAME")
     if github_ref:
@@ -62,6 +72,9 @@ def validate() -> None:
         sys.exit(0)
 
     if branch in PROTECTED_BRANCHES:
+        if is_merge_commit():
+            print(f"[OK] Merge commit to '{branch}' allowed via Pull Request.")
+            return
         _fail(
             f"Direct commits to '{branch}' are not allowed.\n"
             "  Please create a feature branch:\n"
