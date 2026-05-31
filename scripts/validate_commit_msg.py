@@ -22,9 +22,7 @@ ALLOWED_TYPES = [
     "perf",
 ]
 
-COMMIT_PATTERN = re.compile(
-    r"^(?P<type>[a-z]+)" r"\((?P<id>SCRUM-\d+)\)" r": (?P<msg>.+)$"
-)
+COMMIT_PATTERN = re.compile(r"^(?P<type>[a-z]+)\((?P<id>SCRUM-\d+)\): (?P<msg>.+)$")
 
 MAX_FIRST_LINE = 72
 

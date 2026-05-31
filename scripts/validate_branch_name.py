@@ -32,7 +32,9 @@ ALLOWED_TYPES = [
     "perf",
 ]
 
-BRANCH_PATTERN = re.compile(r"^(?P<type>[a-z]+)/(?:SCRUM-\d+-)?[a-zA-Z0-9][a-zA-Z0-9\-]*$")
+BRANCH_PATTERN = re.compile(
+    r"^(?P<type>[a-z]+)/(?:SCRUM-\d+-)?[a-zA-Z0-9][a-zA-Z0-9\-]*$"
+)
 
 PROTECTED_BRANCHES = {"main", "master"}
 
