@@ -47,6 +47,23 @@ from api.models import (
 )
 
 # ---------------------------------------------------------------------------
+# Constantes
+# ---------------------------------------------------------------------------
+
+ANA_LIMA = "Ana Lima"
+CARLOS_MELO = "Carlos Melo"
+FERNANDA_CRUZ = "Fernanda Cruz"
+RICARDO_NEVES = "Ricardo Neves"
+
+STATUS_PLANEJAMENTO = "Planejamento"
+STATUS_EM_ANDAMENTO = "Em andamento"
+STATUS_CONCLUIDO = "Concluído"
+STATUS_SUSPENSO = "Suspenso"
+STATUS_TAREFA_CONCLUIDA = "Concluída"
+
+CATEGORIA_ELETRONICO = "Eletrônico"
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -82,33 +99,33 @@ def criar_programas():
         id=1,
         codigo_programa="PGM-001",
         nome_programa="Programa Norte",
-        gerente_programa="Ana Lima",
+        gerente_programa=ANA_LIMA,
         data_inicio=date(2024, 1, 1),
         data_fim_prevista=date(2026, 12, 31),
-        status="Em andamento",
+        status=STATUS_EM_ANDAMENTO,
     )
     programa_sul = DimPrograma.objects.create(
         id=2,
         codigo_programa="PGM-002",
         nome_programa="Programa Sul",
-        gerente_programa="Carlos Melo",
+        gerente_programa=CARLOS_MELO,
         data_inicio=date(2024, 3, 1),
         data_fim_prevista=date(2026, 6, 30),
-        status="Em andamento",
+        status=STATUS_EM_ANDAMENTO,
     )
     # Programa vazio — sem projetos vinculados
     # Cobre: GET /programas/{id}/distribuicao-status/ -> {"total": 0, "status": []}
     # Cobre: GET /programas/{id}/resumo/ -> todos os campos zerados
     # Cobre: GET /programas/{id}/horas-por-projeto/ -> []
     # Cobre: GET /programas/{id}/tabela-projetos/ -> count=0, results=[]
-    DimPrograma.objects.create(
+    DimPrograma.objects.create (
         id=3,
         codigo_programa="PGM-003",
         nome_programa="Programa Vazio",
-        gerente_programa="Ricardo Neves",
+        gerente_programa=RICARDO_NEVES,
         data_inicio=date(2025, 1, 1),
         data_fim_prevista=date(2026, 12, 31),
-        status="Planejamento",
+        status=STATUS_PLANEJAMENTO,
     )
     print("   ✅ programas: 3 registros (2 com projetos, 1 vazio)")
     return programa_norte, programa_sul
@@ -120,7 +137,7 @@ def criar_projetos(programa_norte, programa_sul):
     Necessário para: TC-P01, TC-P03, TC-PR03, TC-PR06, TC-PR11
     Status cobertos: Planejamento, Em andamento, Suspenso, Concluído
     """
-    hoje = date.today()
+    
     prazo_futuro = date(2026, 12, 31)
     prazo_passado = date(2024, 6, 30)
 
@@ -130,9 +147,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-001",
             nome_projeto="Sistema de Telemetria",
             programa=programa_norte,
-            responsavel="Ana Lima",
+            responsavel=ANA_LIMA,
             custo_hora=150.0,
-            status="Em andamento",
+            status=STATUS_EM_ANDAMENTO,
             data_inicio=date(2024, 1, 1),
             data_fim_prevista=prazo_futuro,
         ),
@@ -141,9 +158,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-002",
             nome_projeto="Módulo de Navegação GPS",
             programa=programa_norte,
-            responsavel="Carlos Melo",
+            responsavel=CARLOS_MELO,
             custo_hora=120.0,
-            status="Em andamento",
+            status=STATUS_EM_ANDAMENTO,
             data_inicio=date(2024, 2, 1),
             data_fim_prevista=prazo_passado,
         ),
@@ -152,9 +169,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-003",
             nome_projeto="Central de Comunicação",
             programa=programa_norte,
-            responsavel="Ana Lima",
+            responsavel=ANA_LIMA,
             custo_hora=130.0,
-            status="Concluído",
+            status=STATUS_CONCLUIDO,
             data_inicio=date(2024, 1, 1),
             data_fim_prevista=date(2024, 12, 31),
         ),
@@ -163,9 +180,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-004",
             nome_projeto="Plataforma de Simulação",
             programa=programa_norte,
-            responsavel="Fernanda Cruz",
+            responsavel=FERNANDA_CRUZ,
             custo_hora=140.0,
-            status="Suspenso",
+            status=STATUS_SUSPENSO,
             data_inicio=date(2024, 3, 1),
             data_fim_prevista=prazo_futuro,
         ),
@@ -174,9 +191,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-005",
             nome_projeto="Sistema de Propulsão",
             programa=programa_norte,
-            responsavel="Carlos Melo",
+            responsavel=CARLOS_MELO,
             custo_hora=160.0,
-            status="Planejamento",
+            status=STATUS_PLANEJAMENTO,
             data_inicio=date(2025, 1, 1),
             data_fim_prevista=prazo_futuro,
         ),
@@ -185,9 +202,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-006",
             nome_projeto="Controle de Atitude",
             programa=programa_norte,
-            responsavel="Ana Lima",
+            responsavel=ANA_LIMA,
             custo_hora=150.0,
-            status="Concluído",
+            status=STATUS_CONCLUIDO,
             data_inicio=date(2024, 1, 1),
             data_fim_prevista=date(2025, 6, 30),
         ),
@@ -199,9 +216,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-007",
             nome_projeto="Integração de Subsistemas",
             programa=programa_sul,
-            responsavel="Ricardo Neves",
+            responsavel=RICARDO_NEVES,
             custo_hora=145.0,
-            status="Em andamento",
+            status=STATUS_EM_ANDAMENTO,
             data_inicio=date(2024, 4, 1),
             data_fim_prevista=prazo_futuro,
         ),
@@ -210,9 +227,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-008",
             nome_projeto="Módulo de Energia Solar",
             programa=programa_sul,
-            responsavel="Fernanda Cruz",
+            responsavel=FERNANDA_CRUZ,
             custo_hora=135.0,
-            status="Em andamento",
+            status=STATUS_EM_ANDAMENTO,
             data_inicio=date(2024, 5, 1),
             data_fim_prevista=prazo_passado,
         ),
@@ -221,9 +238,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-009",
             nome_projeto="Sistema de Arrefecimento",
             programa=programa_sul,
-            responsavel="Ricardo Neves",
+            responsavel=RICARDO_NEVES,
             custo_hora=125.0,
-            status="Concluído",
+            status=STATUS_CONCLUIDO,
             data_inicio=date(2024, 1, 1),
             data_fim_prevista=date(2024, 12, 31),
         ),
@@ -232,9 +249,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-010",
             nome_projeto="Banco de Dados Embarcado",
             programa=programa_sul,
-            responsavel="Fernanda Cruz",
+            responsavel=FERNANDA_CRUZ,
             custo_hora=155.0,
-            status="Suspenso",
+            status=STATUS_SUSPENSO,
             data_inicio=date(2024, 6, 1),
             data_fim_prevista=prazo_futuro,
         ),
@@ -243,9 +260,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-011",
             nome_projeto="Interface de Controle",
             programa=programa_sul,
-            responsavel="Ricardo Neves",
+            responsavel=RICARDO_NEVES,
             custo_hora=140.0,
-            status="Planejamento",
+            status=STATUS_PLANEJAMENTO,
             data_inicio=date(2025, 2, 1),
             data_fim_prevista=prazo_futuro,
         ),
@@ -254,9 +271,9 @@ def criar_projetos(programa_norte, programa_sul):
             codigo_projeto="PRJ-012",
             nome_projeto="Módulo de Telemetria II",
             programa=programa_sul,
-            responsavel="Fernanda Cruz",
+            responsavel=FERNANDA_CRUZ,
             custo_hora=150.0,
-            status="Concluído",
+            status=STATUS_CONCLUIDO,
             data_inicio=date(2024, 1, 1),
             data_fim_prevista=date(2025, 3, 31),
         ),
@@ -272,9 +289,9 @@ def criar_projetos(programa_norte, programa_sul):
         codigo_projeto="PRJ-013",
         nome_projeto="Projeto Sem Horas",
         programa=programa_norte,
-        responsavel="Ana Lima",
+        responsavel=ANA_LIMA,
         custo_hora=100.0,
-        status="Em andamento",
+        status=STATUS_EM_ANDAMENTO,
         data_inicio=date(2025, 1, 1),
         data_fim_prevista=prazo_futuro,
     )
@@ -290,9 +307,9 @@ def criar_funcionarios():
     Necessário para: TC-P05, TC-P06
     """
     funcionarios = [
-        DimFuncionario.objects.create(nome="Ana Lima"),
-        DimFuncionario.objects.create(nome="Carlos Melo"),
-        DimFuncionario.objects.create(nome="Fernanda Cruz"),
+        DimFuncionario.objects.create(nome=ANA_LIMA),
+        DimFuncionario.objects.create(nome=CARLOS_MELO),
+        DimFuncionario.objects.create(nome=FERNANDA_CRUZ),
     ]
     print("   ✅ funcionarios: 3 registros")
     return funcionarios
@@ -315,7 +332,7 @@ def criar_tarefas(projetos_norte, projetos_sul):
                 titulo=f"Tarefa 1 - {projeto.nome_projeto}",
                 responsavel=projeto.responsavel,
                 horas_estimadas=40.0,
-                status="Concluída",
+                status=STATUS_TAREFA_CONCLUIDA,
             )
         )
         tarefa_id += 1
@@ -327,7 +344,7 @@ def criar_tarefas(projetos_norte, projetos_sul):
                 titulo=f"Tarefa 2 - {projeto.nome_projeto}",
                 responsavel=projeto.responsavel,
                 horas_estimadas=20.0,
-                status="Em andamento",
+                status=STATUS_EM_ANDAMENTO,
             )
         )
         tarefa_id += 1
@@ -346,7 +363,7 @@ def criar_materiais():
             id=1,
             codigo_material="MAT-001",
             descricao="Capacitor Cerâmico 1nF 0402",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="VoltParts",
             custo_estimado=1.50,
             status="Ativo",
@@ -355,7 +372,7 @@ def criar_materiais():
             id=2,
             codigo_material="MAT-002",
             descricao="Resistor SMD 100R 0402",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="ResistorCo",
             custo_estimado=0.80,
             status="Ativo",
@@ -364,7 +381,7 @@ def criar_materiais():
             id=3,
             codigo_material="MAT-003",
             descricao="Transistor NPN 2N2222",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="SemiCo",
             custo_estimado=2.50,
             status="Ativo",
@@ -373,7 +390,7 @@ def criar_materiais():
             id=4,
             codigo_material="MAT-004",
             descricao="LED Infravermelho 940nm",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="LedTech",
             custo_estimado=1.20,
             status="Ativo",
@@ -392,7 +409,7 @@ def criar_materiais():
             id=6,
             codigo_material="MAT-006",
             descricao="Microcontrolador STM32F103",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="STMicro",
             custo_estimado=45.90,
             status="Ativo",
@@ -438,7 +455,7 @@ def criar_materiais():
             id=11,
             codigo_material="MAT-011",
             descricao="Regulador de Tensão LM7805",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="TI",
             custo_estimado=4.20,
             status="Ativo",
@@ -465,7 +482,7 @@ def criar_materiais():
             id=14,
             codigo_material="MAT-014",
             descricao="FPGA Xilinx Artix-7",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="Xilinx",
             custo_estimado=780.00,
             status="Ativo",
@@ -487,7 +504,7 @@ def criar_materiais():
             id=16,
             codigo_material="MAT-016",
             descricao="Material Sem Compras",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             fabricante="TestFab",
             custo_estimado=10.00,
             status="Ativo",
@@ -509,7 +526,7 @@ def criar_fornecedores():
             razao_social="VoltParts 64 Ltda",
             cidade="São Paulo",
             estado="SP",
-            categoria="Eletrônico",
+            categoria=CATEGORIA_ELETRONICO,
             status="Ativo",
         ),
         DimFornecedor.objects.create(
@@ -539,7 +556,7 @@ def criar_status_pedido():
         ),
         DimStatusPedido.objects.create(
             nome_status="Entregue",
-            categoria="Concluído",
+            categoria=STATUS_CONCLUIDO,
             ordem_prioridade=2,
         ),
         DimStatusPedido.objects.create(
