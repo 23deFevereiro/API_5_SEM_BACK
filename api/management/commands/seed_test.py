@@ -67,6 +67,7 @@ CATEGORIA_ELETRONICO = "Eletrônico"
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_tempo(data: date) -> DimTempo:
     """Cria ou retorna um DimTempo para a data informada."""
     tempo_id = int(data.strftime("%Y%m%d"))
@@ -87,6 +88,7 @@ def _make_tempo(data: date) -> DimTempo:
 # ---------------------------------------------------------------------------
 # Criação das entidades
 # ---------------------------------------------------------------------------
+
 
 def criar_programas():
     """
@@ -118,7 +120,7 @@ def criar_programas():
     # Cobre: GET /programas/{id}/resumo/ -> todos os campos zerados
     # Cobre: GET /programas/{id}/horas-por-projeto/ -> []
     # Cobre: GET /programas/{id}/tabela-projetos/ -> count=0, results=[]
-    DimPrograma.objects.create (
+    DimPrograma.objects.create(
         id=3,
         codigo_programa="PGM-003",
         nome_programa="Programa Vazio",
@@ -137,7 +139,7 @@ def criar_projetos(programa_norte, programa_sul):
     Necessário para: TC-P01, TC-P03, TC-PR03, TC-PR06, TC-PR11
     Status cobertos: Planejamento, Em andamento, Suspenso, Concluído
     """
-    
+
     prazo_futuro = date(2026, 12, 31)
     prazo_passado = date(2024, 6, 30)
 
@@ -630,7 +632,9 @@ def criar_fato_horas(projetos_norte, projetos_sul, funcionarios, programas):
     print(f"   ✅ fato_horas: {registros} registros")
 
 
-def criar_fato_materiais(projetos_norte, projetos_sul, materiais, fornecedores, programas):
+def criar_fato_materiais(
+    projetos_norte, projetos_sul, materiais, fornecedores, programas
+):
     """
     Empenhos de materiais por projeto.
     Necessário para: TC-P04, TC-P05, TC-C04
@@ -766,23 +770,23 @@ def criar_fato_estoque(materiais, projetos_norte, projetos_sul):
 
     estoques = [
         # Críticos (dias_ate_acabar <= 30)
-        (materiais[0],  projeto_norte, 0),    # MAT-001: zerado → Urgente
-        (materiais[1],  projeto_norte, 5),    # MAT-002: muito baixo → Urgente
-        (materiais[2],  projeto_norte, 30),   # MAT-003: boundary exato → Urgente
-        (materiais[3],  projeto_norte, 10),   # MAT-004: baixo → Urgente
-        (materiais[4],  projeto_norte, 15),   # MAT-005: baixo → Urgente
+        (materiais[0], projeto_norte, 0),  # MAT-001: zerado → Urgente
+        (materiais[1], projeto_norte, 5),  # MAT-002: muito baixo → Urgente
+        (materiais[2], projeto_norte, 30),  # MAT-003: boundary exato → Urgente
+        (materiais[3], projeto_norte, 10),  # MAT-004: baixo → Urgente
+        (materiais[4], projeto_norte, 15),  # MAT-005: baixo → Urgente
         # Atenção (dias_ate_acabar entre 31 e 60)
-        (materiais[5],  projeto_norte, 50),   # MAT-006: médio → Atenção
-        (materiais[6],  projeto_sul,   45),   # MAT-007: médio → Atenção
-        (materiais[7],  projeto_sul,   55),   # MAT-008: médio → Atenção
-        (materiais[8],  projeto_sul,   40),   # MAT-009: médio → Atenção
-        (materiais[9],  projeto_sul,   35),   # MAT-010: médio → Atenção
+        (materiais[5], projeto_norte, 50),  # MAT-006: médio → Atenção
+        (materiais[6], projeto_sul, 45),  # MAT-007: médio → Atenção
+        (materiais[7], projeto_sul, 55),  # MAT-008: médio → Atenção
+        (materiais[8], projeto_sul, 40),  # MAT-009: médio → Atenção
+        (materiais[9], projeto_sul, 35),  # MAT-010: médio → Atenção
         # Ok (dias_ate_acabar > 60)
         (materiais[10], projeto_norte, 200),  # MAT-011: alto → Ok
         (materiais[11], projeto_norte, 500),  # MAT-012: alto → Ok
-        (materiais[12], projeto_sul,   300),  # MAT-013: alto → Ok
-        (materiais[13], projeto_sul,   150),  # MAT-014: alto → Ok
-        (materiais[14], projeto_sul,   400),  # MAT-015: alto → Ok
+        (materiais[12], projeto_sul, 300),  # MAT-013: alto → Ok
+        (materiais[13], projeto_sul, 150),  # MAT-014: alto → Ok
+        (materiais[14], projeto_sul, 400),  # MAT-015: alto → Ok
     ]
 
     registros = 0
@@ -801,6 +805,7 @@ def criar_fato_estoque(materiais, projetos_norte, projetos_sul):
 # ---------------------------------------------------------------------------
 # Limpeza do banco
 # ---------------------------------------------------------------------------
+
 
 def limpar_banco():
     """
@@ -826,6 +831,7 @@ def limpar_banco():
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def run():
     print("\n📦 Seed de Testes — populando banco com dados controlados...\n")
 
@@ -844,16 +850,22 @@ def run():
     print("\n   📊 Criando fatos...")
     programas = (programa_norte, programa_sul)
     criar_fato_horas(projetos_norte, projetos_sul, funcionarios, programas)
-    criar_fato_materiais(projetos_norte, projetos_sul, materiais, fornecedores, programas)
+    criar_fato_materiais(
+        projetos_norte, projetos_sul, materiais, fornecedores, programas
+    )
     criar_fato_compras(materiais, fornecedores, projetos_norte, status_list)
     criar_fato_estoque(materiais, projetos_norte, projetos_sul)
 
     print("\n✅ Seed de testes concluída com sucesso!")
     print("\nResumo:")
     print(f"   Programas:      {DimPrograma.objects.count()} (2 com projetos, 1 vazio)")
-    print(f"   Projetos:       {DimProjeto.objects.count()} (12 com horas, 1 sem horas)")
+    print(
+        f"   Projetos:       {DimProjeto.objects.count()} (12 com horas, 1 sem horas)"
+    )
     print(f"   Funcionários:   {DimFuncionario.objects.count()}")
-    print(f"   Materiais:      {DimMaterial.objects.count()} (15 com estoque, 1 sem compras)")
+    print(
+        f"   Materiais:      {DimMaterial.objects.count()} (15 com estoque, 1 sem compras)"
+    )
     print(f"   Fornecedores:   {DimFornecedor.objects.count()}")
     print(f"   Status pedido:  {DimStatusPedido.objects.count()}")
     print(f"   Tarefas:        {DimTarefa.objects.count()}")
@@ -865,9 +877,15 @@ def run():
     projeto_sem_horas = DimProjeto.objects.get(codigo_projeto="PRJ-013")
     material_sem_compras = DimMaterial.objects.get(codigo_material="MAT-016")
     print("\nCenários especiais (ids para usar nos testes):")
-    print(f"   Programa vazio:       id={programa_vazio.id} ({programa_vazio.nome_programa})")
-    print(f"   Projeto sem horas:    id={projeto_sem_horas.id} ({projeto_sem_horas.nome_projeto})")
-    print(f"   Material sem compras: id={material_sem_compras.id} ({material_sem_compras.descricao})")
+    print(
+        f"   Programa vazio:       id={programa_vazio.id} ({programa_vazio.nome_programa})"
+    )
+    print(
+        f"   Projeto sem horas:    id={projeto_sem_horas.id} ({projeto_sem_horas.nome_projeto})"
+    )
+    print(
+        f"   Material sem compras: id={material_sem_compras.id} ({material_sem_compras.descricao})"
+    )
 
 
 class Command(BaseCommand):
