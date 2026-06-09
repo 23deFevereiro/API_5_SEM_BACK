@@ -41,21 +41,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           cache: 'pip'
-          
+
       - name: Install dependencies
-        
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Run migrations
+        run: python manage.py migrate
+
+      - name: Run seed de testes
+        run: python manage.py seed_test
+
       - name: Run tests with coverage
-        
         run: |
           pytest --cov=api --cov-report=xml:coverage.xml --cov-fail-under=80
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d
         env:
@@ -63,4 +70,4 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
         with:
           args: >
-            -Dsonar.python.coverage.reportPaths=coverage.xml  
+            -Dsonar.python.coverage.reportPaths=coverage.xml
