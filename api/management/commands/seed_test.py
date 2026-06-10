@@ -94,8 +94,10 @@ def criar_programas():
     """
     3 programas:
     - PGM-001 e PGM-002: com projetos e dados — cobrem cenários happy path
-    - PGM-003: sem projetos — cobre cenário distribuicao-status vazio (total=0, status=[])
-    Necessário para: TC-PR01, TC-PR02, TC-PR03, TC-PR04, TC-PR05, TC-PR09
+    - PGM-003: sem projetos
+      — cobre cenário distribuicao-status vazio (total=0, status=[])
+    Necessário para:
+    TC-PR01, TC-PR02, TC-PR03, TC-PR04, TC-PR05, TC-PR09
     """
     programa_norte = DimPrograma.objects.create(
         id=1,
@@ -864,7 +866,9 @@ def run():
     )
     print(f"   Funcionários:   {DimFuncionario.objects.count()}")
     print(
-        f"   Materiais:      {DimMaterial.objects.count()} (15 com estoque, 1 sem compras)"
+        "   Materiais:      "
+        f"{DimMaterial.objects.count()} "
+        "(15 com estoque, 1 sem compras)"
     )
     print(f"   Fornecedores:   {DimFornecedor.objects.count()}")
     print(f"   Status pedido:  {DimStatusPedido.objects.count()}")
@@ -877,19 +881,31 @@ def run():
     projeto_sem_horas = DimProjeto.objects.get(codigo_projeto="PRJ-013")
     material_sem_compras = DimMaterial.objects.get(codigo_material="MAT-016")
     print("\nCenários especiais (ids para usar nos testes):")
+
     print(
-        f"   Programa vazio:       id={programa_vazio.id} ({programa_vazio.nome_programa})"
+        "   Programa vazio:       "
+        f"id={programa_vazio.id} "
+        f"({programa_vazio.nome_programa})"
     )
+
     print(
-        f"   Projeto sem horas:    id={projeto_sem_horas.id} ({projeto_sem_horas.nome_projeto})"
+        "   Projeto sem horas:    "
+        f"id={projeto_sem_horas.id} "
+        f"({projeto_sem_horas.nome_projeto})"
     )
+
     print(
-        f"   Material sem compras: id={material_sem_compras.id} ({material_sem_compras.descricao})"
+        "   Material sem compras: "
+        f"id={material_sem_compras.id} "
+        f"({material_sem_compras.descricao})"
     )
 
 
 class Command(BaseCommand):
-    help = "Seed de testes: popula o banco com dados mínimos e controlados para testes de integração"
+    help = (
+        "Seed de testes: popula o banco com dados mínimos "
+        "e controlados para testes de integração"
+    )
 
     def handle(self, *args, **options):
         run()
