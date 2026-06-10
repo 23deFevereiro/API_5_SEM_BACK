@@ -62,7 +62,8 @@ class TestGetEstoqueTabelaView:
         resp = client.get("/api/compras/estoque-tabela/?critico_max=abc")
         assert resp.status_code == 400
 
-    # TC-C04 — Cenário: Parâmetros inválidos (page=abc, 400 + body {'error': 'Parâmetros inválidos'})
+    # TC-C04 — Cenário: Parâmetros inválidos (page=abc,
+    # 400 + body {'error': 'Parâmetros inválidos'})
     def test_page_invalida_retorna_400(self, client):
         resp = client.get("/api/compras/estoque-tabela/?page=xyz")
         assert resp.status_code == 400

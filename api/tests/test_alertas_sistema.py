@@ -30,7 +30,8 @@ class TestGetAlertasView:
         assert isinstance(data["criticos"], list)
         assert isinstance(data["atencao"], list)
 
-    # TC-C03 — Cenário: Nenhum material em estado crítico ou atenção ({'criticos': [], 'atencao': []})
+    # TC-C03 — Cenário: Nenhum material em estado crítico ou atenção
+    # Exemplo: {'criticos': [], 'atencao': []}
     def test_retorna_listas_vazias_sem_dados(self, client):
         resp = client.get("/api/compras/alertas/")
         data = resp.json()
@@ -60,7 +61,8 @@ class TestGetAlertasView:
         assert resp.status_code == 400
         assert resp.json() == {"error": "critico_max e atencao_max devem ser inteiros"}
 
-    # TC-C03 — Cenário: critico_max maior que atencao_max (sistema ajusta automaticamente, status 200)
+    # TC-C03 — Cenário: critico_max maior que atencao_max (sistema ajusta
+    # automaticamente, status 200)
     def test_atencao_max_ajustado_quando_menor_que_critico_max(self, client):
         resp = client.get("/api/compras/alertas/?critico_max=30&atencao_max=10")
         assert resp.status_code == 200

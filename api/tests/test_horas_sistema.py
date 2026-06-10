@@ -117,7 +117,8 @@ class TestHorasFuncionarioErrosSistema:
         response = api_client.get(url, {"data_inicio": "31-13-9999"})
         assert response.status_code == 400
 
-    # TC-P05 — Cenário: data_fim em formato inválido (400 + mensagem de erro da especificação)
+    # TC-P05 — Cenário: data_fim em formato inválido
+    # (400 + mensagem de erro da especificação)
     def test_retorna_400_para_data_fim_invalida(self, api_client, projeto):
         url = reverse("horas_por_funcionario", args=[projeto.id])
         response = api_client.get(url, {"data_fim": "2026/01/31"})

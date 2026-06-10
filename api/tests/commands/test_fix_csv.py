@@ -1,4 +1,5 @@
-# Fora da especificação de testes de integração: testes do comando de correção de CSV (infraestrutura).
+# Fora da especificação de testes de integração: testes do comando de correção de
+# CSV (infraestrutura).
 import os
 import sys
 from datetime import date, datetime

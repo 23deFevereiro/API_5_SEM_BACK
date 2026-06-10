@@ -140,7 +140,8 @@ class TestResumoProjetoSistema:
         response = api_client.get(url)
         assert response.status_code == 200
 
-    # TC-P03 — Cenário: Projeto inexistente (404 + body {'error': 'Projeto não encontrado'})
+    # TC-P03 — Cenário: Projeto inexistente
+    # (404 + body {'error': 'Projeto não encontrado'})
     def test_retorna_404_para_projeto_inexistente(self, api_client):
         url = reverse("resumo_projeto", args=[99999])
         response = api_client.get(url)
@@ -201,7 +202,8 @@ class TestMateriaisProjetoSistema:
         assert data["count"] == 0
         assert data["results"] == []
 
-    # TC-P04 — Cenário: Projeto inexistente (404 + body {'error': 'Projeto não encontrado'})
+    # TC-P04 — Cenário: Projeto inexistente
+    # (404 + body {'error': 'Projeto não encontrado'})
     def test_retorna_404_para_projeto_inexistente(self, api_client):
         url = reverse("materiais_projeto", args=[9999])
         response = api_client.get(url)
@@ -260,7 +262,8 @@ class TestProjetoErrosSistema:
             response = api_client.get(url)
         assert response.status_code == 500
 
-    # TC-P04 — Cenário: data_inicio em formato inválido (400 + mensagem de erro da especificação)
+    # TC-P04 — Cenário: data_inicio em formato inválido
+    # (400 + mensagem de erro da especificação)
     def test_materiais_retorna_400_para_data_invalida(self, api_client, projeto):
         url = reverse("materiais_projeto", args=[projeto.id])
         response = api_client.get(url, {"data_inicio": "31-01-2026"})

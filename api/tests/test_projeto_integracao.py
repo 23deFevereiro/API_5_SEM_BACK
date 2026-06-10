@@ -102,14 +102,16 @@ class TestListarProjetos:
 @pytest.mark.django_db
 class TestGetResumoProjeto:
 
-    # Complementar ao TC-P03: projeto sem dados retorna custo_total e tempo_total zerados
+    # Complementar ao TC-P03: projeto sem dados retorna
+    # custo_total e tempo_total zerados
     def test_retorna_zeros_quando_projeto_sem_dados(self):
         projeto = baker.make("api.DimProjeto")
         resultado = get_resumo_projeto(projeto.id)
         assert resultado["custo_total"] == approx(0.0)
         assert resultado["tempo_total"] == approx(0.0)
 
-    # TC-P03 — Cenário: Retornar resumo de projeto existente (cálculo de custo_total com materiais)
+    # TC-P03 — Cenário: Retornar resumo de projeto existente
+    # (cálculo de custo_total com materiais)
     def test_calcula_custo_materiais_corretamente(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", programa=programa)
@@ -129,7 +131,8 @@ class TestGetResumoProjeto:
         resultado = get_resumo_projeto(projeto.id)
         assert resultado["custo_total"] == approx(500.0)
 
-    # TC-P03 — Cenário: Retornar resumo de projeto existente (custo_total consolidado: mão de obra + materiais)
+    # TC-P03 — Cenário: Retornar resumo de projeto existente
+    # (custo_total consolidado: mão de obra + materiais)
     def test_calcula_custo_total_com_mao_de_obra_e_materiais(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", programa=programa)
@@ -474,7 +477,8 @@ class TestGetMateriaisProjeto:
         assert resultado["count"] == 1
         assert resultado["results"][0]["quantidade"] == 30
 
-    # TC-P04 — Cenário: Retornar primeira página (15 materiais, page_size=10, total_pages=2)
+    # TC-P04 — Cenário: Retornar primeira página
+    # (15 materiais, page_size=10, total_pages=2)
     def test_paginacao_retorna_page_size_correto(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", programa=programa)

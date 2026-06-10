@@ -28,7 +28,8 @@ def make_tempo(data_str, pk=None):
 @pytest.mark.django_db
 class TestGetAlertasMateriais:
 
-    # TC-C03 — Cenário: Nenhum material em estado crítico ou atenção (criticos=[] e atencao=[])
+    # TC-C03 — Cenário: Nenhum material em estado crítico ou atenção
+    # (criticos=[] e atencao=[])
     def test_retorna_listas_vazias_sem_dados(self):
         resultado = get_alertas_materiais()
         assert resultado == {"criticos": [], "atencao": []}
@@ -39,7 +40,8 @@ class TestGetAlertasMateriais:
         resultado = get_alertas_materiais()
         assert resultado == {"criticos": [], "atencao": []}
 
-    # TC-C03 — Cenário: Retornar alertas com limiares padrão (material sem lead_time histórico)
+    # TC-C03 — Cenário: Retornar alertas com limiares padrão
+    # (material sem lead_time histórico)
     def test_classifica_material_sem_lead_time_historico(self):
         """Material sem lead_time histórico deve ser classificado
         usando dias_cobertura diretamente."""

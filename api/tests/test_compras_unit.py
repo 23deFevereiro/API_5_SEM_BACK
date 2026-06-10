@@ -40,7 +40,8 @@ class TestListarMateriaisComCompras:
         assert resultado[0]["codigo_material"] == "M001"
         assert resultado[0]["descricao"] == "Capacitor"
 
-    # TC-C01 — Cenário: Nenhum material com compra registrada (material sem fatos não aparece)
+    # TC-C01 — Cenário: Nenhum material com compra registrada
+    # (material sem fatos não aparece)
     def test_nao_retorna_material_sem_fatos(self):
         baker.make("api.DimMaterial", codigo_material="SEM", descricao="Sem compra")
         resultado = listar_materiais_com_compras()
@@ -267,7 +268,8 @@ class TestGetLeadTimePorMaterial:
         resultado = get_lead_time_por_material(material.id)
         assert resultado == []
 
-    # TC-C02 — Contrato: fornecedor, lead_time, valor_unidade, valor_total, status, categoria_status e data_pedido
+    # TC-C02 — Contrato: fornecedor, lead_time, valor_unidade, valor_total,
+    # status, categoria_status e data_pedido
     def test_retorna_campos_corretos(self):
         material = baker.make("api.DimMaterial")
         self._criar_compra(

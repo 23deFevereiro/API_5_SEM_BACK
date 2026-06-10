@@ -1,4 +1,5 @@
-# Fora da especificação de testes de integração: testes do comando de banco de desenvolvimento (infraestrutura).
+# Fora da especificação de testes de integração: testes do comando de banco de
+# desenvolvimento (infraestrutura).
 import importlib
 import os
 import sys

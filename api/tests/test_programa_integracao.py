@@ -81,7 +81,8 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado["total_projetos"] == 3
 
-    # TC-PR01 — Contrato da listagem de programas (observação: exercita listar_programas)
+    # TC-PR01 — Contrato da listagem de programas
+    # (observação: exercita listar_programas)
     def test_retorna_campos_corretos(self):
         baker.make("api.DimPrograma", nome_programa="Defesa")
         resultado = listar_programas()
@@ -203,7 +204,8 @@ class TestGetDistribuicaoStatus:
         assert resultado["total"] == 0
         assert resultado["status"] == []
 
-    # TC-PR03 — Cenário: Todos os projetos com o mesmo status (quantidade=3, percentual=100.0)
+    # TC-PR03 — Cenário: Todos os projetos com o mesmo status
+    # (quantidade=3, percentual=100.0)
     def test_retorna_apenas_status_com_projetos(self):
         programa = baker.make("api.DimPrograma")
         for i in range(1, 4):
@@ -318,7 +320,8 @@ class TestGetBurnupHorasProgramas:
         resultado = get_burnup_horas_programas()
         assert resultado == []
 
-    # TC-PR04 — Cenário: Retornar série temporal de horas por programa (agrupamento mensal)
+    # TC-PR04 — Cenário: Retornar série temporal de horas por programa
+    # (agrupamento mensal)
     def test_agrupa_horas_por_mes_e_ano(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -1129,7 +1132,8 @@ class TestGetTabelaProjetos:
         assert item["responsavel"] == "João"
         assert item["status"] == "Em andamento"
 
-    # TC-PR06 — Cenário: Retornar primeira página (12 projetos, page_size=10, total_pages=2)
+    # TC-PR06 — Cenário: Retornar primeira página
+    # (12 projetos, page_size=10, total_pages=2)
     def test_retorna_paginacao_da_tabela(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", programa=programa, _quantity=12)
@@ -1140,7 +1144,8 @@ class TestGetTabelaProjetos:
         assert resultado["total_pages"] == 2
         assert len(resultado["results"]) == 2
 
-    # TC-PR06 — Contrato: data_ultima_atividade (YYYY-MM-DD) e dias_desde_ultima_atividade (integer)
+    # TC-PR06 — Contrato: data_ultima_atividade (YYYY-MM-DD) e
+    # dias_desde_ultima_atividade (integer)
     def test_retorna_data_ultima_atividade_quando_ha_horas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -1221,7 +1226,8 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "check-verde"
 
-    # TC-PR06 — Contrato: campo acao — corrigir-status (tarefas concluídas, projeto em andamento)
+    # TC-PR06 — Contrato: campo acao — corrigir-status
+    # (tarefas concluídas, projeto em andamento)
     def test_acao_corrigir_status_quando_todas_concluidas_e_em_andamento(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1244,7 +1250,8 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "corrigir-status"
 
-    # TC-PR06 — Contrato: campo acao — corrigir-status (tarefas concluídas, projeto em planejamento)
+    # TC-PR06 — Contrato: campo acao — corrigir-status
+    # (tarefas concluídas, projeto em planejamento)
     def test_acao_corrigir_status_quando_todas_concluidas_e_planejamento(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(

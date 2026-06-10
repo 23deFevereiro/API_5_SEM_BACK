@@ -1,4 +1,5 @@
-# Fora da especificação de testes de integração: valida a documentação Swagger/OpenAPI da API.
+# Fora da especificação de testes de integração: valida a documentação
+# Swagger/OpenAPI da API.
 import pytest
 from django.urls import reverse
 

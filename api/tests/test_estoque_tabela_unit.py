@@ -460,7 +460,8 @@ class TestGetEstoqueTabela:
         assert item["dias_ate_acabar"] == 0
         assert item["status"] == "Urgente"
 
-    # TC-C04 — Cenário: Limiar de boundary — dias_ate_acabar igual a critico_max classifica como crítico (limite usa <=)
+    # TC-C04 — Cenário: Limiar de boundary — dias_ate_acabar igual a
+    # critico_max classifica como crítico (limite usa <=)
     def test_limiar_boundary_dias_iguais_a_critico_max_classifica_como_critico(self):
         """dias_ate_acabar exatamente igual a critico_max → status crítico
         ("Urgente"). Valida que o limite usa <= e não <."""

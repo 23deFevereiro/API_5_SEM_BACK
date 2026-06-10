@@ -50,7 +50,8 @@ class TestResumoProgramaSistema:
         response = api_client.get(url)
         assert response.status_code == 200
 
-    # TC-PR02 — Cenário: Programa inexistente (404 + body {'error': 'Programa não encontrado'})
+    # TC-PR02 — Cenário: Programa inexistente
+    # (404 + body {'error': 'Programa não encontrado'})
     def test_retorna_404_para_programa_inexistente(self, api_client):
         url = reverse("resumo_programa", args=[99999])
         response = api_client.get(url)
@@ -63,7 +64,8 @@ class TestResumoProgramaSistema:
         response = api_client.post(url)
         assert response.status_code == 405
 
-    # TC-PR02 — Contrato: total_projetos, horas_estimadas, horas_realizadas, custo_estimado e custo_real
+    # TC-PR02 — Contrato: total_projetos, horas_estimadas, horas_realizadas,
+    # custo_estimado e custo_real
     def test_retorna_estrutura_correta(self, api_client, programa):
         url = reverse("resumo_programa", args=[programa.id])
         response = api_client.get(url)
@@ -147,7 +149,8 @@ class TestBurnupHorasProgramasSistema:
         response = api_client.get(url)
         assert isinstance(response.json(), list)
 
-    # TC-PR04 — Cenário/Contrato: série temporal com date_str e values{codigo_programa, nome_programa, horas}
+    # TC-PR04 — Cenário/Contrato: série temporal com date_str e
+    # values{codigo_programa, nome_programa, horas}
     def test_estrutura_dos_grupos_e_valores(self, api_client):
         from datetime import date
 
@@ -214,7 +217,8 @@ class TestBurnupCustoProgramasSistema:
         response = api_client.get(url)
         assert isinstance(response.json(), list)
 
-    # TC-PR05 — Cenário/Contrato: série temporal com date_str e values{codigo_programa, nome_programa, custo}
+    # TC-PR05 — Cenário/Contrato: série temporal com date_str e
+    # values{codigo_programa, nome_programa, custo}
     def test_estrutura_dos_grupos_e_valores(self, api_client):
         from datetime import date
 
@@ -262,7 +266,8 @@ class TestTabelaProjetosSistema:
         response = api_client.get(url)
         assert response.status_code == 200
 
-    # TC-PR06 — Cenário: Programa inexistente (404 + body {'error': 'Programa não encontrado'})
+    # TC-PR06 — Cenário: Programa inexistente
+    # (404 + body {'error': 'Programa não encontrado'})
     def test_retorna_404_para_programa_inexistente(self, api_client):
         url = reverse("tabela_projetos", args=[99999])
         response = api_client.get(url)
@@ -452,7 +457,8 @@ class TestHorasPorProjetoSistema:
         response = api_client.get(url)
         assert response.status_code == 200
 
-    # TC-PR07 — Cenário: Programa inexistente (404 + body {'error': 'Programa não encontrado'})
+    # TC-PR07 — Cenário: Programa inexistente
+    # (404 + body {'error': 'Programa não encontrado'})
     def test_retorna_404_para_programa_inexistente(self, api_client):
         url = reverse("horas_por_projeto", args=[99999])
         response = api_client.get(url)

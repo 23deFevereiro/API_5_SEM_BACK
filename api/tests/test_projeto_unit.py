@@ -7,7 +7,8 @@ from api.utils.pagination import calcular_paginacao, normalizar_pagina
 
 class TestNormalizarPagina:
 
-    # Suporte aos contratos paginados (TC-P04/TC-P06/TC-PR06/TC-C04): página 0 normalizada para 1
+    # Suporte aos contratos paginados (TC-P04/TC-P06/TC-PR06/TC-C04):
+    # página 0 normalizada para 1
     def test_valor_zero_retorna_1(self):
         assert normalizar_pagina(0) == 1
 
@@ -143,7 +144,8 @@ class TestParseData:
         resultado = _parse_data("2025-01-15", "data_inicio")
         assert resultado == date(2025, 1, 15)
 
-    # Suporte aos cenários de data inválida (TC-P04/TC-P05/TC-P06): formato inválido gera erro 400 na view
+    # Suporte aos cenários de data inválida (TC-P04/TC-P05/TC-P06):
+    # formato inválido gera erro 400 na view
     def test_levanta_value_error_quando_formato_invalido(self):
         from api.views.view_utils import _parse_data
 

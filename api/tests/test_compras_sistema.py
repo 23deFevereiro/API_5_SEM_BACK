@@ -75,14 +75,16 @@ class TestListarMateriaisComprasSistema:
 @pytest.mark.django_db
 class TestLeadTimeSistema:
 
-    # TC-C02 — Cenário: material_id ausente (400 + body {'error': 'material_id é obrigatório'})
+    # TC-C02 — Cenário: material_id ausente
+    # (400 + body {'error': 'material_id é obrigatório'})
     def test_retorna_400_sem_material_id(self, api_client):
         url = reverse("compras_lead_time")
         response = api_client.get(url)
         assert response.status_code == 400
         assert response.json() == {"error": "material_id é obrigatório"}
 
-    # TC-C02 — Cenário: material_id não numérico (400 + body {'error': 'material_id inválido'})
+    # TC-C02 — Cenário: material_id não numérico
+    # (400 + body {'error': 'material_id inválido'})
     def test_retorna_400_para_material_id_invalido(self, api_client):
         url = reverse("compras_lead_time")
         response = api_client.get(url, {"material_id": "abc"})
