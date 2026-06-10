@@ -19,15 +19,18 @@ from api.services.programa_svc import (
 @pytest.mark.django_db
 class TestListarProgramas:
 
+    # TC-PR01 — Cenário: Nenhum programa cadastrado (camada de serviço)
     def test_retorna_lista_vazia_quando_nao_ha_programas(self):
         resultado = listar_programas()
         assert resultado == []
 
+    # TC-PR01 — Cenário: Retornar todos os programas (camada de serviço)
     def test_retorna_programas_quando_existem(self):
         baker.make("api.DimPrograma", _quantity=3)
         resultado = listar_programas()
         assert len(resultado) == 3
 
+    # TC-PR01 — Cenário: Filtrar por search (camada de serviço)
     def test_filtra_por_nome_quando_search_informado(self):
         baker.make("api.DimPrograma", nome_programa="Programa Alpha")
         baker.make("api.DimPrograma", nome_programa="Programa Beta")
@@ -35,6 +38,7 @@ class TestListarProgramas:
         assert len(resultado) == 1
         assert resultado[0]["nome_programa"] == "Programa Alpha"
 
+    # TC-PR01 — Contrato: cada item possui id, codigo_programa e nome_programa
     def test_retorna_campos_id_e_nome(self):
         baker.make("api.DimPrograma", nome_programa="Aeroespacial")
         resultado = listar_programas()
@@ -58,6 +62,7 @@ class TestGetResumoProjeto:
             dia_semana=0,
         )
 
+    # Complementar ao TC-PR02: programa sem dados retorna campos zerados
     def test_retorna_zeros_quando_programa_sem_dados(self):
         programa = baker.make("api.DimPrograma")
         resultado = get_resumo_programa(programa.id)
@@ -67,6 +72,7 @@ class TestGetResumoProjeto:
         assert resultado["custo_estimado"] == approx(0.0)
         assert resultado["custo_real"] == approx(0.0)
 
+    # TC-PR02 — Cenário: Retornar resumo de programa existente (total_projetos)
     def test_conta_total_projetos_corretamente(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa)
@@ -75,12 +81,14 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado["total_projetos"] == 3
 
+    # TC-PR01 — Contrato da listagem de programas (observação: exercita listar_programas)
     def test_retorna_campos_corretos(self):
         baker.make("api.DimPrograma", nome_programa="Defesa")
         resultado = listar_programas()
         assert len(resultado) == 1
         assert resultado[0]["nome_programa"] == "Defesa"
 
+    # TC-PR02 — Cenário: Retornar resumo de programa existente (horas_realizadas)
     def test_calcula_horas_realizadas_corretamente(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -104,6 +112,7 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado["horas_realizadas"] == approx(12.0)
 
+    # TC-PR02 — Cenário: Retornar resumo (custo_estimado com mão de obra)
     def test_calcula_custo_estimado_mao_de_obra(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -119,6 +128,7 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado["custo_estimado"] == approx(500.0)
 
+    # TC-PR02 — Cenário: Retornar resumo (custo_estimado com materiais)
     def test_calcula_custo_estimado_materiais(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -133,6 +143,7 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado["custo_estimado"] == approx(500.0)
 
+    # TC-PR02 — Cenário: Retornar resumo (custo_real com mão de obra)
     def test_calcula_custo_real_mao_de_obra(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -148,6 +159,7 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado["custo_real"] == approx(500.0)
 
+    # Complementar ao TC-PR02: compras canceladas ficam fora do custo_real
     def test_exclui_compras_canceladas_do_custo_real(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -171,6 +183,7 @@ class TestGetResumoProjeto:
         resultado = get_resumo_programa(programa.id)
         assert resultado["custo_real"] == approx(500.0)
 
+    # Complementar ao TC-PR02: dados de outro programa não vazam
     def test_nao_inclui_dados_de_outro_programa(self):
         programa1 = baker.make("api.DimPrograma")
         programa2 = baker.make("api.DimPrograma")
@@ -183,20 +196,26 @@ class TestGetResumoProjeto:
 @pytest.mark.django_db
 class TestGetDistribuicaoStatus:
 
+    # TC-PR03 — Cenário: Programa sem projetos (total=0 e status=[])
     def test_retorna_total_zero_quando_programa_sem_projetos(self):
         programa = baker.make("api.DimPrograma")
         resultado = get_distribuicao_status(programa.id)
         assert resultado["total"] == 0
         assert resultado["status"] == []
 
+    # TC-PR03 — Cenário: Todos os projetos com o mesmo status (quantidade=3, percentual=100.0)
     def test_retorna_apenas_status_com_projetos(self):
         programa = baker.make("api.DimPrograma")
         for i in range(1, 4):
             baker.make("api.DimProjeto", id=i, programa=programa, status="Planejamento")
         resultado = get_distribuicao_status(programa.id)
+        assert resultado["total"] == 3
         assert len(resultado["status"]) == 1
         assert resultado["status"][0]["status"] == "Planejamento"
+        assert resultado["status"][0]["quantidade"] == 3
+        assert resultado["status"][0]["percentual"] == approx(100.0)
 
+    # TC-PR03 — Cenário: Retornar distribuição (campo total)
     def test_conta_total_corretamente(self):
         programa = baker.make("api.DimPrograma")
         for i in range(1, 5):
@@ -206,6 +225,7 @@ class TestGetDistribuicaoStatus:
         resultado = get_distribuicao_status(programa.id)
         assert resultado["total"] == 10
 
+    # TC-PR03 — Cenário: Retornar distribuição com múltiplos status (percentual)
     def test_calcula_percentual_corretamente(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, status="Planejamento")
@@ -216,6 +236,7 @@ class TestGetDistribuicaoStatus:
         assert status_dict["Planejamento"]["percentual"] == approx(25.0)
         assert status_dict["Concluído"]["percentual"] == approx(75.0)
 
+    # TC-PR03 — Cenário: Retornar distribuição (quantidade por status)
     def test_retorna_quantidade_absoluta_corretamente(self):
         programa = baker.make("api.DimPrograma")
         for i in range(1, 6):
@@ -223,6 +244,7 @@ class TestGetDistribuicaoStatus:
         resultado = get_distribuicao_status(programa.id)
         assert resultado["status"][0]["quantidade"] == 5
 
+    # TC-PR03 — Contrato: campo cor por status
     def test_retorna_cor_correta_por_status(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, status="Planejamento")
@@ -236,6 +258,7 @@ class TestGetDistribuicaoStatus:
         assert status_dict["Suspenso"]["cor"] == "#F97316"
         assert status_dict["Concluído"]["cor"] == "#22C55E"
 
+    # Complementar ao TC-PR03: projetos de outro programa não vazam
     def test_nao_inclui_projetos_de_outro_programa(self):
         programa1 = baker.make("api.DimPrograma")
         programa2 = baker.make("api.DimPrograma")
@@ -247,6 +270,7 @@ class TestGetDistribuicaoStatus:
         assert resultado["total"] == 0
         assert resultado["status"] == []
 
+    # Complementar ao TC-PR03: distribuição com os quatro status presentes
     def test_retorna_todos_os_quatro_status_quando_presentes(self):
         programa = baker.make("api.DimPrograma")
         for i in range(1, 3):
@@ -282,16 +306,19 @@ class TestGetBurnupHorasProgramas:
             dia_semana=date(ano, mes, dia).weekday(),
         )
 
+    # TC-PR04 — Cenário: Nenhum registro de horas (body [])
     def test_retorna_lista_vazia_sem_registros_de_horas(self):
         resultado = get_burnup_horas_programas()
         assert resultado == []
 
+    # TC-PR04 — Cenário: Nenhum registro de horas (programas sem apontamentos)
     def test_retorna_lista_vazia_quando_so_existem_programas_sem_horas(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa)
         resultado = get_burnup_horas_programas()
         assert resultado == []
 
+    # TC-PR04 — Cenário: Retornar série temporal de horas por programa (agrupamento mensal)
     def test_agrupa_horas_por_mes_e_ano(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -320,6 +347,7 @@ class TestGetBurnupHorasProgramas:
         assert resultado[0]["date_str"] == "01/2025"
         assert resultado[0]["values"][0]["horas"] == approx(10.0)
 
+    # TC-PR04 — Cenário: Retornar série temporal (acúmulo mês a mês)
     def test_acumula_horas_ao_longo_dos_meses(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -358,6 +386,7 @@ class TestGetBurnupHorasProgramas:
         assert horas_por_mes["02/2025"] == approx(15.0)
         assert horas_por_mes["03/2025"] == approx(18.0)
 
+    # TC-PR04 — Cenário: Retornar série temporal (séries separadas por programa)
     def test_separa_series_por_programa(self):
         programa1 = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -390,6 +419,7 @@ class TestGetBurnupHorasProgramas:
         assert valores["PROG-1"] == approx(8.0)
         assert valores["PROG-2"] == approx(12.0)
 
+    # Complementar ao TC-PR04: status do projeto não exclui o programa
     def test_inclui_programas_independente_do_status_do_projeto(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -410,6 +440,7 @@ class TestGetBurnupHorasProgramas:
         assert len(resultado) == 1
         assert resultado[0]["values"][0]["codigo_programa"] == "PROG-1"
 
+    # Complementar ao TC-PR04: grupos ordenados cronologicamente
     def test_ordena_grupos_por_ano_e_mes_ascendente(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -446,6 +477,7 @@ class TestGetBurnupHorasProgramas:
         datas = [g["date_str"] for g in resultado]
         assert datas == ["12/2024", "01/2025", "03/2025"]
 
+    # TC-PR04 — Contrato: values com codigo_programa, nome_programa e horas (number)
     def test_retorna_estrutura_correta_dos_valores(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -467,6 +499,7 @@ class TestGetBurnupHorasProgramas:
         assert "horas" in ponto
         assert isinstance(ponto["horas"], float)
 
+    # Complementar ao TC-PR04: acúmulo independente por programa
     def test_acumula_independente_para_cada_programa(self):
         programa1 = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -511,6 +544,7 @@ class TestGetBurnupHorasProgramas:
         assert valores_marco["PROG-1"] == approx(15.0)
         assert "PROG-2" not in valores_marco
 
+    # Complementar ao TC-PR04: horas de vários projetos somadas no programa
     def test_soma_horas_de_multiplos_projetos_do_mesmo_programa(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -560,16 +594,19 @@ class TestGetBurnupCustoProgramas:
             dia_semana=date(ano, mes, dia).weekday(),
         )
 
+    # TC-PR05 — Cenário: Nenhum registro de custo (body [])
     def test_retorna_lista_vazia_sem_registros(self):
         resultado = get_burnup_custo_programas()
         assert resultado == []
 
+    # TC-PR05 — Cenário: Nenhum registro de custo (programas sem lançamentos)
     def test_retorna_lista_vazia_quando_so_existem_programas_sem_lancamentos(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa)
         resultado = get_burnup_custo_programas()
         assert resultado == []
 
+    # TC-PR05 — Cenário: Retornar série temporal de custo (custo de mão de obra)
     def test_soma_apenas_custo_de_mao_de_obra(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -588,6 +625,7 @@ class TestGetBurnupCustoProgramas:
         assert len(resultado) == 1
         assert resultado[0]["values"][0]["custo"] == approx(500.0)
 
+    # TC-PR05 — Cenário: Retornar série temporal de custo (custo de compras)
     def test_soma_apenas_custo_de_compras(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -606,6 +644,7 @@ class TestGetBurnupCustoProgramas:
         assert len(resultado) == 1
         assert resultado[0]["values"][0]["custo"] == approx(300.0)
 
+    # TC-PR05 — Cenário: Retornar série temporal de custo (soma combinada)
     def test_soma_combinada_mao_de_obra_e_compras(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -631,6 +670,7 @@ class TestGetBurnupCustoProgramas:
         resultado = get_burnup_custo_programas()
         assert resultado[0]["values"][0]["custo"] == approx(1000.0)
 
+    # Complementar ao TC-PR05: compras canceladas ficam fora do custo
     def test_exclui_compras_canceladas(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -656,6 +696,7 @@ class TestGetBurnupCustoProgramas:
         resultado = get_burnup_custo_programas()
         assert resultado[0]["values"][0]["custo"] == approx(200.0)
 
+    # TC-PR05 — Cenário: Retornar série temporal (acúmulo mês a mês)
     def test_acumula_custo_ao_longo_dos_meses(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -694,6 +735,7 @@ class TestGetBurnupCustoProgramas:
         assert custo_por_mes["02/2025"] == approx(150.0)
         assert custo_por_mes["03/2025"] == approx(180.0)
 
+    # TC-PR05 — Cenário: Retornar série temporal (séries separadas por programa)
     def test_separa_series_por_programa(self):
         programa1 = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -726,6 +768,7 @@ class TestGetBurnupCustoProgramas:
         assert valores["PROG-1"] == approx(400.0)
         assert valores["PROG-2"] == approx(600.0)
 
+    # Complementar ao TC-PR05: grupos ordenados cronologicamente
     def test_ordena_grupos_cronologicamente(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -762,6 +805,7 @@ class TestGetBurnupCustoProgramas:
         datas = [g["date_str"] for g in resultado]
         assert datas == ["12/2024", "01/2025", "03/2025"]
 
+    # TC-PR05 — Contrato: values com codigo_programa, nome_programa e custo
     def test_retorna_estrutura_correta_dos_valores(self):
         programa = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -783,6 +827,7 @@ class TestGetBurnupCustoProgramas:
         assert "custo" in ponto
         assert isinstance(ponto["custo"], Decimal)
 
+    # Complementar ao TC-PR05: acúmulo independente por programa
     def test_acumula_independente_para_cada_programa(self):
         programa1 = baker.make(
             "api.DimPrograma", codigo_programa="PROG-1", nome_programa="Alpha"
@@ -827,6 +872,7 @@ class TestGetBurnupCustoProgramas:
         assert valores_marco["PROG-1"] == approx(150.0)
         assert "PROG-2" not in valores_marco
 
+    # Complementar ao TC-PR05: compras de projeto órfão (sem programa) são ignoradas
     def test_ignora_compras_de_projeto_sem_programa(self):
         projeto_orfao = baker.make("api.DimProjeto", id=99, programa=None)
         tempo = self._make_tempo(2025, 1, 10)
@@ -857,10 +903,12 @@ class TestGetTabelaProjetos:
             dia_semana=0,
         )
 
+    # TC-PR06 — Cenário: Programa inexistente (Http404 na camada de serviço)
     def test_levanta_404_para_programa_inexistente(self):
         with pytest.raises(Http404):
             get_tabela_projetos(99999)
 
+    # Complementar ao TC-PR06: programa sem projetos retorna contrato paginado vazio
     def test_retorna_lista_vazia_quando_programa_sem_projetos(self):
         programa = baker.make("api.DimPrograma")
         resultado = get_tabela_projetos(programa.id)
@@ -872,6 +920,7 @@ class TestGetTabelaProjetos:
             "results": [],
         }
 
+    # TC-PR06 — Cenário: Retornar primeira página (um item por projeto)
     def test_retorna_um_item_por_projeto(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa)
@@ -880,6 +929,7 @@ class TestGetTabelaProjetos:
         assert resultado["count"] == 2
         assert len(resultado["results"]) == 2
 
+    # TC-PR06 — Contrato: campos principais de cada item de results
     def test_retorna_campos_corretos(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa)
@@ -894,6 +944,7 @@ class TestGetTabelaProjetos:
         assert "desvio_horas" in item
         assert "percentual_desvio" in item
 
+    # Complementar ao TC-PR06: projeto sem tarefas/horas retorna métricas zeradas
     def test_retorna_zeros_quando_sem_tarefas_e_horas(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa)
@@ -905,6 +956,7 @@ class TestGetTabelaProjetos:
         assert item["percentual_desvio"] == approx(0.0)
         assert item["percentual_tarefas_concluidas"] == approx(0.0)
 
+    # TC-PR06 — Contrato: horas_estimadas (number) a partir das tarefas
     def test_calcula_horas_estimadas_a_partir_das_tarefas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -925,6 +977,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["horas_estimadas"] == approx(15.0)
 
+    # TC-PR06 — Contrato: horas_realizadas (number) a partir do FatoHoras
     def test_calcula_horas_realizadas_do_fato_horas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -948,6 +1001,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["horas_realizadas"] == approx(10.0)
 
+    # TC-PR06 — Contrato: desvio_horas (number)
     def test_calcula_desvio_horas_corretamente(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -970,6 +1024,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["desvio_horas"] == approx(3.0)
 
+    # TC-PR06 — Contrato: percentual_desvio (number)
     def test_calcula_percentual_desvio_corretamente(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -992,6 +1047,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["percentual_desvio"] == approx(20.0)
 
+    # TC-PR06 — Contrato: percentual_tarefas_concluidas (number)
     def test_calcula_percentual_tarefas_concluidas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -1026,6 +1082,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["percentual_tarefas_concluidas"] == approx(50.0)
 
+    # Complementar ao TC-PR06: percentual 100% com todas as tarefas concluídas
     def test_percentual_tarefas_cem_por_cento_quando_todas_concluidas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -1046,6 +1103,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["percentual_tarefas_concluidas"] == approx(100.0)
 
+    # Complementar ao TC-PR06: projetos de outro programa não vazam
     def test_nao_inclui_projetos_de_outro_programa(self):
         programa1 = baker.make("api.DimPrograma")
         programa2 = baker.make("api.DimPrograma")
@@ -1054,6 +1112,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa1.id)
         assert resultado["results"] == []
 
+    # TC-PR06 — Contrato: nome_projeto, responsavel e status (strings)
     def test_retorna_nome_responsavel_e_status_do_projeto(self):
         programa = baker.make("api.DimPrograma")
         baker.make(
@@ -1070,6 +1129,7 @@ class TestGetTabelaProjetos:
         assert item["responsavel"] == "João"
         assert item["status"] == "Em andamento"
 
+    # TC-PR06 — Cenário: Retornar primeira página (12 projetos, page_size=10, total_pages=2)
     def test_retorna_paginacao_da_tabela(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", programa=programa, _quantity=12)
@@ -1080,6 +1140,7 @@ class TestGetTabelaProjetos:
         assert resultado["total_pages"] == 2
         assert len(resultado["results"]) == 2
 
+    # TC-PR06 — Contrato: data_ultima_atividade (YYYY-MM-DD) e dias_desde_ultima_atividade (integer)
     def test_retorna_data_ultima_atividade_quando_ha_horas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -1107,6 +1168,7 @@ class TestGetTabelaProjetos:
         assert item["dias_desde_ultima_atividade"] is not None
         assert isinstance(item["dias_desde_ultima_atividade"], int)
 
+    # Complementar ao TC-PR06: data_ultima_atividade nula sem horas registradas
     def test_retorna_nulo_quando_sem_horas_registradas(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa)
@@ -1115,6 +1177,7 @@ class TestGetTabelaProjetos:
         assert item["data_ultima_atividade"] is None
         assert item["dias_desde_ultima_atividade"] is None
 
+    # TC-PR06 — Contrato: sem_horas_registradas (boolean) = true sem horas
     def test_sem_horas_registradas_true_quando_nao_ha_horas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -1128,6 +1191,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["sem_horas_registradas"] is True
 
+    # TC-PR06 — Contrato: sem_horas_registradas (boolean) = false com horas
     def test_sem_horas_registradas_false_quando_ha_horas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make("api.DimProjeto", id=1, programa=programa)
@@ -1143,18 +1207,21 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["sem_horas_registradas"] is False
 
+    # TC-PR06 — Contrato: campo acao (string) — projeto suspenso
     def test_acao_suspenso_quando_projeto_suspenso(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, status="Suspenso")
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "suspenso"
 
+    # TC-PR06 — Contrato: campo acao — concluído sem tarefas
     def test_acao_check_verde_quando_concluido_sem_tarefas(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, status="Concluído")
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "check-verde"
 
+    # TC-PR06 — Contrato: campo acao — corrigir-status (tarefas concluídas, projeto em andamento)
     def test_acao_corrigir_status_quando_todas_concluidas_e_em_andamento(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1177,6 +1244,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "corrigir-status"
 
+    # TC-PR06 — Contrato: campo acao — corrigir-status (tarefas concluídas, projeto em planejamento)
     def test_acao_corrigir_status_quando_todas_concluidas_e_planejamento(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1192,6 +1260,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "corrigir-status"
 
+    # TC-PR06 — Contrato: campo acao — check-verde sem data_fim_prevista
     def test_acao_check_verde_quando_concluido_todas_tarefas_sem_data_fim(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1211,6 +1280,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "check-verde"
 
+    # TC-PR06 — Contrato: campos acao/dentro_do_prazo — conclusão dentro do prazo
     def test_acao_check_verde_quando_concluido_todas_tarefas_dentro_do_prazo(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1249,6 +1319,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "check-verde"
 
+    # TC-PR06 — Contrato: campos acao/dentro_do_prazo — conclusão fora do prazo
     def test_acao_check_vermelho_quando_concluido_todas_tarefas_fora_do_prazo(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1287,6 +1358,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "check-vermelho"
 
+    # TC-PR06 — Contrato: campo acao — conclusão com tarefas dentro e fora do prazo
     def test_acao_check_amarelo_quando_concluido_tarefas_mistas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1351,6 +1423,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "check-amarelo"
 
+    # TC-PR06 — Contrato: campo acao — em andamento dentro do prazo
     def test_acao_priorizar_verde_quando_dentro_do_prazo(self):
         from datetime import timedelta
 
@@ -1366,6 +1439,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "priorizar-verde"
 
+    # TC-PR06 — Contrato: campo acao — em andamento sem data_fim_prevista
     def test_acao_priorizar_verde_quando_sem_data_fim(self):
         programa = baker.make("api.DimPrograma")
         baker.make(
@@ -1378,6 +1452,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "priorizar-verde"
 
+    # TC-PR06 — Contrato: campo acao — em andamento fora do prazo
     def test_acao_priorizar_vermelho_quando_fora_do_prazo(self):
         from datetime import timedelta
 
@@ -1393,6 +1468,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "priorizar-vermelho"
 
+    # TC-PR06 — Contrato: campo acao — concluído com tarefas pendentes
     def test_acao_outro_quando_concluido_com_tarefas_pendentes(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -1415,6 +1491,7 @@ class TestGetTabelaProjetos:
         resultado = get_tabela_projetos(programa.id)
         assert resultado["results"][0]["acao"] == "outro"
 
+    # Complementar ao TC-PR06: ordenação por nome_projeto ascendente (padrão)
     def test_ordena_por_nome_projeto_asc(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, nome_projeto="Zebra")
@@ -1425,6 +1502,7 @@ class TestGetTabelaProjetos:
         nomes = [r["nome_projeto"] for r in resultado["results"]]
         assert nomes == sorted(nomes)
 
+    # Complementar ao TC-PR06: ordenação por nome_projeto descendente
     def test_ordena_por_nome_projeto_desc(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, nome_projeto="Alpha")
@@ -1435,6 +1513,7 @@ class TestGetTabelaProjetos:
         nomes = [r["nome_projeto"] for r in resultado["results"]]
         assert nomes == sorted(nomes, reverse=True)
 
+    # TC-PR06 — Cenário: Ordenar por status ascendente
     def test_ordena_por_status_asc(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, status="Suspenso")
@@ -1444,6 +1523,7 @@ class TestGetTabelaProjetos:
         statuses = [r["status"] for r in resultado["results"]]
         assert statuses == sorted(statuses)
 
+    # Complementar ao TC-PR06: ordenação por responsavel descendente
     def test_ordena_por_responsavel_desc(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", id=1, programa=programa, responsavel="Ana")
@@ -1454,6 +1534,7 @@ class TestGetTabelaProjetos:
         responsaveis = [r["responsavel"] for r in resultado["results"]]
         assert responsaveis == sorted(responsaveis, reverse=True)
 
+    # Complementar ao TC-PR06: ordenação por acao ascendente (ordem de prioridade)
     def test_ordena_por_acao_asc_respeita_ordem_de_prioridade(self):
         from datetime import timedelta
 
@@ -1481,6 +1562,7 @@ class TestGetTabelaProjetos:
         acoes = [r["acao"] for r in resultado["results"]]
         assert acoes == sorted(acoes, key=lambda a: ACAO_ORDEM.get(a, 99))
 
+    # Complementar ao TC-PR06: ordenação por acao descendente
     def test_ordena_por_acao_desc_inverte_ordem(self):
         from datetime import timedelta
 
@@ -1508,6 +1590,7 @@ class TestGetTabelaProjetos:
         acoes = [r["acao"] for r in resultado["results"]]
         assert acoes == sorted(acoes, key=lambda a: ACAO_ORDEM.get(a, 99), reverse=True)
 
+    # Complementar ao TC-PR06: ordenação por acao combinada com paginação
     def test_ordenacao_por_acao_pagina_corretamente(self):
         from datetime import timedelta
 

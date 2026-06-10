@@ -38,21 +38,25 @@ def material_com_compra():
 @pytest.mark.django_db
 class TestListarMateriaisComprasSistema:
 
+    # TC-C01 — Status 200 no endpoint GET /api/compras/materiais/
     def test_retorna_200_para_get(self, api_client):
         url = reverse("compras_materiais")
         response = api_client.get(url)
         assert response.status_code == 200
 
+    # Complementar ao TC-C01: método POST não permitido (405)
     def test_retorna_405_para_post(self, api_client):
         url = reverse("compras_materiais")
         response = api_client.post(url)
         assert response.status_code == 405
 
+    # TC-C01 — Cenário: Nenhum material com compra registrada (body [])
     def test_retorna_lista_vazia_sem_dados(self, api_client):
         url = reverse("compras_materiais")
         response = api_client.get(url)
         assert response.json() == []
 
+    # TC-C01 — Cenário: Retornar materiais com compras
     def test_retorna_material_existente(self, api_client, material_com_compra):
         url = reverse("compras_materiais")
         response = api_client.get(url)
@@ -61,6 +65,7 @@ class TestListarMateriaisComprasSistema:
         assert data[0]["codigo_material"] == "M001"
         assert data[0]["descricao"] == "Capacitor"
 
+    # TC-C01 — Contrato: resposta em application/json
     def test_retorna_json(self, api_client):
         url = reverse("compras_materiais")
         response = api_client.get(url)
@@ -70,21 +75,27 @@ class TestListarMateriaisComprasSistema:
 @pytest.mark.django_db
 class TestLeadTimeSistema:
 
+    # TC-C02 — Cenário: material_id ausente (400 + body {'error': 'material_id é obrigatório'})
     def test_retorna_400_sem_material_id(self, api_client):
         url = reverse("compras_lead_time")
         response = api_client.get(url)
         assert response.status_code == 400
+        assert response.json() == {"error": "material_id é obrigatório"}
 
+    # TC-C02 — Cenário: material_id não numérico (400 + body {'error': 'material_id inválido'})
     def test_retorna_400_para_material_id_invalido(self, api_client):
         url = reverse("compras_lead_time")
         response = api_client.get(url, {"material_id": "abc"})
         assert response.status_code == 400
+        assert response.json() == {"error": "material_id inválido"}
 
+    # Complementar ao TC-C02: método POST não permitido (405)
     def test_retorna_405_para_post(self, api_client):
         url = reverse("compras_lead_time")
         response = api_client.post(url, {"material_id": 1})
         assert response.status_code == 405
 
+    # TC-C02 — Cenário: Material sem compras registradas (body [])
     def test_retorna_lista_vazia_para_material_sem_compras(self, api_client):
         material = baker.make("api.DimMaterial")
         url = reverse("compras_lead_time")
@@ -92,12 +103,21 @@ class TestLeadTimeSistema:
         assert response.status_code == 200
         assert response.json() == []
 
+    # Complementar ao TC-C02: material inexistente retorna []
     def test_retorna_lista_vazia_para_material_inexistente(self, api_client):
         url = reverse("compras_lead_time")
         response = api_client.get(url, {"material_id": 99999})
         assert response.status_code == 200
         assert response.json() == []
 
+    # TC-C02 — Cenário: material_id negativo (200 e body [])
+    def test_retorna_lista_vazia_para_material_id_negativo(self, api_client):
+        url = reverse("compras_lead_time")
+        response = api_client.get(url, {"material_id": -1})
+        assert response.status_code == 200
+        assert response.json() == []
+
+    # TC-C02 — Cenário: Retornar lead time de material com compras (campos do contrato)
     def test_retorna_pontos_corretos(self, api_client, material_com_compra):
         url = reverse("compras_lead_time")
         response = api_client.get(url, {"material_id": material_com_compra.id})
@@ -113,6 +133,7 @@ class TestLeadTimeSistema:
         assert "valor_unidade" in ponto
         assert "valor_total" in ponto
 
+    # TC-C02 — Contrato: resposta em application/json
     def test_retorna_json(self, api_client, material_com_compra):
         url = reverse("compras_lead_time")
         response = api_client.get(url, {"material_id": material_com_compra.id})

@@ -28,15 +28,18 @@ def make_tempo(data_str, pk=None):
 @pytest.mark.django_db
 class TestGetAlertasMateriais:
 
+    # TC-C03 — Cenário: Nenhum material em estado crítico ou atenção (criticos=[] e atencao=[])
     def test_retorna_listas_vazias_sem_dados(self):
         resultado = get_alertas_materiais()
         assert resultado == {"criticos": [], "atencao": []}
 
+    # TC-C03 — Cenário: Nenhum material em estado crítico ou atenção (sem empenhos)
     def test_retorna_listas_vazias_sem_empenho(self):
         make_tempo("2024-01-01")
         resultado = get_alertas_materiais()
         assert resultado == {"criticos": [], "atencao": []}
 
+    # TC-C03 — Cenário: Retornar alertas com limiares padrão (material sem lead_time histórico)
     def test_classifica_material_sem_lead_time_historico(self):
         """Material sem lead_time histórico deve ser classificado
         usando dias_cobertura diretamente."""
@@ -82,6 +85,7 @@ class TestGetAlertasMateriais:
         assert resultado["criticos"][0]["lead_time_min"] == 0
         assert resultado["criticos"][0]["fornecedor"] == "-"
 
+    # TC-C03 — Cenário: Retornar alertas com limiares padrão (classificação em criticos)
     def test_classifica_material_critico(self):
         """Consumo=1/dia, estoque=5, lead time=2 → cobertura=5,
         dias_para_pedir=3 → crítico."""
@@ -127,6 +131,7 @@ class TestGetAlertasMateriais:
         assert item["dias_para_pedir"] == 3
         assert item["lead_time_min"] == 2
 
+    # TC-C03 — Cenário: Retornar alertas com limiares padrão (classificação em atencao)
     def test_classifica_material_atencao(self):
         """Consumo=1/dia, estoque=50, lead time=10 → cobertura=50,
         dias_para_pedir=40 → atenção."""
@@ -169,6 +174,7 @@ class TestGetAlertasMateriais:
         assert resultado["atencao"][0]["material"] == "Resistor"
         assert resultado["atencao"][0]["dias_para_pedir"] == 40
 
+    # Complementar ao TC-C03: material com cobertura confortável não gera alerta
     def test_nao_classifica_material_confortavel(self):
         """Consumo=1/dia, estoque=100, lead time=10 →
         dias_para_pedir=90 → nenhuma categoria."""
@@ -208,6 +214,7 @@ class TestGetAlertasMateriais:
         resultado = get_alertas_materiais()
         assert resultado == {"criticos": [], "atencao": []}
 
+    # Complementar ao TC-C03: pedidos pendentes aumentam a cobertura
     def test_pedidos_pendentes_aumentam_cobertura(self):
         """Estoque 0 + pedido pendente de 10 unidades →
         cobertura=10, dias_para_pedir=8."""
@@ -261,6 +268,7 @@ class TestGetAlertasMateriais:
         assert len(resultado["criticos"]) == 1
         assert resultado["criticos"][0]["dias_para_pedir"] == 8
 
+    # Complementar ao TC-C03: pedidos cancelados são ignorados
     def test_ignora_pedidos_cancelados(self):
         """Pedidos cancelados não devem aumentar a quantidade pendente."""
         material = baker.make("api.DimMaterial", descricao="Transistor")
@@ -313,6 +321,7 @@ class TestGetAlertasMateriais:
         assert len(resultado["criticos"]) == 1
         assert resultado["criticos"][0]["dias_para_pedir"] == 3
 
+    # TC-C03 — Contrato: fornecedor e lead_time_min vêm do fornecedor de menor lead time
     def test_usa_fornecedor_de_menor_lead_time(self):
         """Deve selecionar o fornecedor com menor lead time médio."""
         material = baker.make("api.DimMaterial", descricao="LED")
@@ -363,6 +372,7 @@ class TestGetAlertasMateriais:
         assert resultado["criticos"][0]["fornecedor"] == "Rápido"
         assert resultado["criticos"][0]["lead_time_min"] == 2
 
+    # Complementar ao TC-C03: lista de críticos não é truncada
     def test_retorna_todos_criticos_sem_limite(self):
         """Todos os materiais críticos devem ser retornados (sem limite no backend).
         A limitação a 5 itens visíveis é responsabilidade do frontend."""
@@ -404,6 +414,7 @@ class TestGetAlertasMateriais:
         resultado = get_alertas_materiais()
         assert len(resultado["criticos"]) == 7
 
+    # Complementar ao TC-C03: lista de atenção limitada a 5 itens
     def test_limita_atencao_a_5(self):
         """Nunca deve retornar mais de 5 materiais em atenção."""
         status_ok = baker.make(
@@ -444,6 +455,7 @@ class TestGetAlertasMateriais:
         resultado = get_alertas_materiais()
         assert len(resultado["atencao"]) <= 5
 
+    # Complementar ao TC-C03: críticos ordenados por dias_para_pedir
     def test_criticos_ordenados_do_mais_urgente(self):
         """Críticos devem estar ordenados pelo menor dias_para_pedir."""
         status_ok = baker.make(
@@ -509,6 +521,7 @@ class TestGetAlertasMateriais:
         assert resultado["criticos"][0]["material"] == "Urgente"
         assert resultado["criticos"][1]["material"] == "MenosUrgente"
 
+    # Complementar ao TC-C03: constante de status pendentes
     def test_pendente_status_constante_contem_statuses_corretos(self):
         assert "Aberto" in PENDENTE_STATUS
         assert "Enviado" in PENDENTE_STATUS
@@ -516,6 +529,7 @@ class TestGetAlertasMateriais:
         assert "Cancelado" not in PENDENTE_STATUS
         assert "Entregue" not in PENDENTE_STATUS
 
+    # Complementar ao TC-C03: lead time considera pedidos não cancelados
     def test_usa_lead_time_de_pedido_nao_cancelado(self):
         """Lead_time de pedido 'Aberto' (não Cancelado)
         deve ser considerado no cálculo."""
@@ -560,6 +574,7 @@ class TestGetAlertasMateriais:
         assert resultado["criticos"][0]["lead_time_min"] == 2
         assert resultado["criticos"][0]["fornecedor"] == "Forn Aberto"
 
+    # Complementar ao TC-C03: lead time de pedido cancelado é ignorado
     def test_ignora_lead_time_de_pedido_cancelado(self):
         """Pedido Cancelado com lead_time NÃO deve entrar no cálculo do lead_time_min.
         O material ainda aparece nos alertas usando dias_cobertura diretamente."""
@@ -603,6 +618,7 @@ class TestGetAlertasMateriais:
         assert resultado["criticos"][0]["lead_time_min"] == 0
         assert resultado["criticos"][0]["dias_para_pedir"] == 5
 
+    # TC-C03 — Cenário: Limiares customizados (critico_max personalizado)
     def test_parametro_critico_max_personalizado(self):
         """Com critico_max=90, material com dias_para_pedir=70
         deve ser classificado como crítico."""
@@ -646,6 +662,7 @@ class TestGetAlertasMateriais:
         assert len(resultado["criticos"]) == 1
         assert resultado["criticos"][0]["material"] == "CompX"
 
+    # TC-C03 — Cenário: Limiares customizados (atencao_max personalizado)
     def test_parametro_atencao_max_personalizado(self):
         """Com atencao_max=120, material com dias_para_pedir=100
         deve entrar em atenção."""
@@ -693,6 +710,7 @@ class TestGetAlertasMateriais:
 @pytest.mark.django_db
 class TestGetSugestaoProximaCompra:
 
+    # Fora da especificação: endpoint /sugestao-proxima-compra/
     def test_retorna_mensagem_sem_dados(self):
         resultado = get_sugestao_proxima_compra()
 
@@ -703,6 +721,7 @@ class TestGetSugestaoProximaCompra:
             "mensagem": "Nenhum material precisa de compra no momento",
         }
 
+    # Fora da especificação: endpoint /sugestao-proxima-compra/
     def test_retorna_compra_imediata_quando_data_limite_ja_passou(self):
         material = baker.make("api.DimMaterial", descricao="Sensor")
         projeto = baker.make("api.DimProjeto")
@@ -747,6 +766,7 @@ class TestGetSugestaoProximaCompra:
         assert resultado["materiais"][0]["material"] == "Sensor"
         assert resultado["materiais"][0]["fornecedor_sugerido"] == "Fornecedor A"
 
+    # Fora da especificação: endpoint /sugestao-proxima-compra/
     def test_ignora_material_com_cobertura_maior_ou_igual_a_60(self):
         material = baker.make("api.DimMaterial", descricao="Estoque confortável")
         projeto = baker.make("api.DimProjeto")

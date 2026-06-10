@@ -1,3 +1,4 @@
+# Fora da especificação de testes de integração: testes de seed de dados (infraestrutura).
 import os
 import sys
 from unittest.mock import MagicMock, patch

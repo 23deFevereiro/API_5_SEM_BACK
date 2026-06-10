@@ -22,16 +22,19 @@ def make_tempo(data_str, pk=None):
 @pytest.mark.django_db
 class TestGetEstoqueTabela:
 
+    # Complementar ao TC-C04: sem dados retorna contrato paginado vazio
     def test_retorna_vazio_sem_dados(self):
         resultado = get_estoque_tabela()
         assert resultado["count"] == 0
         assert resultado["results"] == []
 
+    # Complementar ao TC-C04: sem empenhos retorna contrato paginado vazio
     def test_retorna_vazio_sem_empenho(self):
         make_tempo("2024-01-01")
         resultado = get_estoque_tabela()
         assert resultado["count"] == 0
 
+    # TC-C04 — Contrato: material, projeto, estoque_atual e status (classificação Ok)
     def test_retorna_material_com_status_ok_sem_lead_time(self):
         """Material sem lead_time histórico com cobertura suficiente → status Ok."""
         material = baker.make("api.DimMaterial", descricao="Capacitor")
@@ -61,6 +64,7 @@ class TestGetEstoqueTabela:
         assert item["estoque_atual"] == 700
         assert item["status"] == "Ok"
 
+    # TC-C04 — Contrato: classificação 'Urgente' (crítico) abaixo de critico_max
     def test_status_urgente_quando_dias_para_pedir_menor_que_critico_max(self):
         """Consumo=1/dia, estoque=5, lead_time=2 → cobertura=5,
         dias_para_pedir=3 → Urgente."""
@@ -100,6 +104,7 @@ class TestGetEstoqueTabela:
         resultado = get_estoque_tabela(critico_max=30)
         assert resultado["results"][0]["status"] == "Urgente"
 
+    # TC-C04 — Contrato: classificação 'Atenção' entre os limiares
     def test_status_atencao_quando_dias_entre_limiares(self):
         """Consumo=1/dia, estoque=50, lead_time=10 → dias_para_pedir=40 → Atenção."""
         material = baker.make("api.DimMaterial", descricao="Resistor")
@@ -138,6 +143,7 @@ class TestGetEstoqueTabela:
         resultado = get_estoque_tabela(critico_max=30, atencao_max=60)
         assert resultado["results"][0]["status"] == "Atenção"
 
+    # TC-C04 — Contrato: classificação 'Ok' acima de atencao_max
     def test_status_ok_quando_dias_acima_de_atencao_max(self):
         """Consumo=1/dia, estoque=100, lead_time=10 → dias_para_pedir=90 → Ok."""
         material = baker.make("api.DimMaterial", descricao="LED")
@@ -176,6 +182,7 @@ class TestGetEstoqueTabela:
         resultado = get_estoque_tabela(critico_max=30, atencao_max=60)
         assert resultado["results"][0]["status"] == "Ok"
 
+    # Complementar ao TC-C04: ordenação por criticidade (Urgente, Atenção, Ok)
     def test_ordenacao_urgente_antes_de_atencao_antes_de_ok(self):
         """Urgente deve aparecer antes de Atenção que deve aparecer antes de Ok."""
         projeto = baker.make("api.DimProjeto")
@@ -272,6 +279,7 @@ class TestGetEstoqueTabela:
         assert statuses.index("Urgente") < statuses.index("Atenção")
         assert statuses.index("Atenção") < statuses.index("Ok")
 
+    # TC-C04 — Cenário: Retornar primeira página com padrões (camada de serviço)
     def test_paginacao_page_1(self):
         """Com 6 materiais e page_size=5, página 1 retorna 5 itens."""
         projeto = baker.make("api.DimProjeto")
@@ -293,6 +301,7 @@ class TestGetEstoqueTabela:
         assert len(resultado["results"]) == 5
         assert resultado["page"] == 1
 
+    # TC-C04 — Cenário: Navegar para página 2 (itens restantes)
     def test_paginacao_page_2(self):
         """Com 6 materiais e page_size=5, página 2 retorna 1 item."""
         projeto = baker.make("api.DimProjeto")
@@ -312,6 +321,7 @@ class TestGetEstoqueTabela:
         assert len(resultado["results"]) == 1
         assert resultado["page"] == 2
 
+    # TC-C04 — Contrato: campo projeto reflete o projeto de maior consumo
     def test_projeto_principal_e_o_de_maior_consumo(self):
         """O projeto com maior consumo do material deve ser exibido."""
         material = baker.make("api.DimMaterial", descricao="Transistor")
@@ -338,6 +348,7 @@ class TestGetEstoqueTabela:
         resultado = get_estoque_tabela()
         assert resultado["results"][0]["projeto"] == "Projeto Maior"
 
+    # TC-C04 — Contrato: consumo_previsto (number) por dia
     def test_consumo_previsto_e_por_dia(self):
         """consumo_previsto deve ser total_empenhado / dias_periodo."""
         material = baker.make("api.DimMaterial", descricao="Diodo")
@@ -364,6 +375,7 @@ class TestGetEstoqueTabela:
         resultado = get_estoque_tabela()
         assert resultado["results"][0]["consumo_previsto"] == pytest.approx(1.0)
 
+    # TC-C04 — Cenário: Filtrar por material_id
     def test_filtra_por_material_id(self):
         """Quando material_id fornecido, apenas esse material é retornado."""
         projeto = baker.make("api.DimProjeto")
@@ -384,6 +396,7 @@ class TestGetEstoqueTabela:
         assert resultado["count"] == 1
         assert resultado["results"][0]["material"] == "Sensor"
 
+    # Complementar ao TC-C04: material_id inexistente retorna vazio
     def test_material_id_inexistente_retorna_vazio(self):
         """material_id que não existe → lista vazia."""
         projeto = baker.make("api.DimProjeto")
@@ -402,6 +415,7 @@ class TestGetEstoqueTabela:
         assert resultado["count"] == 0
         assert resultado["results"] == []
 
+    # Complementar ao TC-C04: pedidos pendentes não entram em dias_ate_acabar
     def test_pendente_nao_e_contado_em_dias_ate_acabar(self):
         """Pedidos pendentes não devem inflar dias_ate_acabar nem o status.
         Estoque físico = 0 → dias = 0 → Urgente, mesmo com pendente grande."""
@@ -444,4 +458,34 @@ class TestGetEstoqueTabela:
         resultado = get_estoque_tabela(critico_max=30)
         item = resultado["results"][0]
         assert item["dias_ate_acabar"] == 0
+        assert item["status"] == "Urgente"
+
+    # TC-C04 — Cenário: Limiar de boundary — dias_ate_acabar igual a critico_max classifica como crítico (limite usa <=)
+    def test_limiar_boundary_dias_iguais_a_critico_max_classifica_como_critico(self):
+        """dias_ate_acabar exatamente igual a critico_max → status crítico
+        ("Urgente"). Valida que o limite usa <= e não <."""
+        material = baker.make("api.DimMaterial", descricao="Resistor Boundary")
+        projeto = baker.make("api.DimProjeto", nome_projeto="Projeto Boundary")
+        programa = baker.make("api.DimPrograma")
+        t1 = make_tempo("2024-01-01", pk=20240101)
+        # consumo = 1 unidade / 1 dia de período → 1/dia
+        baker.make(
+            "api.FatoMateriais",
+            material=material,
+            projeto=projeto,
+            programa=programa,
+            tempo=t1,
+            quantidade_empenhada=1,
+        )
+        # estoque = 30 → dias_ate_acabar = 30 (sem lead time histórico)
+        baker.make(
+            "api.FatoEstoque",
+            material=material,
+            projeto=projeto,
+            tempo=t1,
+            quantidade_estoque=30,
+        )
+        resultado = get_estoque_tabela(critico_max=30, atencao_max=60)
+        item = resultado["results"][0]
+        assert item["dias_ate_acabar"] == 30
         assert item["status"] == "Urgente"

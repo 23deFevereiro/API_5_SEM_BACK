@@ -20,17 +20,20 @@ class TestGetHorasPorProjeto:
             dia_semana=2,
         )
 
+    # TC-PR07 — Cenário: Programa inexistente (Http404 na camada de serviço)
     def test_levanta_404_para_programa_inexistente(self):
         from django.http import Http404
 
         with pytest.raises(Http404):
             get_horas_por_projeto(99999)
 
+    # TC-PR07 — Cenário: Programa sem projetos com horas (body [])
     def test_retorna_lista_vazia_quando_programa_sem_projetos(self):
         programa = baker.make("api.DimPrograma")
         resultado = get_horas_por_projeto(programa.id)
         assert resultado == []
 
+    # Complementar ao TC-PR07: projeto sem apontamentos aparece com horas 0
     def test_retorna_projeto_com_horas_zero_quando_sem_fato_horas(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", programa=programa, nome_projeto="Projeto A")
@@ -39,6 +42,7 @@ class TestGetHorasPorProjeto:
         assert resultado[0]["nome_projeto"] == "Projeto A"
         assert resultado[0]["horas_realizadas"] == approx(0.0)
 
+    # TC-PR07 — Cenário: Retornar horas por projeto (soma de horas_realizadas)
     def test_retorna_horas_realizadas_corretas(self):
         programa = baker.make("api.DimPrograma")
         projeto = baker.make(
@@ -65,6 +69,7 @@ class TestGetHorasPorProjeto:
         assert len(resultado) == 1
         assert resultado[0]["horas_realizadas"] == approx(8.0)
 
+    # Complementar ao TC-PR07: projetos de outro programa não vazam
     def test_nao_inclui_projetos_de_outro_programa(self):
         programa_a = baker.make("api.DimPrograma")
         programa_b = baker.make("api.DimPrograma")
@@ -75,6 +80,7 @@ class TestGetHorasPorProjeto:
         assert "Projeto Alpha" in nomes
         assert "Projeto Beta" not in nomes
 
+    # Complementar ao TC-PR07: resultado ordenado por nome_projeto
     def test_retorna_multiplos_projetos_ordenados_por_nome(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", programa=programa, nome_projeto="Zebra")
@@ -84,6 +90,7 @@ class TestGetHorasPorProjeto:
         nomes = [r["nome_projeto"] for r in resultado]
         assert nomes == sorted(nomes)
 
+    # TC-PR07 — Contrato: cada item possui nome_projeto e horas_realizadas
     def test_retorna_campos_corretos(self):
         programa = baker.make("api.DimPrograma")
         baker.make("api.DimProjeto", programa=programa, nome_projeto="Projeto C")
@@ -91,6 +98,7 @@ class TestGetHorasPorProjeto:
         assert "nome_projeto" in resultado[0]
         assert "horas_realizadas" in resultado[0]
 
+    # TC-PR07 — Cenário: Retornar horas por projeto (valores independentes por projeto)
     def test_nao_soma_horas_de_outro_projeto(self):
         programa = baker.make("api.DimPrograma")
         projeto_a = baker.make("api.DimProjeto", programa=programa, nome_projeto="Alfa")
@@ -117,6 +125,7 @@ class TestGetHorasPorProjeto:
         assert por_nome["Alfa"] == approx(10.0)
         assert por_nome["Beta"] == approx(4.0)
 
+    # Complementar ao TC-PR07: projeto sem horas exibe 0 junto a projetos com horas
     def test_projeto_sem_horas_tem_valor_zero_quando_outros_tem_horas(self):
         programa = baker.make("api.DimPrograma")
         projeto_com_horas = baker.make(

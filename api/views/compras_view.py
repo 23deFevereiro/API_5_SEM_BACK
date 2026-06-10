@@ -210,6 +210,7 @@ def get_estoque_tabela_view(request):
             critico_max=critico_max,
             atencao_max=atencao_max,
             page=page,
+            page_size=10,  # TC-C04 — contrato paginado da especificação (page_size=10)
             material_id=material_id,
             sort_by=sort_by,
             sort_dir=sort_dir,
