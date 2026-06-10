@@ -126,8 +126,8 @@ def test_burnup_multiplos_projetos(mock_fato_horas):
 
 @pytest.mark.django_db
 @patch("api.views.horas_view.get_burnup_horas_projetos")
-    # TC-P07 — Status 200 no endpoint GET /api/projetos/burnup-horas/
-    # (view com serviço mockado)
+# TC-P07 — Status 200 no endpoint GET /api/projetos/burnup-horas/
+# (view com serviço mockado)
 def test_view_burnup_status_200(mock_service):
     mock_service.return_value = [
         {
@@ -151,8 +151,8 @@ def test_view_burnup_status_200(mock_service):
 
 @pytest.mark.django_db
 @patch("api.views.horas_view.get_burnup_horas_projetos")
-    # TC-P07 — Contrato: projeto_id, projeto e serie{mes, horas, horas_acumuladas}
-    # (view com serviço mockado)
+# TC-P07 — Contrato: projeto_id, projeto e serie{mes, horas, horas_acumuladas}
+# (view com serviço mockado)
 def test_view_burnup_retorna_json(mock_service):
     mock_service.return_value = [
         {
