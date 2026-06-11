@@ -39,11 +39,13 @@ def make_fato_horas(
 @pytest.mark.django_db
 class TestGetHorasPorFuncionario:
 
+    # TC-P05 — Cenário: Projeto sem horas registradas (body [])
     def test_retorna_lista_vazia_quando_projeto_sem_tarefas(self):
         projeto = baker.make("api.DimProjeto")
         resultado = get_horas_por_funcionario(projeto.id)
         assert resultado == []
 
+    # TC-P05 — Cenário: Retornar horas consolidadas por funcionário
     def test_retorna_horas_de_um_funcionario(self):
         projeto = baker.make("api.DimProjeto")
         funcionario = baker.make("api.DimFuncionario", nome="Ana")
@@ -53,6 +55,7 @@ class TestGetHorasPorFuncionario:
         assert resultado[0]["funcionario"] == "Ana"
         assert resultado[0]["total_horas"] == approx(6.0)
 
+    # TC-P05 — Cenário: Retornar horas consolidadas (agregação de múltiplos registros)
     def test_agrega_multiplos_registros_do_mesmo_funcionario(self):
         projeto = baker.make("api.DimProjeto")
         funcionario = baker.make("api.DimFuncionario", nome="Carlos")
@@ -63,6 +66,7 @@ class TestGetHorasPorFuncionario:
         assert len(resultado) == 1
         assert resultado[0]["total_horas"] == approx(7.5)
 
+    # TC-P05 — Cenário: Retornar horas consolidadas (múltiplos funcionários)
     def test_retorna_multiplos_funcionarios(self):
         projeto = baker.make("api.DimProjeto")
         ana = baker.make("api.DimFuncionario", nome="Ana")
@@ -76,6 +80,7 @@ class TestGetHorasPorFuncionario:
         assert "Ana" in usuarios
         assert "Bruno" in usuarios
 
+    # Complementar ao TC-P05: horas de outro projeto não vazam
     def test_nao_inclui_horas_de_outro_projeto(self):
         projeto1 = baker.make("api.DimProjeto")
         projeto2 = baker.make("api.DimProjeto")
@@ -88,6 +93,7 @@ class TestGetHorasPorFuncionario:
         assert len(resultado) == 1
         assert resultado[0]["funcionario"] == "Ana"
 
+    # TC-P05 — Contrato: cada item possui funcionario e total_horas
     def test_retorna_campos_corretos(self):
         projeto = baker.make("api.DimProjeto")
         funcionario = baker.make("api.DimFuncionario", nome="João")
@@ -96,6 +102,7 @@ class TestGetHorasPorFuncionario:
         assert "funcionario" in resultado[0]
         assert "total_horas" in resultado[0]
 
+    # TC-P05 — Contrato: total_horas é number
     def test_total_horas_e_float(self):
         projeto = baker.make("api.DimProjeto")
         funcionario = baker.make("api.DimFuncionario", nome="Lia")
@@ -103,6 +110,7 @@ class TestGetHorasPorFuncionario:
         resultado = get_horas_por_funcionario(projeto.id)
         assert isinstance(resultado[0]["total_horas"], float)
 
+    # TC-P05 — Cenário: Filtrar por período (data_inicio)
     def test_filtra_por_data_inicio(self):
         projeto = baker.make("api.DimProjeto")
         ana = baker.make("api.DimFuncionario", nome="Ana")
@@ -114,6 +122,7 @@ class TestGetHorasPorFuncionario:
         assert len(resultado) == 1
         assert resultado[0]["total_horas"] == approx(6.0)
 
+    # TC-P05 — Cenário: Filtrar por período (data_fim)
     def test_filtra_por_data_fim(self):
         projeto = baker.make("api.DimProjeto")
         ana = baker.make("api.DimFuncionario", nome="Ana")
@@ -125,6 +134,7 @@ class TestGetHorasPorFuncionario:
         assert len(resultado) == 1
         assert resultado[0]["total_horas"] == approx(4.0)
 
+    # TC-P05 — Cenário: Filtrar por período (só horas dentro do período aparecem)
     def test_remove_funcionario_sem_lancamento_no_periodo(self):
         projeto = baker.make("api.DimProjeto")
         ana = baker.make("api.DimFuncionario", nome="Ana")
@@ -140,6 +150,7 @@ class TestGetHorasPorFuncionario:
         assert "Bruno" in usuarios
         assert "Ana" not in usuarios
 
+    # TC-P05 — Cenário: Filtrar por nome de funcionário
     def test_filtra_por_funcionario(self):
         projeto = baker.make("api.DimProjeto")
         ana = baker.make("api.DimFuncionario", nome="Ana")
@@ -151,6 +162,7 @@ class TestGetHorasPorFuncionario:
         assert len(resultado) == 1
         assert resultado[0]["funcionario"] == "Ana"
 
+    # Complementar ao TC-P05: filtro por funcionário é case-insensitive
     def test_filtro_funcionario_case_insensitive(self):
         projeto = baker.make("api.DimProjeto")
         funcionario = baker.make("api.DimFuncionario", nome="Alberto")
@@ -162,10 +174,12 @@ class TestGetHorasPorFuncionario:
 @pytest.mark.django_db
 class TestGetNomesFuncionariosProjeto:
 
+    # Fora da especificação: endpoint auxiliar /nomes-funcionarios/
     def test_retorna_lista_vazia_sem_tempos(self):
         projeto = baker.make("api.DimProjeto")
         assert get_nomes_funcionarios_projeto(projeto.id) == []
 
+    # Fora da especificação: endpoint auxiliar /nomes-funcionarios/
     def test_retorna_nomes_distintos_ordenados(self):
         projeto = baker.make("api.DimProjeto")
         bruno = baker.make("api.DimFuncionario", nome="Bruno")
@@ -177,6 +191,7 @@ class TestGetNomesFuncionariosProjeto:
         resultado = get_nomes_funcionarios_projeto(projeto.id)
         assert resultado == ["Ana", "Bruno"]
 
+    # Fora da especificação: endpoint auxiliar /nomes-funcionarios/
     def test_ignora_funcionarios_de_outros_projetos(self):
         projeto = baker.make("api.DimProjeto")
         outro = baker.make("api.DimProjeto")
@@ -188,6 +203,7 @@ class TestGetNomesFuncionariosProjeto:
 @pytest.mark.django_db
 class TestGetNomesFuncionariosView:
 
+    # Fora da especificação: endpoint auxiliar /nomes-funcionarios/
     def test_retorna_200(self):
         projeto = baker.make("api.DimProjeto")
         factory = RequestFactory()
@@ -195,6 +211,7 @@ class TestGetNomesFuncionariosView:
         response = get_nomes_funcionarios_view(request, projeto.id)
         assert response.status_code == 200
 
+    # Fora da especificação: endpoint auxiliar /nomes-funcionarios/
     def test_retorna_405_para_post(self):
         factory = RequestFactory()
         request = factory.post("/projetos/1/nomes-funcionarios/")
@@ -205,6 +222,7 @@ class TestGetNomesFuncionariosView:
 @pytest.mark.django_db
 class TestGetHorasPorFuncionarioView:
 
+    # TC-P05 — Status 200 na view de horas por funcionário
     def test_retorna_200_para_projeto_existente(self):
         projeto = baker.make("api.DimProjeto")
         factory = RequestFactory()
@@ -212,12 +230,14 @@ class TestGetHorasPorFuncionarioView:
         response = get_horas_por_funcionario_view(request, projeto.id)
         assert response.status_code == 200
 
+    # Complementar ao TC-P05: método POST não permitido (405)
     def test_retorna_405_para_post(self):
         factory = RequestFactory()
         request = factory.post("/projetos/1/horas-por-funcionario/")
         response = get_horas_por_funcionario_view(request, 1)
         assert response.status_code == 405
 
+    # TC-P05 — Contrato: resposta é uma lista JSON
     def test_retorna_lista_json(self):
         import json
 
@@ -228,6 +248,7 @@ class TestGetHorasPorFuncionarioView:
         data = json.loads(response.content)
         assert isinstance(data, list)
 
+    # TC-P05 — Cenário: Retornar horas consolidadas por funcionário (via view)
     def test_retorna_dados_corretos_na_resposta(self):
         import json
 

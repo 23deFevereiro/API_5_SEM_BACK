@@ -1,3 +1,5 @@
+# Fora da especificação de testes de integração: testes de seed de dados
+# (infraestrutura).
 import os
 import sys
 from unittest.mock import MagicMock, patch
@@ -24,7 +26,8 @@ class TestMigrationRef:
 
 
 class TestCarregarDimProjetoCom0006:
-    """Testa a função local carregar_dim_projeto do seed_0006, que inclui data_inicio e data_fim_prevista."""
+    """Testa a função local carregar_dim_projeto do seed_0006, que inclui
+    data_inicio e data_fim_prevista."""
 
     @patch("builtins.print")
     def test_truncates_and_inserts_com_datas(self, mock_print):
@@ -128,7 +131,8 @@ class TestCarregarDimProjetoCom0006:
 
 
 class TestRun0006:
-    """Testa que run() do seed_0006 delega para _run_base (seed_0005.run) passando a fn local."""
+    """Testa que run() do seed_0006 delega para _run_base (seed_0005.run)
+    passando a fn local."""
 
     @patch("builtins.print")
     @patch("seed_0006._run_base")

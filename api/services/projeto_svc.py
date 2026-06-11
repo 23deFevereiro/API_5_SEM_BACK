@@ -96,6 +96,8 @@ def formatar_material(item):
 def get_materiais_projeto(
     projeto_id, page=1, page_size=10, data_inicio=None, data_fim=None, material=None
 ):
+    get_object_or_404(DimProjeto, id=projeto_id)
+
     page = normalizar_pagina(page)
 
     base_qs = FatoMateriais.objects.filter(projeto_id=projeto_id)

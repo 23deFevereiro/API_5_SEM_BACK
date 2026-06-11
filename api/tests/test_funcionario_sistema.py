@@ -35,16 +35,19 @@ def projeto():
 @pytest.mark.django_db
 class TestFuncionariosProjetoSistema:
 
+    # TC-P06 — Status 200 no endpoint GET /api/projetos/{id}/funcionarios/
     def test_retorna_200_para_get(self, api_client, projeto):
         url = reverse("funcionarios_projeto", args=[projeto.id])
         response = api_client.get(url)
         assert response.status_code == 200
 
+    # Complementar ao TC-P06: método POST não permitido (405)
     def test_retorna_405_para_post(self, api_client, projeto):
         url = reverse("funcionarios_projeto", args=[projeto.id])
         response = api_client.post(url)
         assert response.status_code == 405
 
+    # Complementar ao TC-P06: projeto sem dados retorna count=0 e results=[]
     def test_retorna_lista_vazia_quando_projeto_sem_dados(self, api_client, projeto):
         url = reverse("funcionarios_projeto", args=[projeto.id])
         response = api_client.get(url)
@@ -52,6 +55,7 @@ class TestFuncionariosProjetoSistema:
         assert data["count"] == 0
         assert data["results"] == []
 
+    # TC-P06 — Contrato paginado (count, page, page_size, total_pages, results)
     def test_retorna_estrutura_de_paginacao(self, api_client, projeto):
         url = reverse("funcionarios_projeto", args=[projeto.id])
         response = api_client.get(url)
@@ -62,6 +66,7 @@ class TestFuncionariosProjetoSistema:
         assert "total_pages" in data
         assert "results" in data
 
+    # TC-P06 — Cenário: Retornar funcionários com horas e projetos
     def test_retorna_apenas_funcionarios_do_projeto_informado(
         self, api_client, projeto
     ):
@@ -73,6 +78,7 @@ class TestFuncionariosProjetoSistema:
         assert data["count"] == 1
         assert data["results"][0]["funcionario"] == "Alberto"
 
+    # Complementar ao TC-P06: funcionários de outro projeto não vazam
     def test_nao_retorna_funcionarios_de_outro_projeto(self, api_client, projeto):
         projeto2 = baker.make("api.DimProjeto", id=2)
         carlos = baker.make("api.DimFuncionario", nome="Carlos")
@@ -83,6 +89,7 @@ class TestFuncionariosProjetoSistema:
         assert data["count"] == 0
         assert data["results"] == []
 
+    # TC-P06 — Contrato paginado (page=2 com 15 funcionários)
     def test_paginacao_funciona(self, api_client, projeto):
         tempo = baker.make("api.DimTempo", data=date(2025, 1, 1))
         for i in range(15):
@@ -95,6 +102,7 @@ class TestFuncionariosProjetoSistema:
         assert data["total_pages"] == 2
         assert len(data["results"]) > 0
 
+    # Complementar ao TC-P06: registros do mesmo funcionário são agregados
     def test_nao_duplica_funcionarios(self, api_client, projeto):
         funcionario = baker.make("api.DimFuncionario", nome="Alberto")
         tempo = baker.make("api.DimTempo", data=date(2025, 1, 1))
@@ -109,11 +117,16 @@ class TestFuncionariosProjetoSistema:
 @pytest.mark.django_db
 class TestFuncionariosProjetoErrosSistema:
 
+    # TC-P06 — Cenário: data_inicio inválida (400 + mensagem de erro da especificação)
     def test_retorna_400_para_data_invalida(self, api_client, projeto):
         url = reverse("funcionarios_projeto", args=[projeto.id])
-        response = api_client.get(url, {"data_inicio": "31-13-9999"})
+        response = api_client.get(url, {"data_inicio": "abc"})
         assert response.status_code == 400
+        assert response.json() == {
+            "error": "Formato inválido para 'data_inicio': esperado YYYY-MM-DD"
+        }
 
+    # Fora da especificação: erro interno (500)
     def test_retorna_500_quando_service_levanta_excecao(self, api_client, projeto):
         url = reverse("funcionarios_projeto", args=[projeto.id])
         with patch(

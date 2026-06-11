@@ -11,10 +11,12 @@ from api.services.compras_svc import (
 @pytest.mark.django_db
 class TestListarMateriaisComCompras:
 
+    # TC-C01 — Cenário: Nenhum material com compra registrada (camada de serviço)
     def test_retorna_lista_vazia_sem_dados(self):
         resultado = listar_materiais_com_compras()
         assert resultado == []
 
+    # TC-C01 — Cenário: Retornar materiais com compras (camada de serviço)
     def test_retorna_material_com_compras(self):
         material = baker.make(
             "api.DimMaterial", codigo_material="M001", descricao="Capacitor"
@@ -38,11 +40,14 @@ class TestListarMateriaisComCompras:
         assert resultado[0]["codigo_material"] == "M001"
         assert resultado[0]["descricao"] == "Capacitor"
 
+    # TC-C01 — Cenário: Nenhum material com compra registrada
+    # (material sem fatos não aparece)
     def test_nao_retorna_material_sem_fatos(self):
         baker.make("api.DimMaterial", codigo_material="SEM", descricao="Sem compra")
         resultado = listar_materiais_com_compras()
         assert resultado == []
 
+    # Complementar ao TC-C01: material com empenho (FatoMateriais) também é listado
     def test_retorna_material_apenas_em_fatomateriais(self):
         material = baker.make(
             "api.DimMaterial", codigo_material="M002", descricao="Resistor"
@@ -66,6 +71,7 @@ class TestListarMateriaisComCompras:
         assert resultado[0]["codigo_material"] == "M002"
         assert resultado[0]["descricao"] == "Resistor"
 
+    # Complementar ao TC-C01: material presente em compras e empenhos não duplica
     def test_nao_duplica_material_em_ambas_as_tabelas(self):
         material = baker.make("api.DimMaterial")
         fornecedor = baker.make("api.DimFornecedor")
@@ -95,6 +101,7 @@ class TestListarMateriaisComCompras:
         resultado = listar_materiais_com_compras()
         assert len(resultado) == 1
 
+    # Complementar ao TC-C01: múltiplas compras do mesmo material não duplicam
     def test_nao_duplica_material_com_multiplas_compras(self):
         material = baker.make("api.DimMaterial")
         fornecedor = baker.make("api.DimFornecedor")
@@ -140,6 +147,7 @@ class TestListarMateriaisComCompras:
         resultado = listar_materiais_com_compras()
         assert len(resultado) == 1
 
+    # TC-C01 — Contrato: cada item possui id, codigo_material e descricao
     def test_retorna_campos_id_codigo_descricao(self):
         material = baker.make("api.DimMaterial")
         fornecedor = baker.make("api.DimFornecedor")
@@ -158,6 +166,7 @@ class TestListarMateriaisComCompras:
         resultado = listar_materiais_com_compras()
         assert set(resultado[0].keys()) == {"id", "codigo_material", "descricao"}
 
+    # Complementar ao TC-C01: resultado ordenado por descrição
     def test_retorna_ordenado_por_descricao(self):
         fornecedor = baker.make("api.DimFornecedor")
         tempo = baker.make("api.DimTempo")
@@ -229,15 +238,18 @@ class TestGetLeadTimePorMaterial:
             projeto=projeto,
         )
 
+    # TC-C02 — Cenário: Material sem compras registradas (body [])
     def test_retorna_lista_vazia_sem_compras(self):
         material = baker.make("api.DimMaterial")
         resultado = get_lead_time_por_material(material.id)
         assert resultado == []
 
+    # Complementar ao TC-C02: material inexistente retorna []
     def test_retorna_lista_vazia_para_material_inexistente(self):
         resultado = get_lead_time_por_material(99999)
         assert resultado == []
 
+    # Complementar ao TC-C02: compras sem lead_time são excluídas
     def test_exclui_compras_sem_lead_time(self):
         material = baker.make("api.DimMaterial")
         fornecedor = baker.make("api.DimFornecedor")
@@ -256,6 +268,8 @@ class TestGetLeadTimePorMaterial:
         resultado = get_lead_time_por_material(material.id)
         assert resultado == []
 
+    # TC-C02 — Contrato: fornecedor, lead_time, valor_unidade, valor_total,
+    # status, categoria_status e data_pedido
     def test_retorna_campos_corretos(self):
         material = baker.make("api.DimMaterial")
         self._criar_compra(
@@ -275,12 +289,14 @@ class TestGetLeadTimePorMaterial:
         assert ponto["categoria_status"] == "Concluído"
         assert ponto["data_pedido"] == "2024-01-01"
 
+    # TC-C02 — Contrato: valor_unidade (number) calculado
     def test_calcula_valor_unidade_corretamente(self):
         material = baker.make("api.DimMaterial")
         self._criar_compra(material, valor_total=1000.0, quantidade=4)
         resultado = get_lead_time_por_material(material.id)
         assert resultado[0]["valor_unidade"] == approx(250.0)
 
+    # Complementar ao TC-C02: proteção contra divisão por zero no valor_unidade
     def test_quantidade_zero_usa_1_para_evitar_divisao_por_zero(self):
         material = baker.make("api.DimMaterial")
         fornecedor = baker.make("api.DimFornecedor", razao_social="F")
@@ -310,6 +326,7 @@ class TestGetLeadTimePorMaterial:
         resultado = get_lead_time_por_material(material.id)
         assert resultado[0]["valor_unidade"] == approx(300.0)
 
+    # Complementar ao TC-C02: deduplicação do mesmo pedido em projetos diferentes
     def test_deduplica_compras_de_mesmo_pedido_em_projetos_diferentes(self):
         material = baker.make("api.DimMaterial")
         fornecedor = baker.make("api.DimFornecedor", razao_social="Dup Ltda")
@@ -353,6 +370,7 @@ class TestGetLeadTimePorMaterial:
         resultado = get_lead_time_por_material(material.id)
         assert len(resultado) == 1
 
+    # Complementar ao TC-C02: compras distintas não são deduplicadas
     def test_nao_deduplica_compras_diferentes(self):
         material = baker.make("api.DimMaterial")
         fornecedor = baker.make("api.DimFornecedor", razao_social="F1")
@@ -402,6 +420,7 @@ class TestGetLeadTimePorMaterial:
         resultado = get_lead_time_por_material(material.id)
         assert len(resultado) == 2
 
+    # Complementar ao TC-C02: compras de outro material não vazam
     def test_nao_retorna_dados_de_outro_material(self):
         mat1 = baker.make("api.DimMaterial")
         mat2 = baker.make("api.DimMaterial")

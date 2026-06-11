@@ -1,3 +1,5 @@
+# Fora da especificação de testes de integração: testes de seed de dados
+# (infraestrutura).
 import os
 import sys
 from unittest.mock import MagicMock, call, patch
@@ -26,7 +28,8 @@ class TestMigrationRef:
 
 
 class TestCarregarDimProjetoPadrao:
-    """Testa a função carregar_dim_projeto do seed_0005 (sem data_inicio/data_fim_prevista)."""
+    """Testa a função carregar_dim_projeto do seed_0005
+    (sem data_inicio/data_fim_prevista)."""
 
     @patch("builtins.print")
     def test_truncates_and_inserts_sem_datas_extras(self, mock_print):
@@ -71,7 +74,8 @@ class TestRun:
         return pd.DataFrame({col: [] for col in columns})
 
     def _patch_read_csv(self, mock_read_csv):
-        """Configura side_effect do read_csv para retornar DataFrames vazios com colunas mínimas."""
+        """Configura side_effect do read_csv para retornar DataFrames vazios
+        com colunas mínimas."""
         _frames = {
             "programas": pd.DataFrame(
                 {

@@ -43,6 +43,12 @@ jobs:
         run: flake8 api scripts
 
       - name: Run pre-commit
+        env:
+          # Commit-time guards (branch protection / branch-name format) are for
+          # local dev, not CI. Branch-name validation for PRs lives in
+          # validate-commits.yml. Skipping them here avoids false failures when
+          # CI runs on the protected `main` branch (e.g. via pre-release.yml).
+          SKIP: no-commit-to-branch,validate-branch-name
         run: pre-commit run --all-files
 
   general-check:
